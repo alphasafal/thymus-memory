@@ -73,3 +73,9 @@ def test_summary_reports_both_sides_of_the_trade_off():
 )
 def test_parse_memories_is_forgiving(raw, expected):
     assert _parse_memories(raw) == expected
+
+
+def test_markers_work_in_hindi():
+    assert contains_any("आपका बिल ₹1,960 है", ("1,960",))
+    assert contains_any("आपकी डिलीवरी 16 अक्टूबर को होगी", ("16 अक्टूबर",))
+    assert not contains_any("आपकी डिलीवरी 16 अक्टूबर को होगी", ("6 अक्टूबर",))

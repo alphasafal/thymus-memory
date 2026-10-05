@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+import unicodedata
 from dataclasses import asdict, dataclass, field
 from statistics import mean
 
@@ -36,12 +37,15 @@ class ScenarioResult:
     writes: list[dict] = field(default_factory=list)
     error: str | None = None
     domain: str = ""
+    language: str = "en"
 
 
 def normalize(text: str) -> str:
-    """Lowercase, and turn every run of punctuation or space into one space,
-    so '555-0199' matches '+1 555 0199' and '10:45' matches '10.45'."""
-    return re.sub(r"[^a-z0-9]+", " ", text.lower()).strip()
+    """Lowercase, keep letters, combining marks and digits in any script (so Hindi survives),
+    and turn every other run of characters into one space: '555-0199' matches '+1 555 0199'
+    and '10:45' matches '10.45'."""
+    kept = "".join(ch if unicodedata.category(ch)[0] in "LMN" else " " for ch in text.lower())
+    return " ".join(kept.split())
 
 
 def contains_any(text: str, markers: tuple[str, ...]) -> bool:
@@ -53,7 +57,7 @@ def contains_any(text: str, markers: tuple[str, ...]) -> bool:
         needle = normalize(marker)
         if not needle:
             continue
-        pattern = r"(?<![a-z0-9])" + re.escape(needle) + (r"(?![0-9])" if needle[-1].isdigit() else "")
+        pattern = r"(?<!\S)" + re.escape(needle) + (r"(?!\d)" if needle[-1].isdigit() else "")
         if re.search(pattern, haystack):
             return True
     return False
@@ -73,7 +77,8 @@ def run_scenario(
     scenario: Scenario, llm: LLM, embedder: Embedder, gate: Gate, repeat: int = 0, judge: Judge | None = None
 ) -> ScenarioResult:
     result = ScenarioResult(
-        scenario.id, scenario.category, scenario.kind, gate.name, repeat, passed=None, domain=scenario.domain
+        scenario.id, scenario.category, scenario.kind, gate.name, repeat, passed=None,
+        domain=scenario.domain, language=scenario.language,
     )
     store = MemoryStore(embedder)
     agent = MemoryAgent(llm, store, gate)

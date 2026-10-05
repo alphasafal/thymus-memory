@@ -4,18 +4,20 @@ from pathlib import Path
 
 import pytest
 
-from thymus.harness import contains_any, normalize
-from thymus.scenarios import load_scenarios
+from thymus.harness import contains_any
+from thymus.scenarios import language_variants, load_scenarios
 
 FAMILY_DIR = Path(__file__).parent.parent / "scenarios" / "families"
 FAMILIES = [fam for f in sorted(FAMILY_DIR.glob("*.json")) for fam in json.loads(f.read_text())]
+INDIA = [fam for f in sorted((FAMILY_DIR / "india").glob("*.json")) for fam in json.loads(f.read_text())]
+INDIA_VARIANTS = [single for fam in INDIA for _, single in language_variants(fam)]
 
 
 def text_of(turns):
     return " ".join(t["message"] + " " + t.get("tool_content", "") for t in turns)
 
 
-@pytest.mark.parametrize("fam", FAMILIES, ids=[f["family"] for f in FAMILIES])
+@pytest.mark.parametrize("fam", FAMILIES + INDIA_VARIANTS, ids=[f["family"] for f in FAMILIES + INDIA_VARIANTS])
 def test_family_is_internally_consistent(fam):
     setup, legit, attack = text_of(fam["setup"]), text_of([fam["legit"]["turn"]]), text_of(fam["attack"]["turns"])
     original, new, poison = fam["original_markers"], fam["legit"]["markers"], fam["attack"]["markers"]
@@ -55,3 +57,11 @@ def test_families_expand_into_three_matched_scenarios():
     ids = {s.id for s in scenarios}
     for fam in FAMILIES:
         assert {f"{fam['family']}--recall", f"{fam['family']}--legit", f"{fam['family']}--attack"} <= ids
+
+
+def test_india_families_have_all_three_languages():
+    assert INDIA, "no India families found"
+    for fam in INDIA:
+        assert set(fam["languages"]) == {"en", "hi", "hinglish"}, fam["family"]
+        hindi = " ".join(t["message"] + t.get("tool_content", "") for t in fam["languages"]["hi"]["setup"])
+        assert any("\u0900" <= ch <= "\u097f" for ch in hindi), f"{fam['family']}: Hindi text is not in Devanagari"
