@@ -7,9 +7,14 @@ When ``schema`` is given the backend must return JSON matching it.
 from __future__ import annotations
 
 import json
+import os
 import re
+import shutil
+import subprocess
+import tempfile
 import urllib.error
 import urllib.request
+from pathlib import Path
 from typing import Any, Protocol
 
 
@@ -44,6 +49,13 @@ class OllamaLLM:
         self.host = host.rstrip("/")
         self.timeout = timeout
         self.name = f"ollama:{model}"
+        self._can_think: bool | None = None
+
+    def _supports_thinking(self) -> bool:
+        if self._can_think is None:
+            info = post_json(f"{self.host}/api/show", {"model": self.model}, self.timeout)
+            self._can_think = "thinking" in info.get("capabilities", [])
+        return self._can_think
 
     def complete(self, system: str, prompt: str, schema: dict | None = None) -> str:
         body: dict[str, Any] = {
@@ -57,7 +69,70 @@ class OllamaLLM:
         }
         if schema is not None:
             body["format"] = schema
+        if self._supports_thinking():
+            body["think"] = False  # reasoning models: answer directly, keeps runs fast
         return post_json(f"{self.host}/api/chat", body, self.timeout)["message"]["content"]
+
+
+def find_claude_binary() -> str:
+    """The Claude Code CLI: $THYMUS_CLAUDE_BIN, `claude` on PATH, or the newest copy
+    bundled with the Claude desktop app on macOS."""
+    if os.environ.get("THYMUS_CLAUDE_BIN"):
+        return os.environ["THYMUS_CLAUDE_BIN"]
+    on_path = shutil.which("claude")
+    if on_path:
+        return on_path
+    pattern = "Library/Application Support/Claude/claude-code/*/*/claude.app/Contents/MacOS/claude"
+    bundled = sorted(
+        Path.home().glob(pattern),
+        key=lambda p: tuple(int(x) for x in p.parts[-6].split(".") if x.isdigit()),
+    )
+    if bundled:
+        return str(bundled[-1])
+    raise LLMError("Claude Code CLI not found; install it or set THYMUS_CLAUDE_BIN")
+
+
+class ClaudeCodeLLM:
+    """Claude through the Claude Code CLI in print mode, so calls use the user's Claude
+    subscription instead of a paid API key. Log the CLI in once first (run it, then /login).
+    Each call starts a process, so it is slower than the API, and it counts toward the
+    plan's usage limits. Best used for grading, not for running the agent."""
+
+    def __init__(self, model: str | None = None, binary: str | None = None, timeout: float = 300):
+        self.binary = binary or find_claude_binary()
+        self.model = model
+        self.timeout = timeout
+        self.name = f"claude-code:{model or 'default'}"
+
+    def complete(self, system: str, prompt: str, schema: dict | None = None) -> str:
+        command = [
+            self.binary, "-p", prompt,
+            "--output-format", "json",
+            "--system-prompt", system,
+            "--tools", "",
+            "--strict-mcp-config",
+            "--setting-sources", "",
+            "--no-session-persistence",
+        ]
+        if self.model:
+            command += ["--model", self.model]
+        if schema is not None:
+            command += ["--json-schema", json.dumps(schema)]
+        try:
+            done = subprocess.run(
+                command, capture_output=True, text=True, timeout=self.timeout, cwd=tempfile.gettempdir()
+            )
+        except subprocess.TimeoutExpired as e:
+            raise LLMError(f"{self.name} timed out after {self.timeout}s") from e
+        try:
+            data = json.loads(done.stdout)
+        except json.JSONDecodeError:
+            raise LLMError(f"{self.name} returned no JSON: {(done.stderr or done.stdout)[:300]}") from None
+        if data.get("is_error"):
+            raise LLMError(f"{self.name} failed: {data.get('result')}")
+        if schema is not None and data.get("structured_output") is not None:
+            return json.dumps(data["structured_output"])
+        return data.get("result", "")
 
 
 # Models that accept server-side refusal fallbacks (fallbacks="default").

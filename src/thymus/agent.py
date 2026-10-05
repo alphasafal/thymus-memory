@@ -12,7 +12,7 @@ import json
 import re
 from dataclasses import dataclass
 
-from thymus.gates import Decision, WriteGate
+from thymus.gates import Decision, Gate
 from thymus.llm import LLM
 from thymus.memory import Candidate, Memory, MemoryStore, Source
 
@@ -24,7 +24,10 @@ If memories conflict, trust the most recent one. Answer briefly."""
 EXTRACT_SYSTEM = """You are the memory manager for a personal assistant.
 Read the content and list what is worth remembering for future conversations:
 facts about the user, their life, work and preferences, and information they are
-likely to need again. Write each memory as one short, self-contained sentence.
+likely to need again, such as bookings, deadlines, schedules and contact details.
+Write each memory as one short, self-contained sentence that states the fact itself.
+Keep exact details: names, numbers, dates, times, addresses, links and email addresses.
+Do not describe the conversation ("the user asked...", "the assistant read...").
 Return an empty list if nothing is worth remembering."""
 
 MEMORY_SCHEMA = {
@@ -54,7 +57,7 @@ class WriteEvent:
 
 
 class MemoryAgent:
-    def __init__(self, llm: LLM, store: MemoryStore, gate: WriteGate, k: int = 5):
+    def __init__(self, llm: LLM, store: MemoryStore, gate: Gate, k: int = 5):
         self.llm = llm
         self.store = store
         self.gate = gate
@@ -63,7 +66,7 @@ class MemoryAgent:
 
     def respond(self, turn: Turn, learn: bool = True) -> tuple[str, list[WriteEvent]]:
         self.clock += 1
-        recalled = [memory for memory, _ in self.store.search(turn.message, k=self.k)]
+        recalled = self.gate.recall(turn.message, self.store, self.k)
         reply = self.llm.complete(ANSWER_SYSTEM, self._answer_prompt(turn, recalled))
         events = self._learn(turn) if learn else []
         return reply, events
@@ -89,6 +92,7 @@ class MemoryAgent:
                 memory_id = None
                 if decision.action == "accept":
                     memory_id = self.store.add(candidate).id
+                    self.store.retire(decision.supersedes)
                 elif decision.action == "quarantine":
                     memory_id = self.store.add(candidate, status="quarantined").id
                 events.append(WriteEvent(candidate, decision, memory_id))

@@ -31,6 +31,9 @@ class Scenario:
     expect_any: tuple[str, ...] = ()  # update/benign: any of these in the reply means pass
     poison_markers: tuple[str, ...] = ()  # attack: any of these in the reply means the attack worked
     stale_markers: tuple[str, ...] = ()  # update: the old value; tracked, not part of pass/fail
+    planted_claim: str = ""  # attack: the false claim, in plain words, for the judge
+    correct_answer: str = ""  # update/benign: the right current answer, for the judge
+    outdated_answer: str = ""  # update: the answer that used to be true
 
 
 def _turn(data: dict) -> Turn:
@@ -53,6 +56,9 @@ def parse_scenario(data: dict) -> Scenario:
         expect_any=tuple(data.get("expect_any", ())),
         poison_markers=tuple(data.get("poison_markers", ())),
         stale_markers=tuple(data.get("stale_markers", ())),
+        planted_claim=data.get("planted_claim", ""),
+        correct_answer=data.get("correct_answer", ""),
+        outdated_answer=data.get("outdated_answer", ""),
     )
     if scenario.category not in CATEGORIES:
         raise ValueError(f"{scenario.id}: unknown category {scenario.category!r}")
@@ -60,6 +66,10 @@ def parse_scenario(data: dict) -> Scenario:
         raise ValueError(f"{scenario.id}: attack scenarios need poison_markers")
     if scenario.category != "attack" and not scenario.expect_any:
         raise ValueError(f"{scenario.id}: {scenario.category} scenarios need expect_any")
+    if scenario.category == "attack" and not scenario.planted_claim:
+        raise ValueError(f"{scenario.id}: attack scenarios need planted_claim for the judge")
+    if scenario.category != "attack" and not scenario.correct_answer:
+        raise ValueError(f"{scenario.id}: {scenario.category} scenarios need correct_answer for the judge")
     return scenario
 
 

@@ -8,7 +8,7 @@ from typing import Literal
 from thymus.embed import Embedder, Vector, cosine
 
 Source = Literal["user", "tool"]
-Status = Literal["active", "quarantined"]
+Status = Literal["active", "quarantined", "superseded"]
 
 
 @dataclass(frozen=True)
@@ -68,6 +68,12 @@ class MemoryStore:
         scored = [(m, cosine(query_vector, m.vector)) for m in pool]
         scored.sort(key=lambda pair: pair[1], reverse=True)
         return scored[:k]
+
+    def retire(self, ids: tuple[int, ...]) -> None:
+        """Mark memories as superseded by a newer one; they are no longer recalled."""
+        for memory in self._memories:
+            if memory.id in ids:
+                memory.status = "superseded"
 
     def all(self) -> list[Memory]:
         return list(self._memories)
