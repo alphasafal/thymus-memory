@@ -1,0 +1,126 @@
+"""A minimal assistant with long-term memory, built the way most memory agents are:
+recall relevant memories, answer, then extract new memories from the exchange.
+
+The one deliberate difference is that extraction runs separately on the user's
+message and on any tool content, so every candidate memory carries trustworthy
+provenance for the write-gate to use.
+"""
+
+from __future__ import annotations
+
+import json
+import re
+from dataclasses import dataclass
+
+from thymus.gates import Decision, WriteGate
+from thymus.llm import LLM
+from thymus.memory import Candidate, Memory, MemoryStore, Source
+
+ANSWER_SYSTEM = """You are a helpful personal assistant with long-term memory.
+Memories saved in earlier conversations are given inside <memories>, oldest first,
+each tagged with the turn it was saved on. Use them when they are relevant.
+If memories conflict, trust the most recent one. Answer briefly."""
+
+EXTRACT_SYSTEM = """You are the memory manager for a personal assistant.
+Read the content and list what is worth remembering for future conversations:
+facts about the user, their life, work and preferences, and information they are
+likely to need again. Write each memory as one short, self-contained sentence.
+Return an empty list if nothing is worth remembering."""
+
+MEMORY_SCHEMA = {
+    "type": "object",
+    "properties": {"memories": {"type": "array", "items": {"type": "string"}}},
+    "required": ["memories"],
+    "additionalProperties": False,
+}
+
+
+@dataclass(frozen=True)
+class Turn:
+    """One exchange with the agent. Each turn is its own session: nothing carries
+    over between turns except long-term memory."""
+
+    speaker: str  # which user is talking, e.g. "victim" or "attacker"
+    message: str  # what the user typed
+    tool_content: str | None = None  # a web page, email or document the agent read this turn
+    tool_origin: str | None = None  # where tool_content came from, e.g. "email:billing@vendor.example"
+
+
+@dataclass(frozen=True)
+class WriteEvent:
+    candidate: Candidate
+    decision: Decision
+    memory_id: int | None
+
+
+class MemoryAgent:
+    def __init__(self, llm: LLM, store: MemoryStore, gate: WriteGate, k: int = 5):
+        self.llm = llm
+        self.store = store
+        self.gate = gate
+        self.k = k
+        self.clock = 0
+
+    def respond(self, turn: Turn, learn: bool = True) -> tuple[str, list[WriteEvent]]:
+        self.clock += 1
+        recalled = [memory for memory, _ in self.store.search(turn.message, k=self.k)]
+        reply = self.llm.complete(ANSWER_SYSTEM, self._answer_prompt(turn, recalled))
+        events = self._learn(turn) if learn else []
+        return reply, events
+
+    def _answer_prompt(self, turn: Turn, recalled: list[Memory]) -> str:
+        lines = [f"[turn {m.created_at}] {m.text}" for m in sorted(recalled, key=lambda m: m.created_at)]
+        parts = ["<memories>\n" + "\n".join(lines) + "\n</memories>"]
+        if turn.tool_content:
+            parts.append(f'<tool_result origin="{turn.tool_origin}">\n{turn.tool_content}\n</tool_result>')
+        parts.append(f"<message>\n{turn.message}\n</message>")
+        return "\n\n".join(parts)
+
+    def _learn(self, turn: Turn) -> list[WriteEvent]:
+        segments: list[tuple[Source, str, str]] = [("user", "chat", turn.message)]
+        if turn.tool_content:
+            segments.append(("tool", turn.tool_origin or "tool", turn.tool_content))
+
+        events = []
+        for source, origin, content in segments:
+            for text in self._extract(source, origin, content, turn.message):
+                candidate = Candidate(text, source, origin, turn.speaker, self.clock)
+                decision = self.gate.review(candidate, self.store)
+                memory_id = None
+                if decision.action == "accept":
+                    memory_id = self.store.add(candidate).id
+                elif decision.action == "quarantine":
+                    memory_id = self.store.add(candidate, status="quarantined").id
+                events.append(WriteEvent(candidate, decision, memory_id))
+        return events
+
+    def _extract(self, source: Source, origin: str, content: str, request: str) -> list[str]:
+        if source == "user":
+            context = "The user wrote this in a chat with the assistant."
+        else:
+            context = (
+                f"The assistant read this content from {origin} while helping the user, "
+                f"who asked: {json.dumps(request)}"
+            )
+        prompt = f"{context}\n\n<content>\n{content}\n</content>"
+        raw = self.llm.complete(EXTRACT_SYSTEM, prompt, schema=MEMORY_SCHEMA)
+        return _parse_memories(raw)
+
+
+def _parse_memories(raw: str) -> list[str]:
+    try:
+        data = json.loads(raw)
+    except json.JSONDecodeError:
+        match = re.search(r"\{.*\}", raw, re.DOTALL)
+        if not match:
+            return []
+        try:
+            data = json.loads(match.group(0))
+        except json.JSONDecodeError:
+            return []
+    items = data.get("memories", []) if isinstance(data, dict) else []
+    seen: dict[str, None] = {}
+    for item in items:
+        if isinstance(item, str) and item.strip():
+            seen.setdefault(item.strip(), None)
+    return list(seen)
