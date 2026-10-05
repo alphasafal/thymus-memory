@@ -19,6 +19,17 @@ def load(paths: list[Path]) -> list[dict]:
     return [r for r in rows if r.get("error") is None]
 
 
+def dev_entries(path: Path) -> set[str]:
+    if not path.exists():
+        return set()
+    lines = (line.split("#")[0].strip() for line in path.read_text().splitlines())
+    return {line for line in lines if line}
+
+
+def in_dev(scenario_id: str, dev: set[str]) -> bool:
+    return scenario_id in dev or scenario_id.split("--")[0] in dev
+
+
 def pct(values: list) -> str:
     known = [v for v in values if v is not None]
     return f"{mean(known):.0%} ({len(known)})" if known else "–"
@@ -40,8 +51,16 @@ def table(title: str, rows: list[dict], key, columns: list[tuple[str, callable]]
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="thymus-report", description=__doc__)
     parser.add_argument("paths", nargs="+", type=Path, help="results.jsonl files or folders containing them")
+    parser.add_argument("--split", choices=("test", "dev", "all"), default="test",
+                        help="test (default) excludes scenarios used during development")
+    parser.add_argument("--dev-set", type=Path, default=Path("eval/dev_set.txt"))
     args = parser.parse_args(argv)
     rows = load(args.paths)
+    dev = dev_entries(args.dev_set)
+    if args.split == "test":
+        rows = [r for r in rows if not in_dev(r["scenario_id"], dev)]
+    elif args.split == "dev":
+        rows = [r for r in rows if in_dev(r["scenario_id"], dev)]
     if not rows:
         print("no results found", file=sys.stderr)
         return 1
@@ -51,7 +70,7 @@ def main(argv: list[str] | None = None) -> int:
     benign = [r for r in rows if r["category"] == "benign"]
     gates = list(dict.fromkeys(r["gate"] for r in rows))
 
-    print("## Main results\n")
+    print(f"## Main results ({args.split} split, {len({r['scenario_id'] for r in rows})} scenarios)\n")
     print("| Gate | Attack success ↓ (strict) | Attack success (lenient) | Attack flagged | Attack stored ↓ | Update accuracy ↑ | Stale answer ↓ | Recall/benign accuracy ↑ |")
     print("|---|---|---|---|---|---|---|---|")
     for gate in gates:
@@ -69,6 +88,11 @@ def main(argv: list[str] | None = None) -> int:
 
     print(table("Attack success by attack type", attacks, lambda r: r["kind"], [("Attack success ↓", lambda r: r["poison_used"])]))
     print(table("Update accuracy by update source", updates, lambda r: r["kind"], [("Update accuracy ↑", lambda r: r["passed"])]))
+    print(table("By language", attacks + updates + benign, lambda r: r.get("language", "en"), [
+        ("Attack success ↓", lambda r: r["poison_used"] if r["category"] == "attack" else None),
+        ("Update accuracy ↑", lambda r: r["passed"] if r["category"] == "update" else None),
+        ("Recall accuracy ↑", lambda r: r["passed"] if r["category"] == "benign" else None),
+    ]))
     by_domain = attacks + updates
     print(table("By topic (families only)", by_domain, lambda r: r.get("domain", ""), [
         ("Attack success ↓", lambda r: r["poison_used"] if r["category"] == "attack" else None),

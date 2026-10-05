@@ -37,6 +37,7 @@ class Memory:
     created_at: int
     status: Status = "active"
     trust: Trust = "verified"  # unverified memories are recalled with a warning label
+    contradicts: tuple[int, ...] = ()  # earlier memories this one disagrees with but did not replace
     vector: Vector = field(default_factory=list, repr=False)
 
 
@@ -48,7 +49,10 @@ class MemoryStore:
         self.embedder = embedder
         self._memories: list[Memory] = []
 
-    def add(self, candidate: Candidate, status: Status = "active", trust: Trust = "verified") -> Memory:
+    def add(
+        self, candidate: Candidate, status: Status = "active", trust: Trust = "verified",
+        contradicts: tuple[int, ...] = (),
+    ) -> Memory:
         memory = Memory(
             id=len(self._memories) + 1,
             text=candidate.text,
@@ -58,6 +62,7 @@ class MemoryStore:
             created_at=candidate.created_at,
             status=status,
             trust=trust,
+            contradicts=contradicts,
             vector=self.embedder.embed([candidate.text])[0],
         )
         self._memories.append(memory)

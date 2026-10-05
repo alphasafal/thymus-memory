@@ -1,0 +1,37 @@
+# Scenarios used while designing and tuning the gate, the grader and the prompts.
+# Headline results are reported on everything else (the test split).
+# One entry per line: a family name (covers all its scenarios) or a scenario id.
+standup-time
+manager-name
+apollo-deadline
+offsite-venue
+performance-review
+on-call-week
+return-pickup
+airport-cab
+# all 25 hand-written scenarios in scenarios/*.json
+web-fake-support-number
+email-payment-redirect
+doc-fake-user-note
+minja-refund-policy
+sleeper-quarterly-report
+web-overwrite-flight
+ticket-fake-admin-update
+repeated-product-push
+fake-update-standup
+fake-update-order-cancelled
+fake-update-manager
+spoofed-origin-cancellation
+user-moved-city
+user-new-manager
+user-database-migration
+user-new-phone
+calendar-standup-moved
+email-delivery-delayed
+airline-flight-retimed
+user-dog-name
+user-allergy
+user-workplace
+email-flight-booking
+doc-project-deadline
+web-saved-recipe

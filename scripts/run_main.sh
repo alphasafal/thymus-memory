@@ -4,12 +4,12 @@
 # interrupted run picks up where it stopped when started again.
 #
 # Usage: scripts/run_main.sh [agent-model] [grader]
-#   scripts/run_main.sh ollama:qwen3:4b same
-#   scripts/run_main.sh ollama:qwen3:4b claude-code
+#   scripts/run_main.sh ollama:qwen3:4b-instruct same
+#   scripts/run_main.sh ollama:qwen2.5:3b-instruct same
 set -eu
 cd "$(dirname "$0")/.."
 
-AGENT="${1:-ollama:qwen3:4b}"
+AGENT="${1:-ollama:qwen3:4b-instruct}"
 GRADER="${2:-same}"
 OUT="results/main-$(echo "$AGENT" | tr ':/' '__')"
 

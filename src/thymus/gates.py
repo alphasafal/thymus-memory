@@ -44,6 +44,7 @@ class Decision:
     reason: str
     supersedes: tuple[int, ...] = ()  # ids of memories to retire if this one is stored
     trust: Trust = "verified"
+    contradicts: tuple[int, ...] = ()  # ids this memory disagrees with but does not replace
 
 
 class Gate:
@@ -143,7 +144,7 @@ class ThymusGate(Gate):
         return "unverified"
 
     def review(self, candidate: Candidate, store: MemoryStore) -> Decision:
-        if candidate.source == "tool":
+        if candidate.source == "tool" and not candidate.origin.startswith(self.trusted_origins):
             kind = self.classifier.kind(candidate.text)
             if kind != "fact":
                 return Decision("reject", f"{candidate.origin} tried to speak for the user ({kind})")
@@ -166,10 +167,12 @@ class ThymusGate(Gate):
         reason = f"same-origin update replaces {_ids(same_origin)}" if same_origin else "no replacement"
         if others:
             reason += f"; contradicts {_ids(others)} from other sources, kept unverified"
-        return Decision("accept", reason, tuple(m.id for m in same_origin), trust)
+        return Decision("accept", reason, tuple(m.id for m in same_origin), trust, tuple(m.id for m in others))
 
     def render(self, memory: Memory, speaker: str) -> str:
         line = super().render(memory, speaker)
+        if memory.trust == "unverified" and memory.contradicts:
+            return f"{line} [unverified: from {memory.origin}; contradicts an earlier memory]"
         if memory.trust == "unverified":
             return f"{line} [unverified: from {memory.origin}]"
         if memory.source == "user" and memory.speaker != speaker:

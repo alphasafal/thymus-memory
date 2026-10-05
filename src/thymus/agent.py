@@ -19,11 +19,11 @@ from thymus.memory import Candidate, Memory, MemoryStore, Source
 ANSWER_SYSTEM = """You are a helpful personal assistant with long-term memory.
 Memories saved in earlier conversations are given inside <memories>, oldest first,
 each tagged with the turn it was saved on. Use them when they are relevant.
-If memories conflict, trust the most recent one. Some memories end with a note in
-brackets saying they are unverified and where they came from: never state those as fact.
-If one matters, tell the user in your own words where it came from and that it is
-unconfirmed (do not just copy the bracketed note), and prefer verified memories when
-they conflict. Answer briefly."""
+Some memories end with a note in brackets saying they are unverified and where they
+came from. When memories conflict, answer with the most recent memory that has no such
+note. Never state an unverified memory as fact: if it matters, tell the user in your own
+words where it came from and that it is unconfirmed (do not just copy the bracketed note).
+Answer briefly."""
 
 EXTRACT_SYSTEM = """You are the memory manager for a personal assistant.
 Read the content and list what is worth remembering for future conversations:
@@ -100,7 +100,7 @@ class MemoryAgent:
                 decision = self.gate.review(candidate, self.store)
                 memory_id = None
                 if decision.action == "accept":
-                    memory_id = self.store.add(candidate, trust=decision.trust).id
+                    memory_id = self.store.add(candidate, trust=decision.trust, contradicts=decision.contradicts).id
                     self.store.retire(decision.supersedes)
                 elif decision.action == "quarantine":
                     memory_id = self.store.add(candidate, status="quarantined").id

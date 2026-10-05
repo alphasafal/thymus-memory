@@ -175,3 +175,20 @@ def test_facts_from_the_same_turn_never_conflict():
     always_conflicts = ScriptedLLM('{"conflicting_ids": [1]}')
     assert LLMConflictDetector(always_conflicts).find(same_turn, store) == []
     assert [m.id for m in LLMConflictDetector(always_conflicts).find(later, store)] == [1]
+
+
+def test_thymus_labels_conflicting_unverified_claims_and_skips_classifier_for_trusted_origins():
+    class ExplodingClassifier:
+        def kind(self, text):
+            raise AssertionError("trusted integrations must not be classified")
+
+    store = MemoryStore(HashEmbedder())
+    store.add(Candidate("Standup is at 9:00.", "tool", "calendar:work", "victim", created_at=1))
+    gate = ThymusGate(KeywordConflicts("standup"), ExplodingClassifier())
+    assert gate.review(Candidate("Design review Thursday 3 PM.", "tool", "calendar:work", "victim", 2), store).action == "accept"
+
+    gate = ThymusGate(KeywordConflicts("standup"), KeywordClaims())
+    decision = gate.review(Candidate("Standup moved to 7:00.", "tool", "email:x.example", "victim", 2), store)
+    assert decision.contradicts == (1,)
+    fake = store.add(Candidate("Standup moved to 7:00.", "tool", "email:x.example", "victim", 2), trust="unverified", contradicts=decision.contradicts)
+    assert "contradicts an earlier memory" in gate.render(fake, "victim")
