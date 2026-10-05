@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import subprocess
 import sys
 from dataclasses import asdict
 from datetime import datetime
@@ -39,6 +40,28 @@ def preflight(llm: LLM) -> str | None:
     if "paris" not in reply.lower() or len(reply) > 80:
         return f"{llm.name} failed the sanity check (expected a one-word answer, got {reply[:120]!r})"
     return None
+
+
+def run_metadata(args: argparse.Namespace, llm: LLM, judge: Judge, scenarios: list) -> dict:
+    """Everything needed to reproduce a run: code version, settings, scenario set."""
+    def git(*cmd: str) -> str:
+        try:
+            return subprocess.run(["git", *cmd], capture_output=True, text=True, timeout=10).stdout.strip()
+        except (OSError, subprocess.TimeoutExpired):
+            return ""
+
+    return {
+        "started": datetime.now().isoformat(timespec="seconds"),
+        "git_commit": git("rev-parse", "HEAD"),
+        "git_dirty": bool(git("status", "--porcelain", "--untracked-files=no")),
+        "agent_model": llm.name,
+        "grader": judge.name,
+        "embedder": args.embedder,
+        "gates": args.gate or list(GATES),
+        "scenario_count": len(scenarios),
+        "scenario_ids": [s.id for s in scenarios],
+        "argv": sys.argv[1:],
+    }
 
 
 def make_embedder(spec: str) -> Embedder:
@@ -96,6 +119,7 @@ def main(argv: list[str] | None = None) -> int:
 
     run_dir = args.out / datetime.now().strftime("%Y%m%d-%H%M%S")
     run_dir.mkdir(parents=True, exist_ok=True)
+    (run_dir / "meta.json").write_text(json.dumps(run_metadata(args, llm, judge, scenarios), indent=2) + "\n")
     results = []
     total = len(gates) * len(scenarios) * args.repeats
     with (run_dir / "results.jsonl").open("w") as log:
