@@ -9,8 +9,9 @@ USER_NAME="${USER_NAME:-safalguptaofficial}"
 BUILD=".kaggle-build"
 rm -rf "$BUILD" && mkdir -p "$BUILD/dataset" "$BUILD/kernel"
 
-# Code bundle (no results, caches or virtualenv).
-tar --exclude=.venv --exclude=results --exclude=.cache --exclude=.kaggle-build --exclude=.git \
+# Code bundle (no results, caches, virtualenv or macOS metadata files; Kaggle unpacks it).
+COPYFILE_DISABLE=1 tar --exclude=.venv --exclude=results --exclude=.cache --exclude=.kaggle-build \
+    --exclude=.git --exclude=.pytest_cache --exclude=__pycache__ --exclude=.DS_Store --exclude='._*' \
     -czf "$BUILD/dataset/code.tar.gz" -C .. "$(basename "$PWD")"
 cp "$CONFIG" "$BUILD/dataset/run_config.json"
 cat > "$BUILD/dataset/dataset-metadata.json" <<META
@@ -38,7 +39,8 @@ cat > "$BUILD/kernel/kernel-metadata.json" <<META
   "kernel_sources": []
 }
 META
-# Give Kaggle a moment to process the new dataset version before the notebook starts.
-sleep 60
+# Wait until Kaggle has processed the new dataset version before the notebook starts.
+until kaggle datasets status "$USER_NAME/thymus-memory-code" 2>/dev/null | grep -q ready; do sleep 10; done
+sleep 30
 kaggle kernels push -p "$BUILD/kernel"
 echo "Started. Check with: kaggle kernels status $USER_NAME/thymus-memory-run"

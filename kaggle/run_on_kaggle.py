@@ -8,16 +8,38 @@ a later session can resume) in /kaggle/working.
 import json
 import os
 import pathlib
+import shutil
 import subprocess
 import sys
 import tarfile
 import time
 import urllib.request
 
-INPUT = next(pathlib.Path("/kaggle/input").glob("*/code.tar.gz")).parent
+INPUT_ROOT = pathlib.Path("/kaggle/input")
 WORK = pathlib.Path("/kaggle/working")
 CODE = WORK / "thymus-memory"
-CONFIG = json.loads((INPUT / "run_config.json").read_text())
+CONFIG = json.loads(next(INPUT_ROOT.rglob("run_config.json")).read_text())
+
+
+def unpack_code():
+    """Kaggle unpacks uploaded archives into folders, so accept either form."""
+    for pyproject in INPUT_ROOT.rglob("pyproject.toml"):
+        if (pyproject.parent / "src" / "thymus").is_dir():
+            shutil.copytree(pyproject.parent, CODE, dirs_exist_ok=True)
+            return
+    tarball = next(INPUT_ROOT.rglob("code.tar.gz"))
+    with tarfile.open(tarball) as archive:
+        archive.extractall(WORK)
+
+
+def restore_cache():
+    for cache in INPUT_ROOT.rglob("cache.tar.gz"):
+        with tarfile.open(cache) as archive:
+            archive.extractall(CODE)
+        return
+    for cache_dir in INPUT_ROOT.rglob(".cache"):
+        shutil.copytree(cache_dir, CODE / ".cache", dirs_exist_ok=True)
+        return
 
 
 def sh(cmd, **kwargs):
@@ -36,13 +58,9 @@ def wait_for_ollama(timeout=120):
     raise RuntimeError("ollama did not start")
 
 
-with tarfile.open(INPUT / "code.tar.gz") as archive:
-    archive.extractall(WORK)
-
-previous_cache = INPUT / "cache.tar.gz"
-if previous_cache.exists():
-    with tarfile.open(previous_cache) as archive:
-        archive.extractall(CODE)
+print("input files:", [str(p) for p in INPUT_ROOT.rglob("*")][:20], flush=True)
+unpack_code()
+restore_cache()
 
 sh("curl -fsSL https://ollama.com/install.sh | sh", shell=True)
 server_log = open(WORK / "ollama-server.log", "w")
