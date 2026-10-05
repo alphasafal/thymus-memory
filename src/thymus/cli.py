@@ -14,7 +14,7 @@ from thymus.embed import Embedder, HashEmbedder, OllamaEmbedder
 from thymus.gates import GATES, make_gate
 from thymus.harness import run_scenario, summarize, summary_markdown
 from thymus.judge import MODES, Judge
-from thymus.llm import LLM, AnthropicLLM, CachedLLM, ClaudeCodeLLM, EchoLLM, OllamaLLM
+from thymus.llm import LLM, AnthropicLLM, CachedLLM, ClaudeCodeLLM, EchoLLM, LLMUnavailable, OllamaLLM
 from thymus.scenarios import CATEGORIES, load_scenarios
 
 
@@ -122,18 +122,22 @@ def main(argv: list[str] | None = None) -> int:
     (run_dir / "meta.json").write_text(json.dumps(run_metadata(args, llm, judge, scenarios), indent=2) + "\n")
     results = []
     total = len(gates) * len(scenarios) * args.repeats
+    unavailable = None
     with (run_dir / "results.jsonl").open("w") as log:
-        for gate in gates:
-            for scenario in scenarios:
-                for repeat in range(args.repeats):
-                    if any(getattr(m, "exhausted", False) for m in (llm, judge.llm)):
-                        break
-                    result = run_scenario(scenario, llm, embedder, gate, repeat, judge)
-                    results.append(result)
-                    log.write(json.dumps(asdict(result)) + "\n")
-                    log.flush()
-                    status = "ERROR" if result.error else ("pass" if result.passed else "FAIL")
-                    print(f"[{len(results)}/{total}] {gate.name:<20} {scenario.id:<32} {status}", file=sys.stderr)
+        try:
+            for gate in gates:
+                for scenario in scenarios:
+                    for repeat in range(args.repeats):
+                        if any(getattr(m, "exhausted", False) for m in (llm, judge.llm)):
+                            break
+                        result = run_scenario(scenario, llm, embedder, gate, repeat, judge)
+                        results.append(result)
+                        log.write(json.dumps(asdict(result)) + "\n")
+                        log.flush()
+                        status = "ERROR" if result.error else ("pass" if result.passed else "FAIL")
+                        print(f"[{len(results)}/{total}] {gate.name:<20} {scenario.id:<32} {status}", file=sys.stderr)
+        except LLMUnavailable as e:
+            unavailable = e
 
     grader = f"`{judge.name}`"
     header = (
@@ -148,6 +152,9 @@ def main(argv: list[str] | None = None) -> int:
     print(f"\nSaved to {run_dir}", file=sys.stderr)
     if any(getattr(m, "exhausted", False) for m in (llm, judge.llm)):
         print(f"Stopped early: reached --max-new-calls {args.max_new_calls}. Rerun to resume from the cache.", file=sys.stderr)
+    if unavailable:
+        print(f"Stopped early, model server unavailable: {unavailable}. Rerun the same command to resume from the cache.", file=sys.stderr)
+        return 3
     errors = [r for r in results if r.error]
     if errors:
         print(f"{len(errors)} runs errored; first error: {errors[0].error}", file=sys.stderr)

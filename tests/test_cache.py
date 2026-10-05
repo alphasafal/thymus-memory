@@ -35,3 +35,22 @@ def test_call_cap_stops_new_calls_but_keeps_serving_the_cache(tmp_path):
     assert capped.complete("sys", "q1") == "answer 1"  # cached answers are still free
     with pytest.raises(CallBudgetExceeded):
         capped.complete("sys", "q2")
+
+
+def test_post_json_turns_dropped_connections_into_llm_unavailable(monkeypatch):
+    import http.client
+    import urllib.request
+
+    from thymus import llm as llm_module
+
+    calls = {"n": 0}
+
+    def drop(*args, **kwargs):
+        calls["n"] += 1
+        raise http.client.RemoteDisconnected("Remote end closed connection without response")
+
+    monkeypatch.setattr(urllib.request, "urlopen", drop)
+    monkeypatch.setattr(llm_module.time, "sleep", lambda s: None)
+    with pytest.raises(llm_module.LLMUnavailable):
+        llm_module.post_json("http://localhost:1/api/chat", {}, timeout=1, retries=2)
+    assert calls["n"] == 3

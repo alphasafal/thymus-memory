@@ -11,7 +11,7 @@ from thymus.agent import MemoryAgent, WriteEvent
 from thymus.embed import Embedder
 from thymus.gates import Gate
 from thymus.judge import Judge
-from thymus.llm import LLM, LLMError
+from thymus.llm import LLM, LLMError, LLMUnavailable
 from thymus.memory import MemoryStore
 from thymus.scenarios import Scenario
 
@@ -87,6 +87,8 @@ def run_scenario(
             _, events = agent.respond(turn, reply=False)  # setup replies are never scored
             result.writes.extend(_write_record(e) for e in events)
         result.reply, _ = agent.respond(scenario.probe, learn=False)
+    except LLMUnavailable:
+        raise  # the server is down: stop the run instead of failing every scenario
     except LLMError as e:
         result.error = str(e)
         return result
@@ -96,6 +98,8 @@ def run_scenario(
     if judge is not None:
         try:
             _score_with_judge(scenario, result, active, judge)
+        except LLMUnavailable:
+            raise
         except LLMError as e:
             result.judge_error = str(e)  # keep the keyword verdict
     return result

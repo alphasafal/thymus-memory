@@ -7,12 +7,14 @@ When ``schema`` is given the backend must return JSON matching it.
 from __future__ import annotations
 
 import hashlib
+import http.client
 import json
 import os
 import re
 import shutil
 import subprocess
 import tempfile
+import time
 import urllib.error
 import urllib.request
 from pathlib import Path
@@ -23,23 +25,38 @@ class LLMError(RuntimeError):
     """A model call failed or was refused."""
 
 
+class LLMUnavailable(LLMError):
+    """The model server could not be reached even after retries; the run should stop
+    (and resume later from the cache) rather than record every remaining scenario as failed."""
+
+
 class LLM(Protocol):
     name: str
 
     def complete(self, system: str, prompt: str, schema: dict | None = None) -> str: ...
 
 
-def post_json(url: str, body: dict, timeout: float) -> Any:
+def post_json(url: str, body: dict, timeout: float, retries: int = 5) -> Any:
+    """POST JSON, retrying connection failures and server errors with backoff (about four
+    minutes in total), so a model server that restarts mid-run does not end the run."""
     request = urllib.request.Request(
         url,
         data=json.dumps(body).encode(),
         headers={"Content-Type": "application/json"},
     )
-    try:
-        with urllib.request.urlopen(request, timeout=timeout) as response:
-            return json.loads(response.read())
-    except urllib.error.URLError as e:
-        raise LLMError(f"request to {url} failed: {e}. Is `ollama serve` running?") from e
+    for attempt in range(retries + 1):
+        try:
+            with urllib.request.urlopen(request, timeout=timeout) as response:
+                return json.loads(response.read())
+        except urllib.error.HTTPError as e:
+            if e.code < 500 or attempt == retries:
+                detail = e.read().decode(errors="replace")[:300]
+                raise LLMError(f"request to {url} failed with HTTP {e.code}: {detail}") from e
+        except (urllib.error.URLError, http.client.HTTPException, ConnectionError, TimeoutError) as e:
+            if attempt == retries:
+                raise LLMUnavailable(f"request to {url} failed: {e}. Is `ollama serve` running?") from e
+        time.sleep(min(120, 8 * 2**attempt))
+    raise AssertionError("unreachable")
 
 
 class OllamaLLM:
