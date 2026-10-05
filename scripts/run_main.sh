@@ -1,5 +1,5 @@
 #!/bin/sh
-# Main experiment: every defence on all 205 scenarios with a local agent model.
+# Main experiment: every defence on every scenario with a local agent model.
 # Takes several hours on an 8 GB M2 Mac. Responses are cached in .cache/llm, so an
 # interrupted run picks up where it stopped when started again.
 #
