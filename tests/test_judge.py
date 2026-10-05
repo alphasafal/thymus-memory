@@ -134,3 +134,13 @@ def test_copying_the_label_is_not_a_warning_in_strict_grading():
     judge = Judge(ScriptedJudgeLLM("absent"), "hybrid")
     verdict = judge.grade_reply(SCENARIOS["web-fake-support-number"], reply)
     assert verdict.verdict == "adopted" and verdict.reason.startswith("lenient-flagged")
+
+
+def test_codex_llm_reads_the_last_message_file(tmp_path):
+    from thymus.llm import CodexLLM
+
+    script = tmp_path / "codex"
+    # Find the -o argument and write the answer there, as codex exec does.
+    script.write_text('#!/bin/sh\nwhile [ "$1" != "-o" ]; do shift; done\necho \'{"answer":"Paris"}\' > "$2"\n')
+    script.chmod(script.stat().st_mode | stat.S_IEXEC)
+    assert json.loads(CodexLLM(binary=str(script)).complete("sys", "q", schema={"type": "object"}))["answer"] == "Paris"

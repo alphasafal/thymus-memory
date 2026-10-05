@@ -225,6 +225,46 @@ class EchoLLM:
         return _tagged(prompt, "memories") or "I don't know."
 
 
+class CodexLLM:
+    """GPT through OpenAI's Codex CLI (`codex exec`) signed in with a ChatGPT plan, so calls
+    use the plan instead of a paid API key. Codex is a coding agent: every call carries its
+    own large built-in prompt (about 20k tokens) and counts toward the plan's 5-hour limits,
+    so use it only for small, capped runs. It runs read-only in an empty folder and saves no
+    session files. Our system prompt is sent at the top of the prompt."""
+
+    def __init__(self, model: str | None = None, binary: str | None = None, timeout: float = 300):
+        self.binary = binary or shutil.which("codex") or "codex"
+        self.model = model
+        self.timeout = timeout
+        self.name = f"codex:{model or 'default'}"
+
+    def complete(self, system: str, prompt: str, schema: dict | None = None) -> str:
+        with tempfile.TemporaryDirectory() as workdir:
+            out = Path(workdir) / "last.txt"
+            command = [
+                self.binary, "exec", "--skip-git-repo-check", "--ephemeral", "--ignore-user-config",
+                "-s", "read-only", "-C", workdir, "-o", str(out),
+            ]
+            if self.model:
+                command += ["-m", self.model]
+            if schema is not None:
+                schema_file = Path(workdir) / "schema.json"
+                schema_file.write_text(json.dumps(schema))
+                command += ["--output-schema", str(schema_file)]
+            command.append("-")
+            text = (
+                "Follow these instructions exactly. Do not run commands or edit files; just reply.\n\n"
+                f"<instructions>\n{system}\n</instructions>\n\n{prompt}"
+            )
+            try:
+                done = subprocess.run(command, input=text, capture_output=True, text=True, timeout=self.timeout)
+            except subprocess.TimeoutExpired as e:
+                raise LLMError(f"{self.name} timed out after {self.timeout}s") from e
+            if done.returncode != 0 or not out.exists():
+                raise LLMError(f"{self.name} failed: {(done.stderr or done.stdout)[-300:]}")
+            return out.read_text().strip()
+
+
 class CachedLLM:
     """Remembers every response on disk, keyed by model and full request.
 
