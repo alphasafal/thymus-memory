@@ -9,6 +9,7 @@ from thymus.embed import Embedder, Vector, cosine
 
 Source = Literal["user", "tool"]
 Status = Literal["active", "quarantined", "superseded"]
+Trust = Literal["verified", "unverified"]
 
 
 @dataclass(frozen=True)
@@ -35,6 +36,7 @@ class Memory:
     speaker: str
     created_at: int
     status: Status = "active"
+    trust: Trust = "verified"  # unverified memories are recalled with a warning label
     vector: Vector = field(default_factory=list, repr=False)
 
 
@@ -46,7 +48,7 @@ class MemoryStore:
         self.embedder = embedder
         self._memories: list[Memory] = []
 
-    def add(self, candidate: Candidate, status: Status = "active") -> Memory:
+    def add(self, candidate: Candidate, status: Status = "active", trust: Trust = "verified") -> Memory:
         memory = Memory(
             id=len(self._memories) + 1,
             text=candidate.text,
@@ -55,6 +57,7 @@ class MemoryStore:
             speaker=candidate.speaker,
             created_at=candidate.created_at,
             status=status,
+            trust=trust,
             vector=self.embedder.embed([candidate.text])[0],
         )
         self._memories.append(memory)

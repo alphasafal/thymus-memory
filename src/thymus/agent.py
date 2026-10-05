@@ -19,7 +19,10 @@ from thymus.memory import Candidate, Memory, MemoryStore, Source
 ANSWER_SYSTEM = """You are a helpful personal assistant with long-term memory.
 Memories saved in earlier conversations are given inside <memories>, oldest first,
 each tagged with the turn it was saved on. Use them when they are relevant.
-If memories conflict, trust the most recent one. Answer briefly."""
+If memories conflict, trust the most recent one. Some memories end with a note in
+brackets saying they are unverified and where they came from: never state those as fact.
+If one matters, say where it came from and that it is unconfirmed, and prefer verified
+memories when they conflict. Answer briefly."""
 
 EXTRACT_SYSTEM = """You are the memory manager for a personal assistant.
 Read the content and list what is worth remembering for future conversations:
@@ -66,13 +69,13 @@ class MemoryAgent:
 
     def respond(self, turn: Turn, learn: bool = True) -> tuple[str, list[WriteEvent]]:
         self.clock += 1
-        recalled = self.gate.recall(turn.message, self.store, self.k)
+        recalled = self.gate.recall(turn.message, self.store, self.k, turn.speaker)
         reply = self.llm.complete(ANSWER_SYSTEM, self._answer_prompt(turn, recalled))
         events = self._learn(turn) if learn else []
         return reply, events
 
     def _answer_prompt(self, turn: Turn, recalled: list[Memory]) -> str:
-        lines = [f"[turn {m.created_at}] {m.text}" for m in sorted(recalled, key=lambda m: m.created_at)]
+        lines = [self.gate.render(m, turn.speaker) for m in sorted(recalled, key=lambda m: m.created_at)]
         parts = ["<memories>\n" + "\n".join(lines) + "\n</memories>"]
         if turn.tool_content:
             parts.append(f'<tool_result origin="{turn.tool_origin}">\n{turn.tool_content}\n</tool_result>')
@@ -91,7 +94,7 @@ class MemoryAgent:
                 decision = self.gate.review(candidate, self.store)
                 memory_id = None
                 if decision.action == "accept":
-                    memory_id = self.store.add(candidate).id
+                    memory_id = self.store.add(candidate, trust=decision.trust).id
                     self.store.retire(decision.supersedes)
                 elif decision.action == "quarantine":
                     memory_id = self.store.add(candidate, status="quarantined").id
