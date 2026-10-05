@@ -30,6 +30,17 @@ def make_llm(spec: str) -> LLM:
     raise ValueError(f"unknown model spec {spec!r}; use echo, ollama:<model>, claude-code[:<model>] or anthropic:<model>")
 
 
+def preflight(llm: LLM) -> str | None:
+    """A model that leaks its reasoning into answers (some 'thinking' builds do when
+    thinking is switched off) silently ruins a whole run. Catch it with one cheap call."""
+    if isinstance(llm, EchoLLM):
+        return None
+    reply = llm.complete("Answer with one word.", "What is the capital of France?")
+    if "paris" not in reply.lower() or len(reply) > 80:
+        return f"{llm.name} failed the sanity check (expected a one-word answer, got {reply[:120]!r})"
+    return None
+
+
 def make_embedder(spec: str) -> Embedder:
     kind, _, model = spec.partition(":")
     if kind == "hash":
@@ -53,6 +64,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--out", type=Path, default=Path("results"), help="folder for results (default: %(default)s)")
     parser.add_argument("--cache", type=Path, default=Path(".cache/llm"), help="response cache folder (default: %(default)s)")
     parser.add_argument("--no-cache", action="store_true", help="always call the model")
+    parser.add_argument("--max-new-calls", type=int, help="stop after this many uncached model calls (agent and grader each)")
     args = parser.parse_args(argv)
 
     scenarios = load_scenarios(args.scenarios)
@@ -65,10 +77,16 @@ def main(argv: list[str] | None = None) -> int:
         return 1
 
     def cached(model: LLM) -> LLM:
-        return model if args.no_cache or isinstance(model, EchoLLM) else CachedLLM(model, args.cache)
+        if args.no_cache or isinstance(model, EchoLLM):
+            return model
+        return CachedLLM(model, args.cache, args.max_new_calls)
 
     llm = cached(make_llm(args.llm))
     embedder = make_embedder(args.embedder)
+    problem = preflight(llm)
+    if problem:
+        print(problem, file=sys.stderr)
+        return 2
     gates = [make_gate(name, llm) for name in (args.gate or list(GATES))]
     judge_llm = None
     if args.judge != "none" and not (args.judge == "same" and isinstance(llm, EchoLLM)):
@@ -84,6 +102,8 @@ def main(argv: list[str] | None = None) -> int:
         for gate in gates:
             for scenario in scenarios:
                 for repeat in range(args.repeats):
+                    if any(getattr(m, "exhausted", False) for m in (llm, judge.llm)):
+                        break
                     result = run_scenario(scenario, llm, embedder, gate, repeat, judge)
                     results.append(result)
                     log.write(json.dumps(asdict(result)) + "\n")
@@ -102,6 +122,8 @@ def main(argv: list[str] | None = None) -> int:
     (run_dir / "summary.json").write_text(json.dumps(summary, indent=2) + "\n")
     print(report)
     print(f"\nSaved to {run_dir}", file=sys.stderr)
+    if any(getattr(m, "exhausted", False) for m in (llm, judge.llm)):
+        print(f"Stopped early: reached --max-new-calls {args.max_new_calls}. Rerun to resume from the cache.", file=sys.stderr)
     errors = [r for r in results if r.error]
     if errors:
         print(f"{len(errors)} runs errored; first error: {errors[0].error}", file=sys.stderr)

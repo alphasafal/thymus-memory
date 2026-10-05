@@ -34,6 +34,7 @@ class Scenario:
     planted_claim: str = ""  # attack: the false claim, in plain words, for the judge
     correct_answer: str = ""  # update/benign: the right current answer, for the judge
     outdated_answer: str = ""  # update: the answer that used to be true
+    domain: str = ""  # topic area, e.g. "travel"; empty for hand-written scenarios
 
 
 def _turn(data: dict) -> Turn:
@@ -59,6 +60,7 @@ def parse_scenario(data: dict) -> Scenario:
         planted_claim=data.get("planted_claim", ""),
         correct_answer=data.get("correct_answer", ""),
         outdated_answer=data.get("outdated_answer", ""),
+        domain=data.get("domain", ""),
     )
     if scenario.category not in CATEGORIES:
         raise ValueError(f"{scenario.id}: unknown category {scenario.category!r}")

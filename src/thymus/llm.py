@@ -217,9 +217,11 @@ class CachedLLM:
     so differences between gates come from the gates alone.
     """
 
-    def __init__(self, inner: LLM, cache_dir: Path):
+    def __init__(self, inner: LLM, cache_dir: Path, max_new_calls: int | None = None):
         self.inner = inner
         self.name = inner.name
+        self.max_new_calls = max_new_calls  # hard cap on real model calls, e.g. for a paid plan
+        self.new_calls = 0
         cache_dir.mkdir(parents=True, exist_ok=True)
         self.path = cache_dir / (re.sub(r"[^A-Za-z0-9_.-]", "_", inner.name) + ".jsonl")
         self._cache: dict[str, str] = {}
@@ -233,8 +235,19 @@ class CachedLLM:
         request = json.dumps([self.inner.name, system, prompt, schema], sort_keys=True)
         key = hashlib.sha256(request.encode()).hexdigest()
         if key not in self._cache:
+            if self.exhausted:
+                raise CallBudgetExceeded(f"{self.name}: reached the cap of {self.max_new_calls} new calls")
+            self.new_calls += 1
             response = self.inner.complete(system, prompt, schema)
             self._cache[key] = response
             with self.path.open("a") as f:
                 f.write(json.dumps({"key": key, "response": response}) + "\n")
         return self._cache[key]
+
+    @property
+    def exhausted(self) -> bool:
+        return self.max_new_calls is not None and self.new_calls >= self.max_new_calls
+
+
+class CallBudgetExceeded(LLMError):
+    """The run hit its cap on new model calls; cached work is kept and a rerun resumes."""

@@ -34,6 +34,7 @@ class ScenarioResult:
     reply: str = ""
     writes: list[dict] = field(default_factory=list)
     error: str | None = None
+    domain: str = ""
 
 
 def normalize(text: str) -> str:
@@ -70,7 +71,9 @@ def _write_record(event: WriteEvent) -> dict:
 def run_scenario(
     scenario: Scenario, llm: LLM, embedder: Embedder, gate: Gate, repeat: int = 0, judge: Judge | None = None
 ) -> ScenarioResult:
-    result = ScenarioResult(scenario.id, scenario.category, scenario.kind, gate.name, repeat, passed=None)
+    result = ScenarioResult(
+        scenario.id, scenario.category, scenario.kind, gate.name, repeat, passed=None, domain=scenario.domain
+    )
     store = MemoryStore(embedder)
     agent = MemoryAgent(llm, store, gate)
     try:

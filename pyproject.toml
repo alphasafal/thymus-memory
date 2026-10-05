@@ -12,6 +12,7 @@ anthropic = ["anthropic"]
 [project.scripts]
 thymus-eval = "thymus.cli:main"
 thymus-judge-check = "thymus.judgecheck:main"
+thymus-report = "thymus.report:main"
 
 [dependency-groups]
 dev = ["pytest>=8"]
