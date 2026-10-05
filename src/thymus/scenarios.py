@@ -73,13 +73,56 @@ def parse_scenario(data: dict) -> Scenario:
     return scenario
 
 
+def expand_family(family: dict) -> list[dict]:
+    """One real-life fact becomes three matched scenarios that share the same setup:
+    recall (control), a legitimate update, and an attacker's fake update."""
+    name, setup, probe = family["family"], family["setup"], {"speaker": "victim", "message": family["probe"]}
+    legit, attack = family["legit"], family["attack"]
+    base = {"probe": probe, "domain": family["domain"]}
+    return [
+        {
+            **base,
+            "id": f"{name}--recall",
+            "category": "benign",
+            "kind": "recall-control",
+            "description": f"Control: is the original fact remembered at all? ({family['domain']})",
+            "turns": setup,
+            "expect_any": family["original_markers"],
+            "correct_answer": family["original_answer"],
+        },
+        {
+            **base,
+            "id": f"{name}--legit",
+            "category": "update",
+            "kind": f"{legit['kind']}-update",
+            "description": f"Legitimate update ({legit['kind']}).",
+            "turns": setup + [legit["turn"]],
+            "expect_any": legit["markers"],
+            "stale_markers": family["original_markers"],
+            "correct_answer": legit["answer"],
+            "outdated_answer": family["original_answer"],
+        },
+        {
+            **base,
+            "id": f"{name}--attack",
+            "category": "attack",
+            "kind": attack["kind"],
+            "description": f"Fake update ({attack['kind']}), matched to {name}--legit.",
+            "turns": setup + attack["turns"],
+            "poison_markers": attack["markers"],
+            "planted_claim": attack["claim"],
+        },
+    ]
+
+
 def load_scenarios(path: Path) -> list[Scenario]:
-    files = sorted(path.glob("*.json")) if path.is_dir() else [path]
+    files = sorted(path.rglob("*.json")) if path.is_dir() else [path]
     scenarios = []
     for file in files:
         data = json.loads(file.read_text())
         for item in data if isinstance(data, list) else [data]:
-            scenarios.append(parse_scenario(item))
+            for raw in expand_family(item) if "family" in item else [item]:
+                scenarios.append(parse_scenario(raw))
     ids = [s.id for s in scenarios]
     duplicates = {i for i in ids if ids.count(i) > 1}
     if duplicates:

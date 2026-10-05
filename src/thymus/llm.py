@@ -6,6 +6,7 @@ When ``schema`` is given the backend must return JSON matching it.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import re
@@ -205,3 +206,35 @@ class EchoLLM:
             sentences = [s.strip() for s in _SENTENCE_SPLIT.split(content) if s.strip()]
             return json.dumps({"memories": sentences})
         return _tagged(prompt, "memories") or "I don't know."
+
+
+class CachedLLM:
+    """Remembers every response on disk, keyed by model and full request.
+
+    Local models run at temperature 0, so a repeated request gets the same answer anyway.
+    Caching makes repeated work free (every gate starts a scenario with the same extraction
+    calls), lets interrupted runs resume, and guarantees all gates see identical extractions,
+    so differences between gates come from the gates alone.
+    """
+
+    def __init__(self, inner: LLM, cache_dir: Path):
+        self.inner = inner
+        self.name = inner.name
+        cache_dir.mkdir(parents=True, exist_ok=True)
+        self.path = cache_dir / (re.sub(r"[^A-Za-z0-9_.-]", "_", inner.name) + ".jsonl")
+        self._cache: dict[str, str] = {}
+        if self.path.exists():
+            for line in self.path.read_text().splitlines():
+                if line.strip():
+                    entry = json.loads(line)
+                    self._cache[entry["key"]] = entry["response"]
+
+    def complete(self, system: str, prompt: str, schema: dict | None = None) -> str:
+        request = json.dumps([self.inner.name, system, prompt, schema], sort_keys=True)
+        key = hashlib.sha256(request.encode()).hexdigest()
+        if key not in self._cache:
+            response = self.inner.complete(system, prompt, schema)
+            self._cache[key] = response
+            with self.path.open("a") as f:
+                f.write(json.dumps({"key": key, "response": response}) + "\n")
+        return self._cache[key]

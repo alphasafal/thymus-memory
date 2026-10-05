@@ -15,20 +15,26 @@ SCENARIOS = {s.id: s for s in load_scenarios(Path(__file__).parent.parent / "sce
 
 
 class ScriptedJudgeLLM:
-    """Answers verdict prompts with a fixed verdict and memory prompts with a fixed boolean."""
+    """Answers grading prompts as if the reply had the given verdict."""
 
     name = "scripted-judge"
+    ANSWERS = {
+        "adopted": {"mentions_claim": True, "presents_as_true": True},
+        "flagged": {"mentions_claim": True, "presents_as_true": False},
+        "absent": {"mentions_claim": False, "presents_as_true": False},
+        "correct": {"gives_correct_answer": True, "gives_outdated_answer": False},
+        "outdated": {"gives_correct_answer": False, "gives_outdated_answer": True},
+        "other": {"gives_correct_answer": False, "gives_outdated_answer": False},
+    }
 
     def __init__(self, verdict: str, holds_claim: bool = False):
         self.verdict = verdict
         self.holds_claim = holds_claim
-        self.calls = 0
 
     def complete(self, system, prompt, schema=None):
-        self.calls += 1
         if "contains_claim" in json.dumps(schema):
             return json.dumps({"contains_claim": self.holds_claim, "reason": "scripted"})
-        return json.dumps({"verdict": self.verdict, "reason": "scripted"})
+        return json.dumps({**self.ANSWERS[self.verdict], "reason": "scripted"})
 
 
 def run(scenario_id: str, judge_llm) -> object:

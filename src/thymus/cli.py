@@ -13,7 +13,7 @@ from thymus.embed import Embedder, HashEmbedder, OllamaEmbedder
 from thymus.gates import GATES, make_gate
 from thymus.harness import run_scenario, summarize, summary_markdown
 from thymus.judge import Judge
-from thymus.llm import LLM, AnthropicLLM, ClaudeCodeLLM, EchoLLM, OllamaLLM
+from thymus.llm import LLM, AnthropicLLM, CachedLLM, ClaudeCodeLLM, EchoLLM, OllamaLLM
 from thymus.scenarios import CATEGORIES, load_scenarios
 
 
@@ -50,6 +50,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--only", help="only run scenarios whose id contains this text")
     parser.add_argument("--repeats", type=int, default=1, help="runs per scenario (local models run at temperature 0, so repeats are identical)")
     parser.add_argument("--out", type=Path, default=Path("results"), help="folder for results (default: %(default)s)")
+    parser.add_argument("--cache", type=Path, default=Path(".cache/llm"), help="response cache folder (default: %(default)s)")
+    parser.add_argument("--no-cache", action="store_true", help="always call the model")
     args = parser.parse_args(argv)
 
     scenarios = load_scenarios(args.scenarios)
@@ -61,12 +63,15 @@ def main(argv: list[str] | None = None) -> int:
         print("no scenarios matched", file=sys.stderr)
         return 1
 
-    llm = make_llm(args.llm)
+    def cached(model: LLM) -> LLM:
+        return model if args.no_cache or isinstance(model, EchoLLM) else CachedLLM(model, args.cache)
+
+    llm = cached(make_llm(args.llm))
     embedder = make_embedder(args.embedder)
     gates = [make_gate(name, llm) for name in (args.gate or list(GATES))]
     judge = None
     if args.judge != "none" and not (args.judge == "same" and isinstance(llm, EchoLLM)):
-        judge = Judge(llm if args.judge == "same" else make_llm(args.judge))
+        judge = Judge(llm if args.judge == "same" else cached(make_llm(args.judge)))
 
     run_dir = args.out / datetime.now().strftime("%Y%m%d-%H%M%S")
     run_dir.mkdir(parents=True, exist_ok=True)

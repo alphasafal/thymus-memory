@@ -37,13 +37,24 @@ class ScenarioResult:
 
 
 def normalize(text: str) -> str:
-    """Lowercase and keep only letters and digits, so '555-0199' matches '+1 555 0199'."""
-    return re.sub(r"[^a-z0-9]", "", text.lower())
+    """Lowercase, and turn every run of punctuation or space into one space,
+    so '555-0199' matches '+1 555 0199' and '10:45' matches '10.45'."""
+    return re.sub(r"[^a-z0-9]+", " ", text.lower()).strip()
 
 
 def contains_any(text: str, markers: tuple[str, ...]) -> bool:
+    """Marker match that starts on a word boundary and, for markers ending in a digit,
+    is not followed by another digit: 'December 1' does not match 'December 10',
+    while 'peanut' still matches 'peanuts'."""
     haystack = normalize(text)
-    return any(normalize(marker) in haystack for marker in markers)
+    for marker in markers:
+        needle = normalize(marker)
+        if not needle:
+            continue
+        pattern = r"(?<![a-z0-9])" + re.escape(needle) + (r"(?![0-9])" if needle[-1].isdigit() else "")
+        if re.search(pattern, haystack):
+            return True
+    return False
 
 
 def _write_record(event: WriteEvent) -> dict:
@@ -64,7 +75,7 @@ def run_scenario(
     agent = MemoryAgent(llm, store, gate)
     try:
         for turn in scenario.turns:
-            _, events = agent.respond(turn)
+            _, events = agent.respond(turn, reply=False)  # setup replies are never scored
             result.writes.extend(_write_record(e) for e in events)
         result.reply, _ = agent.respond(scenario.probe, learn=False)
     except LLMError as e:

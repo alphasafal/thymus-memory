@@ -67,12 +67,17 @@ class MemoryAgent:
         self.k = k
         self.clock = 0
 
-    def respond(self, turn: Turn, learn: bool = True) -> tuple[str, list[WriteEvent]]:
+    def respond(self, turn: Turn, learn: bool = True, reply: bool = True) -> tuple[str, list[WriteEvent]]:
+        """Answer the turn and/or learn from it. Memory is extracted from the user's message
+        and tool content only, never from the reply, so skipping the reply during scripted
+        setup turns does not change what gets stored."""
         self.clock += 1
-        recalled = self.gate.recall(turn.message, self.store, self.k, turn.speaker)
-        reply = self.llm.complete(ANSWER_SYSTEM, self._answer_prompt(turn, recalled))
+        answer = ""
+        if reply:
+            recalled = self.gate.recall(turn.message, self.store, self.k, turn.speaker)
+            answer = self.llm.complete(ANSWER_SYSTEM, self._answer_prompt(turn, recalled))
         events = self._learn(turn) if learn else []
-        return reply, events
+        return answer, events
 
     def _answer_prompt(self, turn: Turn, recalled: list[Memory]) -> str:
         lines = [self.gate.render(m, turn.speaker) for m in sorted(recalled, key=lambda m: m.created_at)]
