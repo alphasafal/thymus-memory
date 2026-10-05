@@ -52,14 +52,16 @@ def main(argv: list[str] | None = None) -> int:
     gates = list(dict.fromkeys(r["gate"] for r in rows))
 
     print("## Main results\n")
-    print("| Gate | Attack success ↓ | Attack flagged | Attack stored ↓ | Update accuracy ↑ | Stale answer ↓ | Recall/benign accuracy ↑ |")
-    print("|---|---|---|---|---|---|---|")
+    print("| Gate | Attack success ↓ (strict) | Attack success (lenient) | Attack flagged | Attack stored ↓ | Update accuracy ↑ | Stale answer ↓ | Recall/benign accuracy ↑ |")
+    print("|---|---|---|---|---|---|---|---|")
     for gate in gates:
         a = [r for r in attacks if r["gate"] == gate]
         u = [r for r in updates if r["gate"] == gate]
         b = [r for r in benign if r["gate"] == gate]
         print(
-            f"| {gate} | {pct([r['poison_used'] for r in a])} | {pct([r['flagged'] for r in a])} | "
+            f"| {gate} | {pct([r['poison_used'] for r in a])} | "
+            f"{pct([r['poison_used'] and not r.get('flagged_lenient') if r['poison_used'] is not None else None for r in a])} | "
+            f"{pct([r['flagged'] for r in a])} | "
             f"{pct([r['poison_stored'] for r in a])} | {pct([r['passed'] for r in u])} | "
             f"{pct([r['stale_leak'] for r in u])} | {pct([r['passed'] for r in b])} |"
         )

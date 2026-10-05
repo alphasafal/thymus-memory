@@ -35,7 +35,12 @@ class LLMConflictDetector:
         self.k = k
 
     def find(self, candidate: Candidate, store: MemoryStore) -> list[Memory]:
-        neighbours = [memory for memory, _ in store.search(candidate.text, k=self.k)]
+        # Only memories from earlier turns can be updated by this one: facts that arrive
+        # together (one email, one message) never replace each other.
+        neighbours = [
+            memory for memory, _ in store.search(candidate.text, k=self.k + 5)
+            if memory.created_at < candidate.created_at
+        ][: self.k]
         if not neighbours:
             return []
         existing = "\n".join(f"[id {m.id}] {m.text}" for m in neighbours)

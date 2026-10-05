@@ -90,7 +90,7 @@ class ScriptedLLM:
 
 def test_llm_conflict_detector_maps_ids_and_tolerates_bad_output():
     store = store_with(("Standup is at 9:00.", "tool"), ("My dog is Bruno.", "user"))
-    candidate = cand("Standup moved to 7:00.", "tool")
+    candidate = Candidate("Standup moved to 7:00.", "tool", "web:x.example", "victim", created_at=3)
 
     assert [m.id for m in LLMConflictDetector(ScriptedLLM(json.dumps({"conflicting_ids": ["1"]}))).find(candidate, store)] == [1]
     assert LLMConflictDetector(ScriptedLLM("not json")).find(candidate, store) == []
@@ -165,3 +165,13 @@ def test_thymus_labels_unverified_and_other_users_memories():
     assert "attacker" not in gate.render(other, "victim")  # never leak who said it
     assert "unverified" not in gate.render(other, "attacker")
     assert "unverified" not in gate.render(mine, "victim")
+
+
+def test_facts_from_the_same_turn_never_conflict():
+    store = MemoryStore(HashEmbedder())
+    store.add(Candidate("Offsite is at Lakeview Resort.", "tool", "email:hr@x.example", "victim", created_at=1))
+    same_turn = Candidate("Buses leave the office at 8 AM.", "tool", "email:hr@x.example", "victim", created_at=1)
+    later = Candidate("Offsite moved to Hilltop Retreat.", "tool", "email:hr@x.example", "victim", created_at=2)
+    always_conflicts = ScriptedLLM('{"conflicting_ids": [1]}')
+    assert LLMConflictDetector(always_conflicts).find(same_turn, store) == []
+    assert [m.id for m in LLMConflictDetector(always_conflicts).find(later, store)] == [1]

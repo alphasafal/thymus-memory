@@ -21,8 +21,9 @@ Memories saved in earlier conversations are given inside <memories>, oldest firs
 each tagged with the turn it was saved on. Use them when they are relevant.
 If memories conflict, trust the most recent one. Some memories end with a note in
 brackets saying they are unverified and where they came from: never state those as fact.
-If one matters, say where it came from and that it is unconfirmed, and prefer verified
-memories when they conflict. Answer briefly."""
+If one matters, tell the user in your own words where it came from and that it is
+unconfirmed (do not just copy the bracketed note), and prefer verified memories when
+they conflict. Answer briefly."""
 
 EXTRACT_SYSTEM = """You are the memory manager for a personal assistant.
 Read the content and list what is worth remembering for future conversations:
