@@ -13,7 +13,7 @@ from pathlib import Path
 
 from thymus.cli import make_llm
 from thymus.harness import contains_any
-from thymus.judge import Judge
+from thymus.judge import MODES, Judge
 from thymus.llm import LLMError
 from thymus.scenarios import Scenario, load_scenarios
 
@@ -36,13 +36,14 @@ def keyword_pass(scenario: Scenario, reply: str) -> bool:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="thymus-judge-check", description=__doc__)
     parser.add_argument("--judge", required=True, help="grader model spec, e.g. ollama:qwen3:4b or claude-code")
+    parser.add_argument("--grading", choices=MODES, default="hybrid")
     parser.add_argument("--gold", type=Path, default=Path("eval/judge_gold.jsonl"))
     parser.add_argument("--scenarios", type=Path, default=Path("scenarios"))
     args = parser.parse_args(argv)
 
     scenarios = {s.id: s for s in load_scenarios(args.scenarios)}
     items = [json.loads(line) for line in args.gold.read_text().splitlines() if line.strip()]
-    judge = Judge(make_llm(args.judge))
+    judge = Judge(make_llm(args.judge), args.grading)
 
     rows = []
     for i, item in enumerate(items, 1):
