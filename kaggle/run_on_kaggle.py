@@ -62,6 +62,7 @@ print("input files:", [str(p) for p in INPUT_ROOT.rglob("*")][:20], flush=True)
 unpack_code()
 restore_cache()
 
+sh("apt-get -qq update && apt-get -qq install -y zstd", shell=True)  # the Ollama installer needs it
 sh("curl -fsSL https://ollama.com/install.sh | sh", shell=True)
 server_log = open(WORK / "ollama-server.log", "w")
 subprocess.Popen(["ollama", "serve"], stdout=server_log, stderr=subprocess.STDOUT,
