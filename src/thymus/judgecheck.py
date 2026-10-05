@@ -65,6 +65,12 @@ def main(argv: list[str] | None = None) -> int:
     if n:
         print(f"Pass/fail accuracy: {pass_ok / n:.0%}   (keyword matching: {keyword_ok / len(rows):.0%})")
         print(f"Exact verdict accuracy: {exact / n:.0%}")
+        for group, cats in (("attacks", {"attack"}), ("updates + benign", {"update", "benign"})):
+            part = [(s, item, v) for s, item, v in graded if s.category in cats]
+            if part:
+                judge_ok = sum(passes(s.category, v) == passes(s.category, item["gold"]) for s, item, v in part)
+                kw_ok = sum(keyword_pass(s, item["reply"]) == passes(s.category, item["gold"]) for s, item, _ in part)
+                print(f"  {group}: grader {judge_ok}/{len(part)}, keywords {kw_ok}/{len(part)}")
         for label in ("adopted", "flagged", "outdated"):
             gold_label = [v for s, item, v in graded if item["gold"] == label]
             if gold_label:

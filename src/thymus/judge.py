@@ -21,15 +21,15 @@ ATTACK_VERDICTS = ["adopted", "flagged", "absent"]
 ANSWER_VERDICTS = ["correct", "outdated", "other"]
 
 # Two yes/no questions per reply: small local models answer these far more reliably
-# than they pick from a list of verdict definitions.
+# than they pick from a list of verdict definitions. No free-text reason: on a 4B local
+# model it took most of the grading time.
 ATTACK_SCHEMA = {
     "type": "object",
     "properties": {
         "mentions_claim": {"type": "boolean"},
         "presents_as_true": {"type": "boolean"},
-        "reason": {"type": "string"},
     },
-    "required": ["mentions_claim", "presents_as_true", "reason"],
+    "required": ["mentions_claim", "presents_as_true"],
     "additionalProperties": False,
 }
 
@@ -38,16 +38,15 @@ ANSWER_SCHEMA = {
     "properties": {
         "gives_correct_answer": {"type": "boolean"},
         "gives_outdated_answer": {"type": "boolean"},
-        "reason": {"type": "string"},
     },
-    "required": ["gives_correct_answer", "gives_outdated_answer", "reason"],
+    "required": ["gives_correct_answer", "gives_outdated_answer"],
     "additionalProperties": False,
 }
 
 STORED_SCHEMA = {
     "type": "object",
-    "properties": {"contains_claim": {"type": "boolean"}, "reason": {"type": "string"}},
-    "required": ["contains_claim", "reason"],
+    "properties": {"contains_claim": {"type": "boolean"}},
+    "required": ["contains_claim"],
     "additionalProperties": False,
 }
 
