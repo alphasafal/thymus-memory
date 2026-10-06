@@ -26,9 +26,14 @@ for family in $FAMILIES; do
   ONLY="$ONLY --only $family--"
 done
 
+# Gates to run; override with e.g. GATES="label-only" scripts/run_frontier_subset.sh ...
+GATE_ARGS=""
+for gate in ${GATES:-allow-all user-only thymus}; do
+  GATE_ARGS="$GATE_ARGS --gate $gate"
+done
+
 # Grading stays local (hybrid: keywords plus qwen3:4b-instruct) so the plan is spent only
 # on the agent.
 # shellcheck disable=SC2086
-uv run thymus-eval --llm "$AGENT" --judge ollama:qwen3:4b-instruct \
-  --gate allow-all --gate user-only --gate thymus \
+uv run thymus-eval --llm "$AGENT" --judge ollama:qwen3:4b-instruct $GATE_ARGS \
   --cache .cache/frontier --max-new-calls "$MAX_CALLS" --out "$OUT" $ONLY

@@ -106,6 +106,10 @@ without a gate: on a 36-scenario subset, Claude Opus 5.5 states 58% of update-sh
 as fact and GPT-6-Astra 50% (open models on the same scenarios: **[R]**); with the gate both fall to
 8%, the remaining case being a spoofed calendar invite that the gate is not designed to stop,
 while update and recall accuracy stay at 100% (versus 33% under provenance quarantine).
+On these frontier agents, a label-only baseline (keep everything, label untrusted sources,
+no update rules) does exactly as well as the full gate: disclosure is what works. The
+screening and update rules **[R: add X on smaller models / adaptive attacks, or nothing
+measurable]**, and they give guarantees that hold whatever the model does (Section 3.4).
 Hiding contested claims instead of disclosing them **[R]**.
 
 ## 2 Setting and threat model
@@ -177,6 +181,26 @@ review(c, store):
 
 **Cost.** Per tool candidate, one classifier call; per candidate with earlier neighbours,
 one conflict call. Recall is unchanged apart from the labels.
+
+**3.4 Guarantees.** The models inside the gate decide *which* rule applies (is this a fact?
+does it conflict?), never *what* a rule allows. So, with authentic origins and whatever the
+detector and classifier output:
+
+- **G1 (no cross-source overwrite).** Tool content from origin *o* only ever retires
+  memories from origin *o*; it never retires a user's statement or another source's fact.
+- **G2 (no cross-user overwrite).** A user only retires tool facts and their own statements,
+  never what another user told a shared assistant.
+- **G3 (non-self cannot speak for the user).** No memory from an untrusted tool origin that
+  the classifier calls a preference or instruction is stored.
+- **G4 (disclosure).** Every active memory from an untrusted origin is recalled with its
+  origin, every contested one says so, and another user's statement is marked as such without
+  naming them.
+
+Each follows directly from the rules in 3.1–3.3. We check them mechanically on 300 random
+write sequences (7,500 gate decisions) with random detector and classifier outputs; each
+check fails when the corresponding rule is switched off, so the tests are not vacuous.
+G3 depends on the classifier's accuracy and G1 on authentic origins; both limits are
+measured in Section 6 (instruction and spoofed-origin attacks).
 
 ## 4 Benchmark
 

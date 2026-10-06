@@ -61,6 +61,17 @@ Rule from now on: every number about another paper carries the exact quote in
 `docs/related-work.md`; every number about ours comes from `thymus-report` output saved with
 the commit that produced it.
 
+## Findings that change the framing
+
+- **6 Oct: on frontier models, labels alone did as well as the full gate.** On the
+  36-scenario subset, label-only and thymus both give 8% attack success and 100% update and
+  recall accuracy, for Opus 5.5 and GPT-6-Astra. Disclosure is the active ingredient there,
+  which supports the title. What the screening and update rules add must be shown where
+  labels alone are weak: adaptive attacks (flooding, label smuggling, relays), smaller models
+  that ignore labels, and model-independent guarantees (`tests/test_invariants.py`). If the
+  rules add nothing measurable anywhere, the paper says so and leads with disclosure plus the
+  benchmark; it must not claim the rules help without data.
+
 ## What to add, ranked
 
 ### Tier 1: answers the objections every reviewer will raise
