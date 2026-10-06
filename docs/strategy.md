@@ -15,7 +15,7 @@ Written 5 October 2026. Revisit every two weeks.
 | Trait | Our plan |
 |---|---|
 | One crisp, surprising idea | "Disclose, don't decide": a third outcome beyond store/block moves the safety–usefulness trade-off |
-| A problem people care about | Memory poisoning (OWASP ASI06) + India's ₹53,000-crore fraud problem + a legal hook (DPDP right to correction) |
+| A problem people care about | Memory poisoning (OWASP ASI06) + India's cyber-fraud problem (figures to be quoted from MHA/NCRP and RBI primary sources; see `docs/literature-map.md` §6) + a legal hook (DPDP s. 8(3) accuracy, s. 12 correction) |
 | Rigorous evidence | 300+ matched scenarios, 6 defences, 5+ models from 4 families, ablations, confidence intervals and significance tests |
 | Trustworthy measurement | Grader validated against three independent labellers: a human, Claude, GPT |
 | Honesty about limits | Scenarios built to make our own gate fail (cross-origin updates, spoofed senders) and reported prominently |
