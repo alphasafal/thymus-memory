@@ -144,3 +144,34 @@ def test_codex_llm_reads_the_last_message_file(tmp_path):
     script.write_text('#!/bin/sh\nwhile [ "$1" != "-o" ]; do shift; done\necho \'{"answer":"Paris"}\' > "$2"\n')
     script.chmod(script.stat().st_mode | stat.S_IEXEC)
     assert json.loads(CodexLLM(binary=str(script)).complete("sys", "q", schema={"type": "object"}))["answer"] == "Paris"
+
+
+def test_codex_llm_sends_our_system_prompt_as_its_instructions(tmp_path):
+    from thymus.llm import CodexLLM
+
+    script = tmp_path / "codex"
+    # Echo back the instructions file named in -c model_instructions_file=... and the stdin prompt.
+    script.write_text(
+        "#!/bin/sh\n"
+        'for a in "$@"; do case "$a" in model_instructions_file=*) f="${a#*=}";; esac; done\n'
+        'while [ "$1" != "-o" ]; do shift; done\n'
+        'f=$(echo "$f" | tr -d \'"\'); { cat "$f"; echo "|"; cat; } > "$2"\n'
+    )
+    script.chmod(script.stat().st_mode | stat.S_IEXEC)
+    reply = CodexLLM(binary=str(script)).complete("be brief", "what is 2+2?")
+    assert reply == "be brief|\nwhat is 2+2?"
+
+
+def test_a_plan_usage_limit_stops_the_run_instead_of_failing_one_call(tmp_path):
+    from thymus.llm import CodexLLM, LLMError, LLMUnavailable
+
+    script = tmp_path / "codex"
+    script.write_text("#!/bin/sh\necho \"ERROR: You've hit your usage limit. Try again at 3:05 PM.\" >&2\nexit 1\n")
+    script.chmod(script.stat().st_mode | stat.S_IEXEC)
+    with pytest.raises(LLMUnavailable):
+        CodexLLM(binary=str(script)).complete("sys", "q")
+
+    script.write_text("#!/bin/sh\necho 'ERROR: stream disconnected' >&2\nexit 1\n")
+    with pytest.raises(LLMError) as failure:
+        CodexLLM(binary=str(script)).complete("sys", "q")
+    assert not isinstance(failure.value, LLMUnavailable)

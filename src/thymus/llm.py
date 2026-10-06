@@ -113,6 +113,17 @@ def find_claude_binary() -> str:
     raise LLMError("Claude Code CLI not found; install it or set THYMUS_CLAUDE_BIN")
 
 
+# Messages the Claude Code and Codex CLIs print when a subscription's usage limit is hit.
+_PLAN_LIMIT = re.compile(r"usage limit|rate.?limit|hit your limit|limit reached|quota|too many requests|\b429\b", re.I)
+
+
+def _cli_failure(name: str, text: str) -> LLMError:
+    """A plan usage limit stops the run (rerun after it resets); anything else fails one call."""
+    if _PLAN_LIMIT.search(text):
+        return LLMUnavailable(f"{name} hit the plan's usage limit (rerun after it resets): {text[-300:]}")
+    return LLMError(f"{name} failed: {text[-300:]}")
+
+
 class ClaudeCodeLLM:
     """Claude through the Claude Code CLI in print mode, so calls use the user's Claude
     subscription instead of a paid API key. Log the CLI in once first (run it, then /login).
@@ -148,9 +159,9 @@ class ClaudeCodeLLM:
         try:
             data = json.loads(done.stdout)
         except json.JSONDecodeError:
-            raise LLMError(f"{self.name} returned no JSON: {(done.stderr or done.stdout)[:300]}") from None
+            raise _cli_failure(self.name, f"no JSON: {done.stderr or done.stdout}") from None
         if data.get("is_error"):
-            raise LLMError(f"{self.name} failed: {data.get('result')}")
+            raise _cli_failure(self.name, str(data.get("result")))
         if schema is not None and data.get("structured_output") is not None:
             return json.dumps(data["structured_output"])
         return data.get("result", "")
@@ -230,10 +241,19 @@ class EchoLLM:
 
 class CodexLLM:
     """GPT through OpenAI's Codex CLI (`codex exec`) signed in with a ChatGPT plan, so calls
-    use the plan instead of a paid API key. Codex is a coding agent: every call carries its
-    own large built-in prompt (about 20k tokens) and counts toward the plan's 5-hour limits,
-    so use it only for small, capped runs. It runs read-only in an empty folder and saves no
-    session files. Our system prompt is sent at the top of the prompt."""
+    use the plan instead of a paid API key. Codex is a coding agent, so by default every call
+    carries its own coding prompt and tool definitions (about 20k tokens). Here our system
+    prompt replaces Codex's built-in instructions and its tools are switched off, which brings
+    a call down to about 5k tokens. Calls still count toward the plan's 5-hour limits, so use
+    it only for small, capped runs. It runs read-only in an empty folder and saves no session
+    files."""
+
+    # Codex features that add tools (and so prompt tokens) we never want here.
+    DISABLED_FEATURES = (
+        "apps", "browser_use", "browser_use_external", "computer_use", "goals", "image_generation",
+        "multi_agent", "plugins", "shell_tool", "unified_exec", "view_image", "sleep_tool",
+        "skill_search", "tool_suggest", "hooks",
+    )
 
     def __init__(self, model: str | None = None, binary: str | None = None, timeout: float = 300):
         self.binary = binary or shutil.which("codex") or "codex"
@@ -244,10 +264,16 @@ class CodexLLM:
     def complete(self, system: str, prompt: str, schema: dict | None = None) -> str:
         with tempfile.TemporaryDirectory() as workdir:
             out = Path(workdir) / "last.txt"
+            instructions = Path(workdir) / "instructions.md"
+            instructions.write_text(system)
             command = [
                 self.binary, "exec", "--skip-git-repo-check", "--ephemeral", "--ignore-user-config",
                 "-s", "read-only", "-C", workdir, "-o", str(out),
+                "-c", f"model_instructions_file={json.dumps(str(instructions))}",
+                "-c", 'web_search="disabled"',
             ]
+            for feature in self.DISABLED_FEATURES:
+                command += ["--disable", feature]
             if self.model:
                 command += ["-m", self.model]
             if schema is not None:
@@ -255,16 +281,12 @@ class CodexLLM:
                 schema_file.write_text(json.dumps(schema))
                 command += ["--output-schema", str(schema_file)]
             command.append("-")
-            text = (
-                "Follow these instructions exactly. Do not run commands or edit files; just reply.\n\n"
-                f"<instructions>\n{system}\n</instructions>\n\n{prompt}"
-            )
             try:
-                done = subprocess.run(command, input=text, capture_output=True, text=True, timeout=self.timeout)
+                done = subprocess.run(command, input=prompt, capture_output=True, text=True, timeout=self.timeout)
             except subprocess.TimeoutExpired as e:
                 raise LLMError(f"{self.name} timed out after {self.timeout}s") from e
             if done.returncode != 0 or not out.exists():
-                raise LLMError(f"{self.name} failed: {(done.stderr or done.stdout)[-300:]}")
+                raise _cli_failure(self.name, done.stderr or done.stdout)
             return out.read_text().strip()
 
 
