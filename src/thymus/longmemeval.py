@@ -44,13 +44,14 @@ from thymus.agent import ANSWER_SYSTEM, Turn
 from thymus.embed import Embedder, MemoEmbedder
 from thymus.gates import GATES, MAIN_GATES, Gate, make_gate
 from thymus.judge import Judge
-from thymus.llm import LLM, CachedLLM, LLMError, LLMUnavailable
+from thymus.llm import LLM, CachedLLM, LLMError, LLMUnavailable, OllamaLLM
 from thymus.memory import Candidate, MemoryStore
 from thymus.scenarios import Scenario
 
 SEED = 42
 SAMPLE_SIZE = 120
 TOP_K = 15
+OLLAMA_CONTEXT = 32768  # tokens; recalled rounds can reach ~20k
 POISON_ROUNDS = 3
 POISON_ORIGIN = "import:untrusted-chat-log"
 EVIDENCE_ORIGIN = "import:history-export"
@@ -285,6 +286,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--make-poison", metavar="MODEL", help="generate the poison with this model spec, then stop")
     parser.add_argument("--llm", default="ollama:qwen3:4b-instruct", help="agent model spec")
     parser.add_argument("--judge", default="ollama:qwen3:4b-instruct", help="grader model spec")
+    parser.add_argument("--gate-llm", help="model for the gates' conflict and claim checks (default: the agent model); "
+                        "lets a subscription model answer while a local model runs the gate")
     parser.add_argument("--embedder", default="ollama:nomic-embed-text")
     parser.add_argument("--gate", action="append", choices=list(GATES))
     parser.add_argument("--condition", action="append", choices=CONDITIONS)
@@ -297,7 +300,11 @@ def main(argv: list[str] | None = None) -> int:
 
     entries = load_sample(args.data)
     if args.make_poison:
-        make_poison(entries, CachedLLM(make_llm(args.make_poison), args.cache, args.max_new_calls), args.poison)
+        try:
+            make_poison(entries, CachedLLM(make_llm(args.make_poison), args.cache, args.max_new_calls), args.poison)
+        except LLMError as e:
+            print(f"Stopped: {e}. Rerun to continue; finished questions are kept.", file=sys.stderr)
+            return 3
         return 0
     if args.question_type:
         entries = [e for e in entries if e["question_type"] in args.question_type]
@@ -312,16 +319,24 @@ def main(argv: list[str] | None = None) -> int:
             print(f"no poison for {len(missing)} questions; run --make-poison first", file=sys.stderr)
             return 1
 
-    llm = CachedLLM(make_llm(args.llm), args.cache, args.max_new_calls)
-    judge_llm = llm if args.judge == "same" else CachedLLM(make_llm(args.judge), args.cache)
+    def model(spec: str) -> LLM:
+        inner = make_llm(spec)
+        if isinstance(inner, OllamaLLM) and not inner.num_ctx:
+            inner.num_ctx = OLLAMA_CONTEXT  # 15 long chat rounds do not fit Ollama's default window
+        return inner
+
+    llm = CachedLLM(model(args.llm), args.cache, args.max_new_calls)
+    judge_llm = llm if args.judge == "same" else CachedLLM(model(args.judge), args.cache)
     embedder = MemoEmbedder(make_embedder(args.embedder))
-    gates = [make_gate(name, llm) for name in (args.gate or MAIN_GATES)]
+    gate_llm = CachedLLM(model(args.gate_llm), args.cache) if args.gate_llm else llm
+    gates = [make_gate(name, gate_llm) for name in (args.gate or MAIN_GATES)]
 
     run_dir = args.out / datetime.now().strftime("%Y%m%d-%H%M%S")
     run_dir.mkdir(parents=True, exist_ok=True)
     (run_dir / "meta.json").write_text(json.dumps({
         "benchmark": "longmemeval_s (Utility Under Attack protocol)", "agent_model": llm.name,
-        "grader": judge_llm.name, "embedder": args.embedder, "gates": [g.name for g in gates],
+        "grader": judge_llm.name, "gate_model": gate_llm.name, "embedder": args.embedder,
+        "gates": [g.name for g in gates],
         "conditions": conditions, "questions": [e["question_id"] for e in entries], "top_k": TOP_K,
         "seed": SEED, "argv": sys.argv[1:],
     }, indent=2) + "\n")

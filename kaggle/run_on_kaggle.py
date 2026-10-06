@@ -72,6 +72,8 @@ for model in CONFIG["pull"]:
     sh(["ollama", "pull", model])
 sh(["nvidia-smi"])
 sh([sys.executable, "-m", "pip", "install", "-q", "-e", str(CODE)])
+for command in CONFIG.get("setup", []):  # e.g. download a public dataset into data/
+    sh(command, shell=True, cwd=CODE)
 
 def save_outputs():
     """Write results and cache after every run, so a session stopped at Kaggle's time
@@ -85,6 +87,13 @@ def save_outputs():
 
 
 for run in CONFIG["runs"]:
+    if "command" in run:  # any other entry point, e.g. thymus-longmemeval, as an argument list
+        try:
+            sh(run["command"], cwd=CODE)
+        except subprocess.CalledProcessError as e:
+            print(f"run {run['name']} stopped with exit code {e.returncode}; results so far are kept", flush=True)
+        save_outputs()
+        continue
     command = ["thymus-eval", "--llm", run["llm"], "--judge", run["judge"], "--out", f"results/{run['name']}"]
     for gate in run.get("gates", []):
         command += ["--gate", gate]

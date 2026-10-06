@@ -62,11 +62,17 @@ def post_json(url: str, body: dict, timeout: float, retries: int = 5) -> Any:
 class OllamaLLM:
     """A local model served by Ollama. Free to run; quality depends on model size."""
 
-    def __init__(self, model: str, host: str = "http://localhost:11434", timeout: float = 300, max_tokens: int = 768):
+    def __init__(
+        self, model: str, host: str = "http://localhost:11434", timeout: float = 300, max_tokens: int = 768,
+        num_ctx: int | None = None,
+    ):
         self.model = model
         self.host = host.rstrip("/")
         self.timeout = timeout
         self.max_tokens = max_tokens
+        # Ollama's default context window is short and it drops the start of longer prompts
+        # without an error; long-memory benchmarks set this (THYMUS_OLLAMA_CTX or the caller).
+        self.num_ctx = num_ctx or (int(os.environ["THYMUS_OLLAMA_CTX"]) if os.environ.get("THYMUS_OLLAMA_CTX") else None)
         self.name = f"ollama:{model}"
         self._can_think: bool | None = None
 
@@ -88,6 +94,8 @@ class OllamaLLM:
             # until the request times out (seen on Hindi inputs), which stalls a whole run.
             "options": {"temperature": 0, "seed": 0, "num_predict": self.max_tokens},
         }
+        if self.num_ctx:
+            body["options"]["num_ctx"] = self.num_ctx
         if schema is not None:
             body["format"] = schema
         if self._supports_thinking():
