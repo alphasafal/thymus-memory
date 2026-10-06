@@ -33,7 +33,7 @@ def unpack_code():
 
 
 def restore_cache():
-    for cache in INPUT_ROOT.rglob("cache.tar.gz"):
+    for cache in list(INPUT_ROOT.rglob("cache.tgz.bin")) + list(INPUT_ROOT.rglob("cache.tar.gz")):
         with tarfile.open(cache) as archive:
             archive.extractall(CODE)
         return

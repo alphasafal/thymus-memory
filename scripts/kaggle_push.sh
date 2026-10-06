@@ -3,7 +3,8 @@
 # Usage: scripts/kaggle_push.sh <kaggle-config.json>   (see kaggle/configs/)
 set -eu
 cd "$(dirname "$0")/.."
-CONFIG="${1:?usage: scripts/kaggle_push.sh kaggle/configs/<name>.json}"
+CONFIG="${1:?usage: scripts/kaggle_push.sh kaggle/configs/<name>.json [previous-cache.tar.gz]}"
+PREVIOUS_CACHE="${2:-}"   # cache.tar.gz from an earlier Kaggle run, so finished calls are reused
 USER_NAME="$(kaggle config view 2>/dev/null | awk -F': ' '/username/ {print $2}' | tr -d ' ')"
 USER_NAME="${USER_NAME:-safalguptaofficial}"
 BUILD=".kaggle-build"
@@ -14,6 +15,10 @@ COPYFILE_DISABLE=1 tar --exclude=.venv --exclude=results --exclude=.cache --excl
     --exclude=.git --exclude=.pytest_cache --exclude=__pycache__ --exclude=.DS_Store --exclude='._*' \
     -czf "$BUILD/dataset/code.tar.gz" -C .. "$(basename "$PWD")"
 cp "$CONFIG" "$BUILD/dataset/run_config.json"
+if [ -n "$PREVIOUS_CACHE" ]; then
+  # Kaggle unpacks .tar.gz uploads, so ship the cache under a name it leaves alone.
+  cp "$PREVIOUS_CACHE" "$BUILD/dataset/cache.tgz.bin"
+fi
 cat > "$BUILD/dataset/dataset-metadata.json" <<META
 {"title": "thymus-memory-code", "id": "$USER_NAME/thymus-memory-code", "licenses": [{"name": "other"}]}
 META
