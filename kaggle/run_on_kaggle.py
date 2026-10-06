@@ -16,8 +16,8 @@ import time
 import urllib.request
 
 INPUT_ROOT = pathlib.Path("/kaggle/input")
-WORK = pathlib.Path("/kaggle/working")
-CODE = WORK / "thymus-memory"
+WORK = pathlib.Path("/kaggle/working")  # only the archives below end up here, so downloads stay small
+CODE = pathlib.Path("/tmp/thymus-memory")
 CONFIG = json.loads(next(INPUT_ROOT.rglob("run_config.json")).read_text())
 
 
@@ -29,7 +29,14 @@ def unpack_code():
             return
     tarball = next(INPUT_ROOT.rglob("code.tar.gz"))
     with tarfile.open(tarball) as archive:
-        archive.extractall(WORK)
+        archive.extractall(CODE.parent)
+
+
+def restore_inputs():
+    """Earlier results shipped with the config (e.g. to regrade them here)."""
+    for inputs in INPUT_ROOT.rglob("inputs.tgz.bin"):
+        with tarfile.open(inputs) as archive:
+            archive.extractall(CODE)
 
 
 def restore_cache():
@@ -61,10 +68,11 @@ def wait_for_ollama(timeout=120):
 print("input files:", [str(p) for p in INPUT_ROOT.rglob("*")][:20], flush=True)
 unpack_code()
 restore_cache()
+restore_inputs()
 
 sh("apt-get -qq update && apt-get -qq install -y zstd", shell=True)  # the Ollama installer needs it
 sh("curl -fsSL https://ollama.com/install.sh | sh", shell=True)
-server_log = open(WORK / "ollama-server.log", "w")
+server_log = open("/tmp/ollama-server.log", "w")  # large; only its tail is saved
 subprocess.Popen(["ollama", "serve"], stdout=server_log, stderr=subprocess.STDOUT,
                  env={**os.environ, "OLLAMA_KEEP_ALIVE": "24h"})
 wait_for_ollama()
@@ -84,6 +92,8 @@ def save_outputs():
     if (CODE / ".cache").exists():
         with tarfile.open(WORK / "cache.tar.gz", "w:gz") as archive:
             archive.add(CODE / ".cache", arcname=".cache")
+    lines = pathlib.Path("/tmp/ollama-server.log").read_text(errors="replace").splitlines()
+    (WORK / "ollama-server-tail.log").write_text("\n".join(lines[-2000:]) + "\n")
 
 
 for run in CONFIG["runs"]:

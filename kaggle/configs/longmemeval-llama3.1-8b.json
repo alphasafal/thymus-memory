@@ -1,0 +1,86 @@
+{
+  "pull": [
+    "llama3.1:8b",
+    "qwen3:4b-instruct",
+    "nomic-embed-text"
+  ],
+  "setup": [
+    "mkdir -p data/longmemeval",
+    "curl -fsSL -o data/longmemeval/longmemeval_s https://huggingface.co/datasets/xiaowu0162/longmemeval/resolve/2ec2a557f339b6c0369619b1ed5793734cc87533/longmemeval_s",
+    "echo '08d8dad4be43ee2049a22ff5674eb86725d0ce5ff434cde2627e5e8e7e117894  data/longmemeval/longmemeval_s' | sha256sum -c"
+  ],
+  "runs": [
+    {
+      "name": "longmemeval-poisoned",
+      "command": [
+        "thymus-longmemeval",
+        "--llm",
+        "ollama:llama3.1:8b",
+        "--judge",
+        "ollama:qwen3:4b-instruct",
+        "--condition",
+        "poisoned",
+        "--out",
+        "results/longmemeval-llama3.1-8b",
+        "--gate",
+        "allow-all",
+        "--gate",
+        "user-only",
+        "--gate",
+        "label-only",
+        "--gate",
+        "thymus",
+        "--gate",
+        "bounded-occupancy",
+        "--gate",
+        "conflict-quarantine"
+      ]
+    },
+    {
+      "name": "longmemeval-evidence-untrusted",
+      "command": [
+        "thymus-longmemeval",
+        "--llm",
+        "ollama:llama3.1:8b",
+        "--judge",
+        "ollama:qwen3:4b-instruct",
+        "--condition",
+        "evidence-untrusted",
+        "--out",
+        "results/longmemeval-llama3.1-8b",
+        "--gate",
+        "allow-all",
+        "--gate",
+        "user-only",
+        "--gate",
+        "label-only",
+        "--gate",
+        "thymus",
+        "--gate",
+        "bounded-occupancy",
+        "--gate",
+        "conflict-quarantine"
+      ]
+    },
+    {
+      "name": "longmemeval-clean",
+      "command": [
+        "thymus-longmemeval",
+        "--llm",
+        "ollama:llama3.1:8b",
+        "--judge",
+        "ollama:qwen3:4b-instruct",
+        "--condition",
+        "clean",
+        "--out",
+        "results/longmemeval-llama3.1-8b",
+        "--gate",
+        "allow-all",
+        "--gate",
+        "label-only",
+        "--gate",
+        "thymus"
+      ]
+    }
+  ]
+}

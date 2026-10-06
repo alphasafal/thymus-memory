@@ -22,6 +22,12 @@ COPYFILE_DISABLE=1 tar --exclude=.venv --exclude=results --exclude=.cache --excl
     --exclude=.git --exclude=.pytest_cache --exclude=__pycache__ --exclude=.DS_Store --exclude='._*' \
     -czf "$BUILD/dataset/code.tar.gz" -C .. "$(basename "$PWD")"
 cp "$CONFIG" "$BUILD/dataset/run_config.json"
+# Earlier results listed under "inputs" in the config travel with it (e.g. to regrade them).
+INPUTS="$(python3 -c 'import json,sys; print(" ".join(json.load(open(sys.argv[1])).get("inputs", [])))' "$CONFIG")"
+if [ -n "$INPUTS" ]; then
+  # shellcheck disable=SC2086
+  COPYFILE_DISABLE=1 tar --exclude='._*' -czf "$BUILD/dataset/inputs.tgz.bin" $INPUTS
+fi
 if [ -n "$PREVIOUS_CACHE" ]; then
   # Kaggle unpacks .tar.gz uploads, so ship the cache under a name it leaves alone.
   cp "$PREVIOUS_CACHE" "$BUILD/dataset/cache.tgz.bin"

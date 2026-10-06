@@ -1,0 +1,58 @@
+{
+  "pull": [
+    "llama3.1:8b",
+    "qwen3:4b-instruct",
+    "nomic-embed-text"
+  ],
+  "inputs": [
+    "results/kaggle/llama3.1-8b/results"
+  ],
+  "runs": [
+    {
+      "name": "regrade-llama",
+      "command": [
+        "thymus-regrade",
+        "results/kaggle/llama3.1-8b/results",
+        "--judge",
+        "ollama:qwen3:4b-instruct"
+      ]
+    },
+    {
+      "name": "llama3.1-8b",
+      "llm": "ollama:llama3.1:8b",
+      "judge": "ollama:qwen3:4b-instruct",
+      "gates": [
+        "allow-all",
+        "user-only",
+        "conflict-quarantine",
+        "last-write-wins",
+        "bounded-occupancy",
+        "thymus"
+      ],
+      "only": [
+        "bank-customer-care--",
+        "sim-plan--",
+        "adaptive-flood-customer-care"
+      ]
+    },
+    {
+      "name": "llama3.1-8b",
+      "llm": "ollama:llama3.1:8b",
+      "judge": "ollama:qwen3:4b-instruct",
+      "gates": [
+        "label-only"
+      ]
+    },
+    {
+      "name": "llama3.1-8b-ablations",
+      "llm": "ollama:llama3.1:8b",
+      "judge": "ollama:qwen3:4b-instruct",
+      "gates": [
+        "thymus-no-screen",
+        "thymus-any-origin",
+        "thymus-no-labels",
+        "thymus-hide"
+      ]
+    }
+  ]
+}

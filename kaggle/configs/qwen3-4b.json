@@ -3,7 +3,36 @@
     "qwen3:4b-instruct",
     "nomic-embed-text"
   ],
+  "inputs": [
+    "results/kaggle/qwen3-4b-ablations/results"
+  ],
   "runs": [
+    {
+      "name": "regrade-qwen3-ablations",
+      "command": [
+        "thymus-regrade",
+        "results/kaggle/qwen3-4b-ablations/results",
+        "--judge",
+        "ollama:qwen3:4b-instruct"
+      ]
+    },
+    {
+      "name": "qwen3-4b-ablations",
+      "llm": "ollama:qwen3:4b-instruct",
+      "judge": "ollama:qwen3:4b-instruct",
+      "gates": [
+        "thymus",
+        "thymus-no-screen",
+        "thymus-any-origin",
+        "thymus-no-labels",
+        "thymus-hide"
+      ],
+      "only": [
+        "bank-customer-care--",
+        "sim-plan--",
+        "adaptive-flood-customer-care"
+      ]
+    },
     {
       "name": "qwen3-4b",
       "llm": "ollama:qwen3:4b-instruct",
