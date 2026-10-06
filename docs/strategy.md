@@ -55,6 +55,7 @@ Status on 6 October 2026. Kaggle notebooks are private and named `thymus-run-<co
 | 10 | **Practical demo:** the gate inside an open-source memory library (Mem0) | Not started |
 | 11 | **Rerun** bank-customer-care, sim-plan and adaptive-flood-customer-care for runs started before 6 Oct 08:40 (phone numbers changed) | To do after Kaggle runs |
 | 12 | **More open models** (Gemma, a larger Qwen) on Kaggle | Optional, if GPU hours allow (30 h/week) |
+| 13 | **Regrade** every run made before commit db131a4 (grader fix: model decides when no warning phrase is found) with `thymus-regrade` | Frontier runs done; Llama and qwen3-ablation Kaggle runs after download |
 
 ## Who does what
 
