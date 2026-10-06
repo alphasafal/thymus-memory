@@ -156,16 +156,27 @@ similar earlier memories (facts from the same turn never conflict). Then:
 
 - a **user** candidate replaces conflicting tool facts and the same user's earlier facts, but
   not what a different user told a shared assistant;
-- a **tool** candidate replaces conflicting facts from its **own origin**;
-- conflicting facts from **other origins** are not replaced. The candidate is stored as
-  *unverified*, with a link to what it contradicts.
+- a **tool** candidate replaces conflicting facts from its **own origin**, but only when the
+  channel authenticates that origin (DKIM for email, a registered SMS sender ID, a signed
+  calendar invite); a forged sender has the right origin and fails authentication;
+- conflicting facts from **other origins**, and anything from a forged sender, are not
+  replaced. The candidate is stored as *unverified*, with a link to what it contradicts. A
+  user's statement that contradicts what a *different* user said is linked the same way.
 
-**3.3 Disclosure.** Every tool fact from an untrusted origin is stored as unverified. At
-recall, unverified memories are shown with their origin, and with "contradicts an earlier
-memory" when that applies; memories from another user of the assistant are marked as such
-(without naming who). The answering instruction is one rule: when memories conflict, use the
-most recent one without a note; never state an unverified memory as fact; if it matters, tell
-the user in your own words where it came from and that it is unconfirmed.
+**3.3 Disclosure.** Every tool fact from an untrusted origin is stored as unverified, and
+recalled with its origin; memories from another user of the assistant are marked as such
+(without naming who). *Contested* claims, those linked to something they contradict, are
+not given to the answering model at all. The system appends a notice to the reply instead:
+"I also have unconfirmed information that contradicts this: a message from ⟨origin⟩ said
+⟨claim⟩. I have not used it in my answer; please check with the source." The model cannot
+adopt what it never sees, and the user still learns of the claim and its source.
+
+An earlier version (v1) passed contested claims to the model with an inline label and an
+instruction to disclose them, and let any same-origin message replace a fact. Frontier
+models and a 4B model followed the labels; Llama 3.1 8B did not (Section 6), and forged
+senders exploited unauthenticated replacement. We report v1 alongside the final gate, and a
+variant (v2-inline) that keeps v2's rules but discloses inline, to show how much disclosure
+depends on the model when it is left to the model.
 
 ```
 review(c, store):

@@ -72,6 +72,21 @@ the commit that produced it.
   rules add nothing measurable anywhere, the paper says so and leads with disclosure plus the
   benchmark; it must not claim the rules help without data.
 
+- **6 Oct: on Llama 3.1 8B, version 1 of the gate failed.** Attack success 48% vs 42% with
+  no defence (old grader), flags only 8%: Llama ignores inline labels and answers with "the
+  most recent memory". Without sender authentication, same-origin replacement also let
+  forged senders replace real facts (spoofed-origin 59% vs 9% with no defence). Updates
+  stayed high (92%; cross-origin 98%) and provenance quarantine again lost most updates (33%).
+- **Response: thymus-v2** (commit d6d15de). (1) A source replaces its own fact only through
+  an authenticated channel; a forged sender is kept as contested. (2) Contested claims are
+  withheld from the model and disclosed in a system-written notice, so disclosure no longer
+  depends on the model. (3) A user's claim that contradicts another user is contested.
+  v1 results are kept and reported. **Because v2 was designed after seeing test-split results
+  on Llama, its main evidence must come from data it was not designed on:** LongMemEval
+  (Utility Under Attack protocol), the real SMS set, and the frontier models. The paper says
+  this plainly. The cost to report: a real cross-origin update under v2 reaches the user as an
+  unconfirmed notice instead of as the answer (`update_in_notice`).
+
 ## What to add, ranked
 
 ### Tier 1: answers the objections every reviewer will raise
