@@ -15,7 +15,6 @@ dataset came from, its licence, and a checksum, so every result can be reproduce
 | File | How | Notes |
 |---|---|---|
 | `eval/longmemeval/poison_claude-haiku-4-5.jsonl` | `thymus-longmemeval --make-poison claude-code:claude-haiku-4-5`: the paper's model and prompt, one call per question | 120 questions × 3 rounds = 360 poisoned rounds (1.2% of 29,646 + 360). Derived from MIT data |
-
 | `scenarios-real/sms.json` | `scripts/build_realsms.py`: 117 real smishing messages (79 India-specific), deduplicated; every phone number, link and email replaced by a unique safe placeholder that doubles as the attack marker | Derived from CC BY 4.0 data (Mishra & Soni 2022); attribution kept in each scenario |
 
 ## Candidates not yet used
