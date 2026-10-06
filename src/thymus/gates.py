@@ -23,6 +23,15 @@ And the gate this project is about:
 - thymus: self/non-self screening. Tool content may add facts but never speak for the
   user; a fact can only be replaced by the user or by the source that stated it; every
   other conflicting or unvetted claim is kept but recalled with an "unverified" label.
+
+Ablations switch off one part of the thymus gate at a time:
+
+- thymus-no-screen: no self/non-self screening; tool content may state preferences or
+  instructions in the user's name.
+- thymus-any-origin: no same-origin rule; tool content replaces whatever it contradicts.
+- thymus-no-labels: same storage decisions, but memories are recalled without labels.
+- thymus-hide: decide instead of disclose; a claim that contradicts another source is
+  quarantined (hidden) instead of kept with a label.
 """
 
 from __future__ import annotations
@@ -133,10 +142,22 @@ class ThymusGate(Gate):
         detector: ConflictDetector,
         classifier: ClaimClassifier,
         trusted_origins: tuple[str, ...] = ("calendar:",),
+        *,
+        screen: bool = True,
+        same_origin_only: bool = True,
+        disclose: bool = True,
+        hide_contested: bool = False,
+        name: str = "thymus",
     ):
         self.detector = detector
         self.classifier = classifier
         self.trusted_origins = trusted_origins  # the user's own integrations
+        # Ablation switches; the defaults are the full gate.
+        self.screen = screen
+        self.same_origin_only = same_origin_only
+        self.disclose = disclose
+        self.hide_contested = hide_contested
+        self.name = name
 
     def _trust(self, candidate: Candidate) -> Trust:
         if candidate.source == "user" or candidate.origin.startswith(self.trusted_origins):
@@ -144,7 +165,7 @@ class ThymusGate(Gate):
         return "unverified"
 
     def review(self, candidate: Candidate, store: MemoryStore) -> Decision:
-        if candidate.source == "tool" and not candidate.origin.startswith(self.trusted_origins):
+        if self.screen and candidate.source == "tool" and not candidate.origin.startswith(self.trusted_origins):
             kind = self.classifier.kind(candidate.text)
             if kind != "fact":
                 return Decision("reject", f"{candidate.origin} tried to speak for the user ({kind})")
@@ -160,8 +181,10 @@ class ThymusGate(Gate):
             own = [m for m in conflicts if m.source == "tool" or m.speaker == candidate.speaker]
             return Decision("accept", f"user update replaces {_ids(own)}", tuple(m.id for m in own), trust)
 
-        same_origin = [m for m in conflicts if m.origin == candidate.origin]
-        others = [m for m in conflicts if m.origin != candidate.origin]
+        same_origin = [m for m in conflicts if m.origin == candidate.origin or not self.same_origin_only]
+        others = [m for m in conflicts if m not in same_origin]
+        if others and self.hide_contested:
+            return Decision("quarantine", f"contradicts {_ids(others)} from other sources, hidden")
         if others:
             trust = "unverified"
         reason = f"same-origin update replaces {_ids(same_origin)}" if same_origin else "no replacement"
@@ -171,6 +194,8 @@ class ThymusGate(Gate):
 
     def render(self, memory: Memory, speaker: str) -> str:
         line = super().render(memory, speaker)
+        if not self.disclose:
+            return line
         if memory.trust == "unverified" and memory.contradicts:
             return f"{line} [unverified: from {memory.origin}; contradicts an earlier memory]"
         if memory.trust == "unverified":
@@ -187,7 +212,19 @@ GATES: dict[str, Callable[[LLM], Gate]] = {
     "last-write-wins": lambda llm: LastWriteWinsGate(LLMConflictDetector(llm)),
     "bounded-occupancy": lambda llm: BoundedOccupancyGate(),
     "thymus": lambda llm: ThymusGate(LLMConflictDetector(llm), LLMClaimClassifier(llm)),
+    "thymus-no-screen": lambda llm: ThymusGate(
+        LLMConflictDetector(llm), LLMClaimClassifier(llm), screen=False, name="thymus-no-screen"),
+    "thymus-any-origin": lambda llm: ThymusGate(
+        LLMConflictDetector(llm), LLMClaimClassifier(llm), same_origin_only=False, name="thymus-any-origin"),
+    "thymus-no-labels": lambda llm: ThymusGate(
+        LLMConflictDetector(llm), LLMClaimClassifier(llm), disclose=False, name="thymus-no-labels"),
+    "thymus-hide": lambda llm: ThymusGate(
+        LLMConflictDetector(llm), LLMClaimClassifier(llm), hide_contested=True, name="thymus-hide"),
 }
+
+# The gates compared in the main experiment; the ablations are run separately.
+MAIN_GATES = ("allow-all", "user-only", "conflict-quarantine", "last-write-wins", "bounded-occupancy", "thymus")
+ABLATIONS = ("thymus-no-screen", "thymus-any-origin", "thymus-no-labels", "thymus-hide")
 
 
 def make_gate(name: str, llm: LLM) -> Gate:

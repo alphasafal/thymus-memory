@@ -1,13 +1,20 @@
 #!/bin/sh
 # Bundle the code into a private Kaggle dataset and start a private GPU notebook run.
+# Each config gets its own dataset and notebook (named after the config file), so several
+# configs can run side by side.
 # Usage: scripts/kaggle_push.sh <kaggle-config.json>   (see kaggle/configs/)
+#   Download results: kaggle kernels output <user>/thymus-run-<config> -p results/kaggle/<config>
 set -eu
 cd "$(dirname "$0")/.."
 CONFIG="${1:?usage: scripts/kaggle_push.sh kaggle/configs/<name>.json [previous-cache.tar.gz]}"
 PREVIOUS_CACHE="${2:-}"   # cache.tar.gz from an earlier Kaggle run, so finished calls are reused
 USER_NAME="$(kaggle config view 2>/dev/null | awk -F': ' '/username/ {print $2}' | tr -d ' ')"
 USER_NAME="${USER_NAME:-safalguptaofficial}"
-BUILD=".kaggle-build"
+# Kaggle slugs allow only lowercase letters, digits and hyphens.
+SLUG="$(basename "$CONFIG" .json | tr 'A-Z' 'a-z' | tr -c 'a-z0-9\n' '-')"
+DATASET="thymus-code-$SLUG"
+KERNEL="thymus-run-$SLUG"
+BUILD=".kaggle-build/$SLUG"
 rm -rf "$BUILD" && mkdir -p "$BUILD/dataset" "$BUILD/kernel"
 
 # Code bundle (no results, caches, virtualenv or macOS metadata files; Kaggle unpacks it).
@@ -20,9 +27,9 @@ if [ -n "$PREVIOUS_CACHE" ]; then
   cp "$PREVIOUS_CACHE" "$BUILD/dataset/cache.tgz.bin"
 fi
 cat > "$BUILD/dataset/dataset-metadata.json" <<META
-{"title": "thymus-memory-code", "id": "$USER_NAME/thymus-memory-code", "licenses": [{"name": "other"}]}
+{"title": "$DATASET", "id": "$USER_NAME/$DATASET", "licenses": [{"name": "other"}]}
 META
-if kaggle datasets status "$USER_NAME/thymus-memory-code" >/dev/null 2>&1; then
+if kaggle datasets status "$USER_NAME/$DATASET" >/dev/null 2>&1; then
   kaggle datasets version -p "$BUILD/dataset" -m "code $(git rev-parse --short HEAD)" -r skip
 else
   kaggle datasets create -p "$BUILD/dataset" -r skip   # private by default
@@ -31,21 +38,21 @@ fi
 cp kaggle/run_on_kaggle.py "$BUILD/kernel/"
 cat > "$BUILD/kernel/kernel-metadata.json" <<META
 {
-  "id": "$USER_NAME/thymus-memory-run",
-  "title": "thymus-memory-run",
+  "id": "$USER_NAME/$KERNEL",
+  "title": "$KERNEL",
   "code_file": "run_on_kaggle.py",
   "language": "python",
   "kernel_type": "script",
   "is_private": true,
   "enable_gpu": true,
   "enable_internet": true,
-  "dataset_sources": ["$USER_NAME/thymus-memory-code"],
+  "dataset_sources": ["$USER_NAME/$DATASET"],
   "competition_sources": [],
   "kernel_sources": []
 }
 META
 # Wait until Kaggle has processed the new dataset version before the notebook starts.
-until kaggle datasets status "$USER_NAME/thymus-memory-code" 2>/dev/null | grep -q ready; do sleep 10; done
+until kaggle datasets status "$USER_NAME/$DATASET" 2>/dev/null | grep -q ready; do sleep 10; done
 sleep 30
 kaggle kernels push -p "$BUILD/kernel"
-echo "Started. Check with: kaggle kernels status $USER_NAME/thymus-memory-run"
+echo "Started. Check with: kaggle kernels status $USER_NAME/$KERNEL"

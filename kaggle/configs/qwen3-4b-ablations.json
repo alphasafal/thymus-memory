@@ -1,0 +1,7 @@
+{
+  "pull": ["qwen3:4b-instruct", "nomic-embed-text"],
+  "runs": [
+    {"name": "qwen3-4b-ablations", "llm": "ollama:qwen3:4b-instruct", "judge": "ollama:qwen3:4b-instruct",
+     "gates": ["thymus", "thymus-no-screen", "thymus-any-origin", "thymus-no-labels", "thymus-hide"]}
+  ]
+}

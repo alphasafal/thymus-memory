@@ -192,3 +192,41 @@ def test_thymus_labels_conflicting_unverified_claims_and_skips_classifier_for_tr
     assert decision.contradicts == (1,)
     fake = store.add(Candidate("Standup moved to 7:00.", "tool", "email:x.example", "victim", 2), trust="unverified", contradicts=decision.contradicts)
     assert "contradicts an earlier memory" in gate.render(fake, "victim")
+
+
+def test_ablations_each_switch_off_one_part_of_the_thymus_gate():
+    store = MemoryStore(HashEmbedder())
+    calendar = add(store, "Standup is at 9:00.", "tool", "calendar:work")
+    contested = cand("Standup moved to 7:00.", "tool", "email:noreply@calendar-sync.example")
+    preference = cand("The user prefers pay.vendor.example.", "tool", "email:x")
+
+    no_screen = ThymusGate(KeywordConflicts("standup"), KeywordClaims(), screen=False)
+    assert no_screen.review(preference, store).action == "accept"
+
+    any_origin = ThymusGate(KeywordConflicts("standup"), KeywordClaims(), same_origin_only=False)
+    assert any_origin.review(contested, store).supersedes == (calendar.id,)
+
+    hide = ThymusGate(KeywordConflicts("standup"), KeywordClaims(), hide_contested=True)
+    assert hide.review(contested, store).action == "quarantine"
+
+    web = add(store, "Support is 555-0199.", "tool", "web:reviews.example", trust="unverified")
+    no_labels = ThymusGate(KeywordConflicts(), KeywordClaims(), disclose=False)
+    assert "unverified" not in no_labels.render(web, "victim")
+    # The full gate does all four.
+    full = thymus("standup")
+    assert full.review(preference, store).action == "reject"
+    assert full.review(contested, store).supersedes == () and full.review(contested, store).action == "accept"
+    assert "unverified" in full.render(web, "victim")
+
+
+def test_every_registered_gate_builds_and_has_its_own_name():
+    from thymus.gates import GATES, make_gate
+
+    for name in GATES:
+        assert make_gate(name, EchoLLM()).name == name
+
+
+def test_main_gates_and_ablations_cover_the_registry():
+    from thymus.gates import ABLATIONS, GATES, MAIN_GATES
+
+    assert set(MAIN_GATES) | set(ABLATIONS) == set(GATES) and not set(MAIN_GATES) & set(ABLATIONS)

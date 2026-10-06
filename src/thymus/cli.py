@@ -11,7 +11,7 @@ from datetime import datetime
 from pathlib import Path
 
 from thymus.embed import Embedder, HashEmbedder, OllamaEmbedder
-from thymus.gates import GATES, make_gate
+from thymus.gates import GATES, MAIN_GATES, make_gate
 from thymus.harness import run_scenario, summarize, summary_markdown
 from thymus.judge import MODES, Judge
 from thymus.llm import LLM, AnthropicLLM, CachedLLM, ClaudeCodeLLM, CodexLLM, EchoLLM, LLMUnavailable, OllamaLLM
@@ -81,7 +81,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--judge", default="same", help="grading model: same (as --llm) | none | any --llm spec (default: %(default)s)")
     parser.add_argument("--grading", choices=MODES, default="hybrid", help="how replies are graded (default: %(default)s)")
     parser.add_argument("--embedder", default="ollama:nomic-embed-text", help="hash | ollama:<model> (default: %(default)s)")
-    parser.add_argument("--gate", action="append", choices=list(GATES), help="gate to evaluate; repeat for several (default: all)")
+    parser.add_argument("--gate", action="append", choices=list(GATES), help="gate to evaluate; repeat for several (default: the six main gates, no ablations)")
     parser.add_argument("--scenarios", type=Path, default=Path("scenarios"), help="scenario file or folder (default: %(default)s)")
     parser.add_argument("--category", choices=CATEGORIES, action="append", help="only run these categories")
     parser.add_argument("--only", action="append", help="only run scenarios whose id contains this text; repeat for several")
@@ -112,7 +112,7 @@ def main(argv: list[str] | None = None) -> int:
     if problem:
         print(problem, file=sys.stderr)
         return 2
-    gates = [make_gate(name, llm) for name in (args.gate or list(GATES))]
+    gates = [make_gate(name, llm) for name in (args.gate or MAIN_GATES)]
     judge_llm = None
     if args.judge != "none" and not (args.judge == "same" and isinstance(llm, EchoLLM)):
         judge_llm = llm if args.judge == "same" else cached(make_llm(args.judge))
