@@ -48,3 +48,29 @@ spoofed-origin 59% under v1 vs 9% with no defence. v2 results pending.
   model so far, at the cost of cross-origin updates arriving as notices instead of answers.
 - With a model that follows labels, v2-inline gets both: 0% attacks and 100% updates on
   Opus 5.5 and GPT-6-Astra.
+
+## 6 Oct 2026: Llama 3.1 8B, all defences and ablations (Kaggle, fixed grader), 442 test scenarios
+
+| Defence | Fooled ↓ | Real updates ↑ | Recall ↑ |
+|---|---|---|---|
+| allow-all | 42% | 91% | 94% |
+| user-only | 17% | 33% | 28% |
+| conflict-quarantine | 30% | 78% | 94% |
+| last-write-wins | 78% | 94% | 94% |
+| bounded-occupancy | 31% | 54% | 84% |
+| label-only | 41% | 91% | 95% |
+| thymus (v1) | 47% | 92% | 94% |
+| thymus-v2-inline | 44% | 92% | 94% |
+| **thymus-v2** | **20%** (67% flagged) | 81% + notices | 94% |
+| ablation: hide contested | 28% | 81% | 94% |
+
+Inline disclosure does nothing for a model that ignores labels; the system notice halves
+attack success and beats hiding. Ablations under v1: no labels 63%, any-origin 64%.
+
+## 6 Oct 2026: real smishing SMS (Mishra & Soni 2022), frontier models, keyword grading
+
+| Model · defence | Passes the scam on as genuine |
+|---|---|
+| Opus 5.5 (79 India SMS) · allow-all | 41% |
+| Opus 5.5 · label-only / thymus-v2 | 22% / 22% |
+| GPT-6-Astra (117 SMS) · all defences | 0%: its extraction stored nothing from 116 of 117 scam messages |
