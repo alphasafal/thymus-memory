@@ -49,6 +49,15 @@
       "llm": "ollama:qwen3:4b-instruct",
       "judge": "ollama:qwen3:4b-instruct",
       "gates": [
+        "thymus-v2",
+        "thymus-v2-inline"
+      ]
+    },
+    {
+      "name": "qwen3-4b",
+      "llm": "ollama:qwen3:4b-instruct",
+      "judge": "ollama:qwen3:4b-instruct",
+      "gates": [
         "conflict-quarantine",
         "last-write-wins",
         "bounded-occupancy"

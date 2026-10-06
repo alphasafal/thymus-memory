@@ -44,6 +44,15 @@
       ]
     },
     {
+      "name": "llama3.1-8b",
+      "llm": "ollama:llama3.1:8b",
+      "judge": "ollama:qwen3:4b-instruct",
+      "gates": [
+        "thymus-v2",
+        "thymus-v2-inline"
+      ]
+    },
+    {
       "name": "llama3.1-8b-ablations",
       "llm": "ollama:llama3.1:8b",
       "judge": "ollama:qwen3:4b-instruct",
