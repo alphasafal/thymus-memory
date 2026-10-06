@@ -62,10 +62,11 @@ def post_json(url: str, body: dict, timeout: float, retries: int = 5) -> Any:
 class OllamaLLM:
     """A local model served by Ollama. Free to run; quality depends on model size."""
 
-    def __init__(self, model: str, host: str = "http://localhost:11434", timeout: float = 300):
+    def __init__(self, model: str, host: str = "http://localhost:11434", timeout: float = 300, max_tokens: int = 768):
         self.model = model
         self.host = host.rstrip("/")
         self.timeout = timeout
+        self.max_tokens = max_tokens
         self.name = f"ollama:{model}"
         self._can_think: bool | None = None
 
@@ -83,7 +84,9 @@ class OllamaLLM:
                 {"role": "system", "content": system},
                 {"role": "user", "content": prompt},
             ],
-            "options": {"temperature": 0, "seed": 0},
+            # num_predict caps runaway generations: small models sometimes repeat text
+            # until the request times out (seen on Hindi inputs), which stalls a whole run.
+            "options": {"temperature": 0, "seed": 0, "num_predict": self.max_tokens},
         }
         if schema is not None:
             body["format"] = schema
