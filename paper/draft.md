@@ -7,9 +7,10 @@ runs finish. Citations marked [cite] still need a reference.*
 
 LLM agents with long-term memory save facts from conversations, emails, web pages and other
 tools, and later answer from them. An attacker who can put text in front of the agent can
-plant a false fact that the agent will repeat as true. Current defences decide at write time
-whether to store or block each new memory. We show that this framing forces a trade-off that
-no threshold can escape: legitimate updates ("your delivery is delayed", "your flight now
+plant a false fact that the agent will repeat as true. Most defences decide at write time
+whether to store or block each new memory; the few that keep untrusted content with a label
+use it to gate consequential actions, and leave the agent's answers open. We show that
+store-or-block forces a trade-off that no threshold can escape: legitimate updates ("your delivery is delayed", "your flight now
 leaves from gate B7") arrive through the same untrusted channels, in the same shape, as
 poisoned ones. We build a matched-pair benchmark of 491 scenarios in which every real update
 has an attacker's twin with the same setup and the same question, covering 90 everyday fact
@@ -22,7 +23,7 @@ content may add facts but never speak for the user, and a fact can be replaced o
 user or by the source that stated it. Against five defences from prior work, reimplemented
 in one harness, the thymus gate cuts attack success from **[R]** to **[R]** while keeping
 update accuracy at **[R]**, on agents from four model families including Claude Opus 5.5 and
-GPT-6-Astra. Ablations show each rule is needed, and that disclosing beats hiding.
+GPT-6-Astra. Ablations **[R: what each rule contributes, and disclosing vs hiding]**.
 
 ## 1 Introduction
 
@@ -35,10 +36,13 @@ a shared assistant) can try to plant a "memory" that later corrupts its answers.
 memory poisoning as a top risk for agentic applications (ASI06) [cite], and more than fifteen
 papers in 2026 alone attack or defend agent memory (Section 8).
 
-Nearly all defences share one framing: when a candidate memory arrives, **decide** whether to
+Most defences share one framing: when a candidate memory arrives, **decide** whether to
 store it. Provenance quarantine blocks everything that came from tools; conflict quarantine
 blocks tool content that contradicts what the user said; content screens block what looks
-malicious. The trouble is that the facts users most need an assistant to track are exactly
+malicious. A second line of work keeps untrusted content but labels it, and uses the label to
+stop that content from driving consequential actions such as payments [TMA-NM, PPMF]; its
+authors note that false facts in the agent's *answers* are "mitigated, not eliminated".
+Neither line asks what should happen when a fact legitimately changes. The trouble is that the facts users most need an assistant to track are exactly
 the facts that change, and their changes arrive through the same untrusted channels as
 attacks. A courier's "your parcel is delayed to 11 October" and an attacker's "your parcel was
 cancelled; pay the redelivery fee here" are both emails from outside, both contradict a stored
@@ -48,11 +52,11 @@ untrusted channels, provenance weighting drops accuracy to 0.04 [Utility Under A
 even without an attacker, memory systems routinely keep answering with revoked facts
 [Revoked but Still Authoritative].
 
-We argue the store-or-block decision is the wrong place to resolve this. An immune system
-offers a useful picture. In the thymus, T cells that react to the body's own tissue are
-removed, so the system learns to tell *self* from *non-self* before it acts; and outside the
-thymus, much of the work is not deleting what is foreign but **marking** it so that other
-parts of the system treat it differently. A memory gate can do the same:
+We argue the store-or-block decision is the wrong place to resolve this. The immune system
+offers a useful picture. In the thymus, developing T cells that react strongly to the body's
+own proteins are eliminated, so the system learns to tell *self* from *non-self* before it
+acts. And much of the response to foreign material works by **marking** it: antibodies tag a
+pathogen so that other cells recognise and handle it. A memory gate can do the same:
 
 1. **Self/non-self screening.** Content from tools is *non-self*. It may add facts about the
    world, but it may never speak for the user: no "the user prefers to pay at …", no "always
@@ -97,10 +101,12 @@ updates looks perfect on one and is never penalised on the other.
 **Results in brief [R].** On **[R]**, the thymus gate lowers strict attack success from
 **[R]** (no defence) to **[R]**, with update accuracy **[R]** (no defence: **[R]**). The
 store-or-block baselines move along the trade-off: user-only stops **[R]** of attacks but
-loses **[R]** of updates; conflict quarantine **[R]**. Frontier agents resist naive poison far
-better than small ones even without a gate, **[R]**, but **[R]** attack types still get
-through, and the gate **[R]**. Hiding contested claims instead of disclosing them costs
-**[R]** points of cross-origin update accuracy.
+loses **[R]** of updates; conflict quarantine **[R]**. Frontier agents are not immune
+without a gate: on a 36-scenario subset, Claude Opus 5.5 states 58% of update-shaped attacks
+as fact and GPT-6-Astra 50% (open models on the same scenarios: **[R]**); with the gate both fall to
+8%, the remaining case being a spoofed calendar invite that the gate is not designed to stop,
+while update and recall accuracy stay at 100% (versus 33% under provenance quarantine).
+Hiding contested claims instead of disclosing them **[R]**.
 
 ## 2 Setting and threat model
 
@@ -291,14 +297,30 @@ same scenarios with exact McNemar tests.
 
 ## 8 Related work
 
-See `docs/related-work.md` for the full table. Closest: **Utility Under Attack** (poisoned
-LongMemEval; content screens catch none of 360 plain false facts; proposes bounded occupancy),
-**MemGauge** (stage-wise trade-offs across four memory libraries and 11 models; provenance
-quarantine fails against MINJA; conflict quarantine), **TMA-NM** (origin-bound authority for
-actions; leaves answer biasing open), **belief-based memory** (Bayesian reliability; little
-gain over last-write-wins), **Revoked but Still Authoritative** (revocation is not
-enforced), **A-MemGuard** (consensus across memories; can be fooled by manufactured
-repetition), and attacks **MINJA** and **AgentPoison**.
+See `docs/related-work.md` for the full table, re-checked against each paper.
+
+*Measuring the trade-off.* **Utility Under Attack** poisons 1.2% of LongMemEval (accuracy
+0.850 → 0.300), shows a write-time screen rejects 0 of 360 plain false facts, and that a
+provenance weight strong enough to resist poison drops accuracy to 0.0417 when real answers
+arrive untrusted; it proposes bounded occupancy but has not built it. **MemGauge** varies
+admission, management and exposure across Mem0, A-MEM, LangMem and Hindsight on 11 models;
+provenance quarantine stops tool-side (Sleeper) attacks but not MINJA, and its numeric-conflict
+policy quarantines new records that contradict trusted ones. **Revoked but Still
+Authoritative** finds no memory system enforces revocation by default.
+
+*Labels for actions.* **TMA-NM** stores untrusted content as non-actionable with a label that
+survives summarisation and requires independent corroboration or user authorisation for
+consequential actions (0/1,920 attacks, eight frontier models, also inside Mem0); it states
+that answer bias is "mitigated, not eliminated". **PPMF** authorises tool calls by the
+authority of the memories behind them. We share the idea of keeping and labelling untrusted
+content, and apply it where these systems stop: to answers, and to facts that change.
+
+*Other defences.* Content and consensus checks (**A-MemGuard**, **AM-Sentry**), Bayesian
+reliability (**belief-based memory**, little gain over last-write-wins unless sources differ
+in trust), cryptographic provenance with certified ablation (**SMSR**), and post-hoc auditing
+(**MemAudit**). *Attacks and benchmarks:* **MINJA**, **AgentPoison**, **MPBench**,
+**GhostWriter**, **MemPoison**, **Bad Memory**, and the optimised **PipePoison**, which stays
+effective under eight defences.
 
 ## 9 Conclusion
 

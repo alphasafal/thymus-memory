@@ -17,6 +17,9 @@ real competition rather than only "no defence":
   The naive way to support updates.
 - bounded-occupancy: writes everything, but tool-sourced memories may fill at most
   one recall slot (proposed but not built in Utility Under Attack, arXiv 2608.21230).
+- label-only: keeps everything and recalls untrusted memories with their source, with no
+  rules about updates. The labelling idea of TMA-NM (arXiv 2606.24322) and PPMF
+  (arXiv 2607.29167), which use it to gate actions, applied to answers instead.
 
 And the gate this project is about:
 
@@ -205,15 +208,39 @@ class ThymusGate(Gate):
 
     def render(self, memory: Memory, speaker: str) -> str:
         line = super().render(memory, speaker)
-        if not self.disclose:
-            return line
-        if memory.trust == "unverified" and memory.contradicts:
-            return f"{line} [unverified: from {memory.origin}; contradicts an earlier memory]"
-        if memory.trust == "unverified":
-            return f"{line} [unverified: from {memory.origin}]"
-        if memory.source == "user" and memory.speaker != speaker:
-            return f"{line} [unverified: said by another user of this assistant]"
-        return line
+        return disclose(line, memory, speaker) if self.disclose else line
+
+
+def disclose(line: str, memory: Memory, speaker: str) -> str:
+    """Append the source label that unverified memories carry at recall."""
+    if memory.trust == "unverified" and memory.contradicts:
+        return f"{line} [unverified: from {memory.origin}; contradicts an earlier memory]"
+    if memory.trust == "unverified":
+        return f"{line} [unverified: from {memory.origin}]"
+    if memory.source == "user" and memory.speaker != speaker:
+        return f"{line} [unverified: said by another user of this assistant]"
+    return line
+
+
+class LabelOnlyGate(Gate):
+    """Keep every memory; label untrusted ones at recall; never replace anything."""
+
+    name = "label-only"
+
+    def __init__(self, trusted_origins: tuple[str, ...] = ("calendar:",)):
+        self.trusted_origins = trusted_origins
+
+    def background_trust(self, candidate: Candidate) -> Trust | None:
+        if candidate.source == "user" or candidate.origin.startswith(self.trusted_origins):
+            return "verified"
+        return "unverified"
+
+    def review(self, candidate: Candidate, store: MemoryStore) -> Decision:
+        trust = self.background_trust(candidate)
+        return Decision("accept", f"stored as {trust}", trust=trust)
+
+    def render(self, memory: Memory, speaker: str) -> str:
+        return disclose(super().render(memory, speaker), memory, speaker)
 
 
 GATES: dict[str, Callable[[LLM], Gate]] = {
@@ -222,6 +249,7 @@ GATES: dict[str, Callable[[LLM], Gate]] = {
     "conflict-quarantine": lambda llm: ConflictQuarantineGate(LLMConflictDetector(llm)),
     "last-write-wins": lambda llm: LastWriteWinsGate(LLMConflictDetector(llm)),
     "bounded-occupancy": lambda llm: BoundedOccupancyGate(),
+    "label-only": lambda llm: LabelOnlyGate(),
     "thymus": lambda llm: ThymusGate(LLMConflictDetector(llm), LLMClaimClassifier(llm)),
     "thymus-no-screen": lambda llm: ThymusGate(
         LLMConflictDetector(llm), LLMClaimClassifier(llm), screen=False, name="thymus-no-screen"),
@@ -234,7 +262,9 @@ GATES: dict[str, Callable[[LLM], Gate]] = {
 }
 
 # The gates compared in the main experiment; the ablations are run separately.
-MAIN_GATES = ("allow-all", "user-only", "conflict-quarantine", "last-write-wins", "bounded-occupancy", "thymus")
+MAIN_GATES = (
+    "allow-all", "user-only", "conflict-quarantine", "last-write-wins", "bounded-occupancy", "label-only", "thymus",
+)
 ABLATIONS = ("thymus-no-screen", "thymus-any-origin", "thymus-no-labels", "thymus-hide")
 
 

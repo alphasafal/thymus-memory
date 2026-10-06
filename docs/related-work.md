@@ -1,25 +1,47 @@
 # Related work and where this project fits
 
-Checked on 5 October 2026. Memory poisoning is a crowded area: more than 15 papers in 2026 alone.
-The papers below are the ones that decide what is still open.
+First written 5 October 2026; every claim below was re-checked against the papers on
+6 October 2026 (abstract or full text). Memory poisoning is a crowded area: at least 17 arXiv
+papers on agent-memory attacks or defences in 2026 alone (listed at the end). The papers below
+are the ones that decide what is still open.
 
 ## The closest papers
 
 | Paper | What they did | Key result | What they left open |
 |---|---|---|---|
-| **Utility Under Attack** (Karunanidhi, Aug 2026) [2608.21230](https://arxiv.org/abs/2608.21230) | Poisoned 1.2% of LongMemEval with plain false facts (no instructions); tested a 4-stage write-time content screen and provenance-weighted retrieval | Accuracy 0.85 → 0.30. The screen caught **0 of 360** poisoned memories. Provenance weighting either does nothing (p=0.80) or excludes all untrusted content, and when real answers arrive untrusted, accuracy falls to **0.04** | Says it did **not** evaluate quarantine, delayed trust, corroboration or write-time gating with provenance. Proposes "bounded occupancy" (cap the untrusted share of retrieved context) but did not build it. Attacker is non-adaptive |
-| **MemGauge: Stage-Wise Utility-Risk Trade-offs** (Zang et al., Aug 2026) [2608.30177](https://arxiv.org/abs/2608.30177) | Varies write admission, management policy and retrieval exposure across Mem0, A-MEM, LangMem and Hindsight, on 11 LLMs, with MINJA and sleeper attacks | Attack success jumps once more than ~50% of content is written. Provenance quarantine stops sleeper (tool) attacks but **not MINJA**. Management policies cut attack success by up to 62% with little clean-utility loss | Its conflict policy quarantines new records that conflict with trusted ones, which would also block legitimate updates; knowledge-update questions are not reported separately. Its verification policy is an idealised upper bound, not a real mechanism |
-| **TMA-NM: Origin-Bound Authority** (Louck, Jun 2026) [2606.24322](https://arxiv.org/abs/2606.24322) | Untrusted content is stored but marked non-actionable; the label survives summarisation; actions need independent trusted corroboration or user confirmation | **0 of 1,920** attacks succeed on consequential actions (payments, data sends), with 96–100% legitimate utility, across 8 frontier models | Explicitly out of scope: **"answer biasing"**, false facts that corrupt answers rather than trigger actions ("mitigated, not eliminated") |
+| **Utility Under Attack** (Karunanidhi, Aug 2026) [2608.21230](https://arxiv.org/abs/2608.21230) | Poisoned 1.2% of LongMemEval with plain false facts (no instructions); tested a 4-stage write-time content screen and provenance-weighted retrieval | Accuracy 0.850 → 0.300. The screen rejects **0 of 360** poisoned memories. The shipped provenance weight is indistinguishable from no defence (p=0.80), and when the answer-bearing evidence arrives untrusted, a weight strong enough to resist poison drops accuracy to **0.0417** | Tests only those two defences (no quarantine, delayed trust or corroboration). Proposes "bounded occupancy" (reserve space for untrusted content in retrieval) and says: "We have not implemented or evaluated such a gate" |
+| **MemGauge: Stage-Wise Utility-Risk Trade-offs** (Zang et al., Aug 2026) [2608.30177](https://arxiv.org/abs/2608.30177) | Varies write admission, management policy and retrieval exposure across Mem0, A-MEM, LangMem and Hindsight, on 11 LLMs, with MINJA and sleeper attacks | Attack success jumps once more than ~50% of content is written. Provenance quarantine stops sleeper (tool) attacks but **not MINJA**. Management policies cut attack success by up to 62% with little clean-utility loss | Its Numeric-Conflict policy (NC) "quarantines a newly written record when its numerical content conflicts with an existing trusted record", which would also block legitimate numeric updates; we found no separate report of knowledge-update questions. Its Strict Conflict policy "serves as an upper bound" (assumes complete, reliable feedback) |
+| **TMA-NM: Origin-Bound Authority** (Louck, Jun 2026) [2606.24322](https://arxiv.org/abs/2606.24322) | Untrusted-origin content is stored but non-actionable, and the label propagates through summaries and tool echoes; a consequential action driven by untrusted content needs ≥2 independent trusted principals or fresh user authorisation | 0/1,920 pooled over laundering channels; 0/4,032 in the cross-model study; 100% legit utility (95.9% task utility cross-model), 8 frontier models; also holds at 0% inside Mem0 | States "Answer-bias is mitigated, not eliminated … TMA-NM guards the retrieval-to-action path, not free-text answers". Legitimate *updates* arriving untrusted are not a studied case |
 | **Belief-Based Memory (Nous)** (Singh, Jun 2026) [2606.22030](https://arxiv.org/abs/2606.22030) | Bayesian belief updating with reliability estimates and provenance caps | Little gain over last-write-wins on standard benchmarks; helps when sources differ in trust; resists volumetric poisoning | No quarantine, delayed trust or user confirmation. Tested on LoCoMo plus synthetic contradictions |
 | **Revoked but Still Authoritative** (Shen et al., Sep 2026) [2609.08258](https://arxiv.org/abs/2609.08258) | Five memory systems, nine models: are outdated ("revoked") facts actually suppressed? | No system enforces revocation by default; the revoked fact often outranks its replacement | Shows the update side is broken even without an attacker |
-| **A-MemGuard** (ICML 2026) [2510.02373](https://arxiv.org/abs/2510.02373) | Consensus across reasoning paths from different memories, plus a "lessons" memory of past failures | Cuts attack success by more than 95% with small utility cost | Consensus can be faked by repetition (Louck's "manufactured corroboration") |
+| **A-MemGuard** (Wei et al., arXiv Sep 2025) [2510.02373](https://arxiv.org/abs/2510.02373) | Consensus across reasoning paths from different memories, plus a "lessons" memory of past failures | Cuts attack success by more than 95% with small utility cost | Consensus can be faked by repetition (Louck's "manufactured corroboration") |
+
+## Newer papers (found 6 October 2026) and why they don't close the gap
+
+| Paper | What it does | Updates vs poison? |
+|---|---|---|
+| **MPBench** (Dash et al., Jun 2026) [2606.04329](https://arxiv.org/abs/2606.04329) | 4 write channels, 9 structural weaknesses, 6 attack classes; "existing prompt injection defenses fail to cover memory poisoning" | Not studied |
+| **GhostWriter / AM-Sentry** (Torres et al., Jul 2026) [2607.06595](https://arxiv.org/abs/2607.06595) | Attack: ~98% injection, ~60% activation. Defence: a memory-saving policy plus a retrieval screen | Not studied |
+| **MemPoison** (Gao et al., Jul 2026) [2607.14651](https://arxiv.org/abs/2607.14651) | 1,227 hand-validated cases, 10 model families; argues for adaptive, context-sensitive defences over static write-time filters | Not studied |
+| **Bad Memory** (Gadgil et al., Jul 2026) [2607.14611](https://arxiv.org/abs/2607.14611) | Memory files of Claude Code and Codex: agents rarely overwrite memory from untrusted content, but already-planted payloads attack later sessions | Not studied |
+| **PPMF: memory provenance laundering** (Xu et al., Jul 2026) [2607.29167](https://arxiv.org/abs/2607.29167) | Keeps platform provenance and authorises tool calls by the authority of the memories behind them | Actions only |
+| **SMSR** (Sharma, Jun 2026) [2606.12703](https://arxiv.org/abs/2606.12703) | HMAC provenance plus randomised ablation with a certificate; end-to-end attack success 65.3% → 5.3%, clean utility 85–90% | Not studied |
+| **PipePoison** (Zang et al., Sep 2026) [2609.00523](https://arxiv.org/abs/2609.00523) | Optimised end-to-end poisoning; stays effective under 8 representative defences | Attack only; a stress test for us |
+| **LTM security survey** (Lin et al., Apr/Sep 2026) [2604.16548](https://arxiv.org/abs/2604.16548) | Security "must be anchored in storage-time provenance, versioning, and policy-aware retention" | Names the direction, no mechanism |
+
+Others seen: MemAudit (2605.23723, post-hoc auditing), forensic trajectory signatures
+(2606.30566), memory poisoning attack and defence (2601.05504), SuperLocalMemory
+(2603.02240, Bayesian trust).
 
 ## What is already done (don't claim it)
 
 - Measuring safety and usefulness together (MemGauge, Utility Under Attack).
 - Provenance quarantine, and the finding that it fails against MINJA (MemGauge).
-- Stopping poisoned memories from triggering **actions** (TMA-NM).
-- Showing that content filters can't catch plain false facts (Utility Under Attack).
+- Storing untrusted content with a label instead of blocking it, **to gate actions** (TMA-NM,
+  PPMF). So "keep it but label it" alone is not new; using it for answers and updates is.
+- Cryptographic provenance for memory writes (SMSR).
+- Showing that content filters can't catch plain false facts (Utility Under Attack), and that
+  optimised attacks beat many defences (PipePoison).
 
 ## What is still open
 
