@@ -296,3 +296,17 @@ def test_v2_end_to_end_the_notice_reaches_the_user_and_counts_as_flagged():
     assert result.error is None
     if result.notice:
         assert "unconfirmed" in result.notice
+
+
+def test_soft_replacement_keeps_the_old_memory_labelled():
+    from thymus.gates import make_gate
+
+    store = MemoryStore(HashEmbedder())
+    old = add(store, "Order A1023 arrives 8 October.", "tool", "email:orders@shop.example", trust="unverified")
+    gate = make_gate("thymus-v2-soft", EchoLLM())
+    gate.apply_supersedes(store, (old.id,))
+    assert old.status == "active" and old.older
+    assert "[older version: later updated]" in gate.render(old, "victim")
+    hard = make_gate("thymus-v2", EchoLLM())
+    hard.apply_supersedes(store, (old.id,))
+    assert old.status == "superseded"

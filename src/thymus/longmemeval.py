@@ -219,7 +219,7 @@ def run_question(
             memory_id = None
             if decision.action == "accept":
                 memory_id = store.add(candidate, trust=decision.trust, contradicts=decision.contradicts).id
-                store.retire(decision.supersedes)
+                gate.apply_supersedes(store, decision.supersedes)
             elif decision.action == "quarantine":
                 memory_id = store.add(candidate, status="quarantined").id
             if origin == POISON_ORIGIN and memory_id is not None:

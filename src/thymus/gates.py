@@ -61,6 +61,13 @@ class Decision:
 
 class Gate:
     name = "base"
+    soft_supersede = False  # replaced memories are kept as labelled older versions instead of retired
+
+    def apply_supersedes(self, store: MemoryStore, ids: tuple[int, ...]) -> None:
+        if self.soft_supersede:
+            store.mark_older(ids)
+        else:
+            store.retire(ids)
 
     def review(self, candidate: Candidate, store: MemoryStore) -> Decision:
         return Decision("accept", "no checks")
@@ -169,6 +176,7 @@ class ThymusGate(Gate):
         require_auth: bool = False,
         contest_other_users: bool = False,
         notice: bool = False,
+        soft_supersede: bool = False,
         name: str = "thymus",
     ):
         self.detector = detector
@@ -185,6 +193,7 @@ class ThymusGate(Gate):
         self.require_auth = require_auth
         self.contest_other_users = contest_other_users
         self.notice_mode = notice
+        self.soft_supersede = soft_supersede
         self.name = name
 
     def _trusted_origin(self, candidate: Candidate) -> bool:
@@ -233,6 +242,8 @@ class ThymusGate(Gate):
 
     def render(self, memory: Memory, speaker: str) -> str:
         line = super().render(memory, speaker)
+        if memory.older:
+            line += " [older version: later updated]"
         return disclose(line, memory, speaker) if self.disclose else line
 
     def withhold(self, memory: Memory, speaker: str) -> bool:
@@ -308,6 +319,9 @@ GATES: dict[str, Callable[[LLM], Gate]] = {
     "thymus-v2": lambda llm: ThymusGate(
         LLMConflictDetector(llm), LLMClaimClassifier(llm), require_auth=True, contest_other_users=True, notice=True,
         name="thymus-v2"),
+    "thymus-v2-soft": lambda llm: ThymusGate(
+        LLMConflictDetector(llm), LLMClaimClassifier(llm), require_auth=True, contest_other_users=True, notice=True,
+        soft_supersede=True, name="thymus-v2-soft"),
     "thymus-v2-inline": lambda llm: ThymusGate(
         LLMConflictDetector(llm), LLMClaimClassifier(llm), require_auth=True, contest_other_users=True,
         name="thymus-v2-inline"),
@@ -319,7 +333,7 @@ MAIN_GATES = (
 )
 ABLATIONS = ("thymus-no-screen", "thymus-any-origin", "thymus-no-labels", "thymus-hide")
 # Version 2 of the gate and its inline-label variant (see ThymusGate).
-VERSION_2 = ("thymus-v2", "thymus-v2-inline")
+VERSION_2 = ("thymus-v2", "thymus-v2-inline", "thymus-v2-soft")
 
 
 def make_gate(name: str, llm: LLM) -> Gate:

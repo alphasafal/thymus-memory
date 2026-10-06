@@ -109,7 +109,7 @@ class MemoryAgent:
                 memory_id = None
                 if decision.action == "accept":
                     memory_id = self.store.add(candidate, trust=decision.trust, contradicts=decision.contradicts).id
-                    self.store.retire(decision.supersedes)
+                    self.gate.apply_supersedes(self.store, decision.supersedes)
                 elif decision.action == "quarantine":
                     memory_id = self.store.add(candidate, status="quarantined").id
                 events.append(WriteEvent(candidate, decision, memory_id))

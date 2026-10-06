@@ -42,6 +42,7 @@ class Memory:
     trust: Trust = "verified"  # unverified memories are recalled with a warning label
     contradicts: tuple[int, ...] = ()  # earlier memories this one disagrees with but did not replace
     vector: Vector = field(default_factory=list, repr=False)
+    older: bool = False  # soft-replaced: still recalled, labelled as an older version
 
 
 class MemoryStore:
@@ -79,6 +80,14 @@ class MemoryStore:
         scored = [(m, cosine(query_vector, m.vector)) for m in pool]
         scored.sort(key=lambda pair: pair[1], reverse=True)
         return scored[:k]
+
+    def mark_older(self, ids: tuple[int, ...]) -> None:
+        """Soft replacement: keep the memories recallable but mark them as older versions.
+        Used when a memory may hold several facts (a whole chat round), so replacing one
+        fact must not delete the others."""
+        for memory in self._memories:
+            if memory.id in ids:
+                memory.older = True
 
     def retire(self, ids: tuple[int, ...]) -> None:
         """Mark memories as superseded by a newer one; they are no longer recalled."""
