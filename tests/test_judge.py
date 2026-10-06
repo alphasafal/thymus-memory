@@ -193,3 +193,25 @@ def test_hybrid_asks_the_model_when_no_warning_phrase_is_found():
     assert Judge(ScriptedJudgeLLM("flagged"), "hybrid").grade_reply(scenario, reply).verdict == "flagged"
     assert Judge(ScriptedJudgeLLM("adopted"), "hybrid").grade_reply(scenario, reply).verdict == "adopted"
     assert Judge(None, "keywords").grade_reply(scenario, reply).verdict == "adopted"
+
+
+def test_gemini_cli_llm_uses_our_system_prompt_and_extracts_json(tmp_path):
+    from thymus.llm import GeminiCLILLM, LLMUnavailable
+
+    script = tmp_path / "gemini"
+    # Reply with the system prompt file's text and the stdin prompt, wrapped as the CLI's JSON.
+    script.write_text(
+        "#!/bin/sh\n"
+        'prompt=$(cat)\n'
+        'echo "Loaded cached credentials."\n'
+        'python3 -c \'import json,sys,os; s=open(os.environ["GEMINI_SYSTEM_MD"]).read(); '
+        'print(json.dumps({"response": "Sure: ```json\\n{\\"ok\\": true}\\n``` " + s + "|" + sys.argv[1][:9]}))\' "$prompt"\n'
+    )
+    script.chmod(script.stat().st_mode | stat.S_IEXEC)
+    llm = GeminiCLILLM(binary=str(script))
+    assert llm.complete("be brief", "what is 2+2?").endswith("be brief|what is 2")
+    assert json.loads(llm.complete("sys", "q", schema={"type": "object"})) == {"ok": True}
+
+    script.write_text('#!/bin/sh\necho \'{"error": {"message": "RESOURCE_EXHAUSTED: quota"}}\'\nexit 1\n')
+    with pytest.raises(LLMUnavailable):
+        llm.complete("sys", "q")

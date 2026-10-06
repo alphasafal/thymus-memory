@@ -15,7 +15,9 @@ from thymus.gates import GATES, MAIN_GATES, make_gate
 from thymus.harness import run_scenario, summarize, summary_markdown
 from thymus.haystack import background_pool, fill
 from thymus.judge import MODES, Judge
-from thymus.llm import LLM, AnthropicLLM, CachedLLM, ClaudeCodeLLM, CodexLLM, EchoLLM, LLMUnavailable, OllamaLLM
+from thymus.llm import (
+    LLM, AnthropicLLM, CachedLLM, ClaudeCodeLLM, CodexLLM, EchoLLM, GeminiCLILLM, LLMUnavailable, OllamaLLM,
+)
 from thymus.scenarios import CATEGORIES, load_scenarios
 
 
@@ -31,7 +33,12 @@ def make_llm(spec: str) -> LLM:
         return ClaudeCodeLLM(model or None)
     if kind == "codex":
         return CodexLLM(model or None)
-    raise ValueError(f"unknown model spec {spec!r}; use echo, ollama:<model>, claude-code[:<model>], codex[:<model>] or anthropic:<model>")
+    if kind == "gemini-cli":
+        return GeminiCLILLM(model or None)
+    raise ValueError(
+        f"unknown model spec {spec!r}; use echo, ollama:<model>, claude-code[:<model>], codex[:<model>], "
+        "gemini-cli[:<model>] or anthropic:<model>"
+    )
 
 
 def preflight(llm: LLM) -> str | None:
@@ -79,7 +86,7 @@ def make_embedder(spec: str) -> Embedder:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="thymus-eval", description="Score memory write-gates on attack, update and benign scenarios.")
-    parser.add_argument("--llm", default="ollama:qwen2.5:3b-instruct", help="agent model: echo | ollama:<model> | claude-code[:<model>] | codex[:<model>] | anthropic:<model> (default: %(default)s)")
+    parser.add_argument("--llm", default="ollama:qwen2.5:3b-instruct", help="agent model: echo | ollama:<model> | claude-code[:<model>] | codex[:<model>] | gemini-cli[:<model>] | anthropic:<model> (default: %(default)s)")
     parser.add_argument("--judge", default="same", help="grading model: same (as --llm) | none | any --llm spec (default: %(default)s)")
     parser.add_argument("--grading", choices=MODES, default="hybrid", help="how replies are graded (default: %(default)s)")
     parser.add_argument("--embedder", default="ollama:nomic-embed-text", help="hash | ollama:<model> (default: %(default)s)")

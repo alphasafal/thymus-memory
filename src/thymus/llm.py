@@ -114,7 +114,9 @@ def find_claude_binary() -> str:
 
 
 # Messages the Claude Code and Codex CLIs print when a subscription's usage limit is hit.
-_PLAN_LIMIT = re.compile(r"usage limit|rate.?limit|hit your limit|limit reached|quota|too many requests|\b429\b", re.I)
+_PLAN_LIMIT = re.compile(
+    r"usage limit|rate.?limit|hit your limit|limit reached|quota|too many requests|resource.?exhausted|\b429\b", re.I
+)
 
 
 def _cli_failure(name: str, text: str) -> LLMError:
@@ -288,6 +290,53 @@ class CodexLLM:
             if done.returncode != 0 or not out.exists():
                 raise _cli_failure(self.name, done.stderr or done.stdout)
             return out.read_text().strip()
+
+
+class GeminiCLILLM:
+    """Gemini through Google's Gemini CLI signed in with a Google account (`gemini`, then
+    "Login with Google"), so calls use the account's free quota instead of a paid API key.
+    Our system prompt replaces the CLI's own (GEMINI_SYSTEM_MD) and each call runs in an
+    empty folder. The CLI has no JSON-schema option, so structured calls ask for JSON in the
+    prompt and the first JSON object in the reply is returned."""
+
+    def __init__(self, model: str | None = None, binary: str | None = None, timeout: float = 300):
+        self.binary = binary or shutil.which("gemini") or "gemini"
+        self.model = model
+        self.timeout = timeout
+        self.name = f"gemini-cli:{model or 'default'}"
+
+    def complete(self, system: str, prompt: str, schema: dict | None = None) -> str:
+        if schema is not None:
+            prompt += (
+                "\n\nReply with only one JSON object that matches this JSON schema, and nothing else:\n"
+                + json.dumps(schema)
+            )
+        with tempfile.TemporaryDirectory() as workdir:
+            system_file = Path(workdir) / "system.md"
+            system_file.write_text(system)
+            command = [self.binary, "--output-format", "json"]
+            if self.model:
+                command += ["-m", self.model]
+            env = {**os.environ, "GEMINI_SYSTEM_MD": str(system_file)}
+            try:
+                done = subprocess.run(
+                    command, input=prompt, capture_output=True, text=True, timeout=self.timeout, cwd=workdir, env=env
+                )
+            except subprocess.TimeoutExpired as e:
+                raise LLMError(f"{self.name} timed out after {self.timeout}s") from e
+        try:  # the CLI may print log lines before its JSON
+            data, _ = json.JSONDecoder().raw_decode(done.stdout[done.stdout.index("{"):])
+        except ValueError:
+            raise _cli_failure(self.name, done.stderr or done.stdout) from None
+        if done.returncode != 0 or data.get("error"):
+            raise _cli_failure(self.name, json.dumps(data.get("error")) + " " + done.stderr)
+        reply = str(data.get("response", "")).strip()
+        if schema is None:
+            return reply
+        match = re.search(r"\{.*\}", reply, re.DOTALL)
+        if not match:
+            raise LLMError(f"{self.name} returned no JSON object: {reply[:200]}")
+        return match.group(0)
 
 
 class CachedLLM:
