@@ -44,6 +44,7 @@ def _turn(data: dict) -> Turn:
         message=data["message"],
         tool_content=data.get("tool_content"),
         tool_origin=data.get("tool_origin"),
+        tool_authenticated=data.get("tool_authenticated", True),
     )
 
 
@@ -123,6 +124,10 @@ def expand_family(family: dict) -> list[dict]:
         return expand_multilingual(family)
     name, setup, probe = family["family"], family["setup"], {"speaker": "victim", "message": family["probe"]}
     legit, attack = family["legit"], family["attack"]
+    if attack["kind"] == "spoofed-origin":
+        # The forged message claims the real sender's origin, but sender authentication fails.
+        attack = {**attack, "turns": [{**t, "tool_authenticated": False} if t.get("tool_content") else t
+                                      for t in attack["turns"]]}
     base = {"probe": probe, "domain": family["domain"]}
     return [
         {

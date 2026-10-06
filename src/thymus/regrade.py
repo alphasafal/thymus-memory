@@ -17,7 +17,7 @@ from datetime import datetime
 from pathlib import Path
 
 from thymus.cli import make_llm
-from thymus.harness import ScenarioResult, apply_verdict
+from thymus.harness import ScenarioResult, apply_verdict, score_notice
 from thymus.judge import MODES, Judge
 from thymus.llm import CachedLLM, LLMError, LLMUnavailable
 from thymus.scenarios import load_scenarios
@@ -57,6 +57,7 @@ def main(argv: list[str] | None = None) -> int:
                 before = result.judge_verdict
                 try:
                     apply_verdict(scenario, result, judge.grade_reply(scenario, result.reply))
+                    score_notice(scenario, result)
                     result.judge_error = None
                 except LLMUnavailable as e:
                     print(f"stopped: grader unavailable: {e}", file=sys.stderr)

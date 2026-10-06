@@ -29,11 +29,13 @@
         "--gate",
         "label-only",
         "--gate",
-        "thymus",
+        "thymus-v2",
         "--gate",
         "bounded-occupancy",
         "--gate",
-        "conflict-quarantine"
+        "conflict-quarantine",
+        "--gate",
+        "thymus-v2-inline"
       ]
     },
     {
@@ -55,7 +57,7 @@
         "--gate",
         "label-only",
         "--gate",
-        "thymus",
+        "thymus-v2",
         "--gate",
         "bounded-occupancy",
         "--gate",
@@ -79,7 +81,7 @@
         "--gate",
         "label-only",
         "--gate",
-        "thymus"
+        "thymus-v2"
       ]
     }
   ]

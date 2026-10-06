@@ -77,6 +77,14 @@ class Gate:
         the trust it would be stored with, or None if the gate would not store it."""
         return "verified"
 
+    def withhold(self, memory: Memory, speaker: str) -> bool:
+        """True if a recalled memory goes to the user as a system notice instead of to the model."""
+        return False
+
+    def notice(self, memories: list[Memory], speaker: str) -> str:
+        """The system-written disclosure appended to the reply for withheld memories."""
+        return ""
+
 
 class AllowAllGate(Gate):
     name = "allow-all"
@@ -158,6 +166,9 @@ class ThymusGate(Gate):
         same_origin_only: bool = True,
         disclose: bool = True,
         hide_contested: bool = False,
+        require_auth: bool = False,
+        contest_other_users: bool = False,
+        notice: bool = False,
         name: str = "thymus",
     ):
         self.detector = detector
@@ -168,10 +179,20 @@ class ThymusGate(Gate):
         self.same_origin_only = same_origin_only
         self.disclose = disclose
         self.hide_contested = hide_contested
+        # Version 2 rules (thymus-v2): a source replaces its own fact only through an
+        # authenticated channel; a user's claim that contradicts another user is contested;
+        # contested claims reach the user as a system notice instead of the model.
+        self.require_auth = require_auth
+        self.contest_other_users = contest_other_users
+        self.notice_mode = notice
         self.name = name
 
+    def _trusted_origin(self, candidate: Candidate) -> bool:
+        authentic = candidate.authenticated or not self.require_auth
+        return candidate.origin.startswith(self.trusted_origins) and authentic
+
     def _trust(self, candidate: Candidate) -> Trust:
-        if candidate.source == "user" or candidate.origin.startswith(self.trusted_origins):
+        if candidate.source == "user" or self._trusted_origin(candidate):
             return "verified"
         return "unverified"
 
@@ -179,7 +200,7 @@ class ThymusGate(Gate):
         return self._trust(candidate)  # background facts are facts and conflict with nothing
 
     def review(self, candidate: Candidate, store: MemoryStore) -> Decision:
-        if self.screen and candidate.source == "tool" and not candidate.origin.startswith(self.trusted_origins):
+        if self.screen and candidate.source == "tool" and not self._trusted_origin(candidate):
             kind = self.classifier.kind(candidate.text)
             if kind != "fact":
                 return Decision("reject", f"{candidate.origin} tried to speak for the user ({kind})")
@@ -193,9 +214,13 @@ class ThymusGate(Gate):
             # Users may correct facts from tools and their own earlier statements,
             # but not what a different user told a shared assistant.
             own = [m for m in conflicts if m.source == "tool" or m.speaker == candidate.speaker]
-            return Decision("accept", f"user update replaces {_ids(own)}", tuple(m.id for m in own), trust)
+            contested = tuple(m.id for m in conflicts if m not in own) if self.contest_other_users else ()
+            return Decision("accept", f"user update replaces {_ids(own)}", tuple(m.id for m in own), trust, contested)
 
-        same_origin = [m for m in conflicts if m.origin == candidate.origin or not self.same_origin_only]
+        can_replace = candidate.authenticated or not self.require_auth
+        same_origin = [
+            m for m in conflicts if (m.origin == candidate.origin and can_replace) or not self.same_origin_only
+        ]
         others = [m for m in conflicts if m not in same_origin]
         if others and self.hide_contested:
             return Decision("quarantine", f"contradicts {_ids(others)} from other sources, hidden")
@@ -209,6 +234,27 @@ class ThymusGate(Gate):
     def render(self, memory: Memory, speaker: str) -> str:
         line = super().render(memory, speaker)
         return disclose(line, memory, speaker) if self.disclose else line
+
+    def withhold(self, memory: Memory, speaker: str) -> bool:
+        return self.notice_mode and contested(memory, speaker)
+
+    def notice(self, memories: list[Memory], speaker: str) -> str:
+        if not memories:
+            return ""
+        claims = "; ".join(
+            f"{'another user of this assistant' if m.source == 'user' else 'a message from ' + m.origin} said: "
+            f'"{m.text}"'
+            for m in sorted(memories, key=lambda m: m.created_at)
+        )
+        return (
+            f"Note: I also have unconfirmed information that contradicts this. {claims}. "
+            "I have not used it in my answer; please check with the source directly before acting on it."
+        )
+
+
+def contested(memory: Memory, speaker: str) -> bool:
+    """A claim that contradicts another source and is not the viewer's own verified statement."""
+    return bool(memory.contradicts) and (memory.trust == "unverified" or memory.speaker != speaker)
 
 
 def disclose(line: str, memory: Memory, speaker: str) -> str:
@@ -259,6 +305,12 @@ GATES: dict[str, Callable[[LLM], Gate]] = {
         LLMConflictDetector(llm), LLMClaimClassifier(llm), disclose=False, name="thymus-no-labels"),
     "thymus-hide": lambda llm: ThymusGate(
         LLMConflictDetector(llm), LLMClaimClassifier(llm), hide_contested=True, name="thymus-hide"),
+    "thymus-v2": lambda llm: ThymusGate(
+        LLMConflictDetector(llm), LLMClaimClassifier(llm), require_auth=True, contest_other_users=True, notice=True,
+        name="thymus-v2"),
+    "thymus-v2-inline": lambda llm: ThymusGate(
+        LLMConflictDetector(llm), LLMClaimClassifier(llm), require_auth=True, contest_other_users=True,
+        name="thymus-v2-inline"),
 }
 
 # The gates compared in the main experiment; the ablations are run separately.
@@ -266,6 +318,8 @@ MAIN_GATES = (
     "allow-all", "user-only", "conflict-quarantine", "last-write-wins", "bounded-occupancy", "label-only", "thymus",
 )
 ABLATIONS = ("thymus-no-screen", "thymus-any-origin", "thymus-no-labels", "thymus-hide")
+# Version 2 of the gate and its inline-label variant (see ThymusGate).
+VERSION_2 = ("thymus-v2", "thymus-v2-inline")
 
 
 def make_gate(name: str, llm: LLM) -> Gate:

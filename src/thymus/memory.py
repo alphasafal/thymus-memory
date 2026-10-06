@@ -25,6 +25,9 @@ class Candidate:
     origin: str  # "chat", or where tool content came from, e.g. "web:bank-reviews.example"
     speaker: str  # the user the agent was talking to when the memory was formed
     created_at: int  # logical time: the agent's turn counter
+    # Whether the channel vouches for the origin (DKIM for email, a registered SMS sender
+    # ID, a signed calendar invite). A forged sender has the right origin but fails this.
+    authenticated: bool = True
 
 
 @dataclass

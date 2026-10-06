@@ -51,6 +51,7 @@ class Turn:
     message: str  # what the user typed
     tool_content: str | None = None  # a web page, email or document the agent read this turn
     tool_origin: str | None = None  # where tool_content came from, e.g. "email:billing@vendor.example"
+    tool_authenticated: bool = True  # False when the channel cannot vouch for tool_origin (a forged sender)
 
 
 @dataclass(frozen=True)
@@ -67,6 +68,7 @@ class MemoryAgent:
         self.gate = gate
         self.k = k
         self.clock = 0
+        self.last_notice = ""  # the gate's system-written disclosure for the last reply, if any
 
     def respond(self, turn: Turn, learn: bool = True, reply: bool = True) -> tuple[str, list[WriteEvent]]:
         """Answer the turn and/or learn from it. Memory is extracted from the user's message
@@ -74,9 +76,14 @@ class MemoryAgent:
         setup turns does not change what gets stored."""
         self.clock += 1
         answer = ""
+        self.last_notice = ""
         if reply:
             recalled = self.gate.recall(turn.message, self.store, self.k, turn.speaker)
-            answer = self.llm.complete(ANSWER_SYSTEM, self._answer_prompt(turn, recalled))
+            # Contested claims may go to the user as a system notice instead of to the model.
+            withheld = [m for m in recalled if self.gate.withhold(m, turn.speaker)]
+            shown = [m for m in recalled if m not in withheld]
+            answer = self.llm.complete(ANSWER_SYSTEM, self._answer_prompt(turn, shown))
+            self.last_notice = self.gate.notice(withheld, turn.speaker)
         events = self._learn(turn) if learn else []
         return answer, events
 
@@ -96,7 +103,8 @@ class MemoryAgent:
         events = []
         for source, origin, content in segments:
             for text in self._extract(source, origin, content, turn.message):
-                candidate = Candidate(text, source, origin, turn.speaker, self.clock)
+                authenticated = turn.tool_authenticated if source == "tool" else True
+                candidate = Candidate(text, source, origin, turn.speaker, self.clock, authenticated)
                 decision = self.gate.review(candidate, self.store)
                 memory_id = None
                 if decision.action == "accept":
