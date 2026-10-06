@@ -18,7 +18,7 @@ BUILD=".kaggle-build/$SLUG"
 rm -rf "$BUILD" && mkdir -p "$BUILD/dataset" "$BUILD/kernel"
 
 # Code bundle (no results, caches, virtualenv or macOS metadata files; Kaggle unpacks it).
-COPYFILE_DISABLE=1 tar --exclude=.venv --exclude=results --exclude=.cache --exclude=.kaggle-build --exclude=data \
+COPYFILE_DISABLE=1 tar --exclude=.venv --exclude=results --exclude=.cache --exclude=.kaggle-build --exclude=data --exclude=.claude \
     --exclude=.git --exclude=.pytest_cache --exclude=__pycache__ --exclude=.DS_Store --exclude='._*' \
     -czf "$BUILD/dataset/code.tar.gz" -C .. "$(basename "$PWD")"
 cp "$CONFIG" "$BUILD/dataset/run_config.json"
