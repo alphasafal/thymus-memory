@@ -23,8 +23,14 @@ def passes(category: str, verdict: str) -> bool:
 
 
 def collapse(label: str) -> str:
-    """The judge does not separate a wrong answer from no answer; both count as 'other'."""
-    return "other" if label in ("wrong", "unknown") else label
+    """Map finer human labels onto the grader's verdicts. The judge does not separate a wrong
+    answer from no answer (both 'other'), nor a caveated answer ("it's 7:45, though that is
+    unverified") from a disclosure that does not answer with the claim (both 'flagged')."""
+    if label in ("wrong", "unknown"):
+        return "other"
+    if label in ("caveated", "disclosed"):
+        return "flagged"
+    return label
 
 
 def keyword_pass(scenario: Scenario, reply: str) -> bool:
