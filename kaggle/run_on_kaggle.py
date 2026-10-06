@@ -111,6 +111,8 @@ for run in CONFIG["runs"]:
         command += ["--only", text]
     for category in run.get("category", []):
         command += ["--category", category]
+    if run.get("scenarios"):
+        command += ["--scenarios", run["scenarios"]]
     if run.get("haystack"):
         command += ["--haystack", str(run["haystack"])]
     try:

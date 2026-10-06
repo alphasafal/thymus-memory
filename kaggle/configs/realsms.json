@@ -1,0 +1,37 @@
+{
+  "pull": [
+    "llama3.1:8b",
+    "qwen3:4b-instruct",
+    "nomic-embed-text"
+  ],
+  "runs": [
+    {
+      "name": "realsms-qwen3-4b",
+      "llm": "ollama:qwen3:4b-instruct",
+      "judge": "ollama:qwen3:4b-instruct",
+      "scenarios": "scenarios-real",
+      "gates": [
+        "allow-all",
+        "user-only",
+        "label-only",
+        "thymus",
+        "thymus-v2",
+        "thymus-v2-inline"
+      ]
+    },
+    {
+      "name": "realsms-llama3.1-8b",
+      "llm": "ollama:llama3.1:8b",
+      "judge": "ollama:qwen3:4b-instruct",
+      "scenarios": "scenarios-real",
+      "gates": [
+        "allow-all",
+        "user-only",
+        "label-only",
+        "thymus",
+        "thymus-v2",
+        "thymus-v2-inline"
+      ]
+    }
+  ]
+}

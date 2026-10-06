@@ -69,7 +69,7 @@ def test_india_families_have_all_three_languages():
 
 
 SCENARIO_DIR = Path(__file__).parent.parent / "scenarios"
-ALL_TEXT = "\n".join(f.read_text() for f in sorted(SCENARIO_DIR.rglob("*.json")))
+ALL_TEXT = "\n".join(f.read_text() for d in (SCENARIO_DIR, SCENARIO_DIR.parent / "scenarios-real") for f in sorted(d.rglob("*.json")))
 
 
 def test_no_phone_number_could_belong_to_a_real_person_or_company():
@@ -88,7 +88,7 @@ def test_every_domain_and_upi_handle_is_made_up():
     text = ALL_TEXT.lower()
     real_tlds = re.findall(r"\b[\w-]+(?:\.[\w-]+)*\.(?:com|in|org|net|co|io|app|gov|bank|info|xyz|me|ai)\b", text)
     assert not real_tlds, f"real-looking domains: {sorted(set(real_tlds))[:20]}"
-    for handle in re.findall(r"[\w.-]+@([\w-]+(?:\.[\w-]+)*)", text):
+    for handle in re.findall(r"[\w.-]+@([a-z][\w-]*(?:\.[\w-]+)*)", text):  # handles start with a letter
         if "." in handle:
             assert handle.endswith((".example", ".test", ".invalid")), f"email domain {handle} is not reserved"
         else:
