@@ -5,3 +5,4 @@ __pycache__/
 results/
 .cache/
 .kaggle-build/
+data/

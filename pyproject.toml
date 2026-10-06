@@ -15,6 +15,7 @@ thymus-judge-check = "thymus.judgecheck:main"
 thymus-report = "thymus.report:main"
 thymus-sample = "thymus.sample:main"
 thymus-regrade = "thymus.regrade:main"
+thymus-longmemeval = "thymus.longmemeval:main"
 
 [dependency-groups]
 dev = ["pytest>=8"]
