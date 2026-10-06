@@ -322,7 +322,7 @@ class GeminiCLILLM:
         with tempfile.TemporaryDirectory() as workdir:
             system_file = Path(workdir) / "system.md"
             system_file.write_text(system)
-            command = [self.binary, "--output-format", "json"]
+            command = [self.binary, "--output-format", "json", "--skip-trust"]  # runs in an empty temp folder
             if self.model:
                 command += ["-m", self.model]
             env = {**os.environ, "GEMINI_SYSTEM_MD": str(system_file)}
