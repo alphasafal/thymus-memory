@@ -36,20 +36,25 @@ awards and the Internet Defense Prize for practical security research.
 
 Check each call for papers for anonymity and preprint rules before posting anything publicly.
 
-## Experiments still needed
+## Experiments
 
-1. **Main table:** 6 defences × all scenarios on `qwen3:4b-instruct` (local, overnight).
-2. **Model breadth:** `qwen2.5:3b` and `qwen3:4b-instruct` (local); Claude Sonnet (Pro subscription,
-   capped); GPT (ChatGPT Plus via the Codex CLI, if it works cleanly); 8–14B open models (Llama,
-   Qwen, Gemma) on Kaggle's free GPUs.
-3. **India extension:** 30 families × 3 languages (English, Hindi, Hinglish). Batch 1 has 12.
-4. **Adaptive attacker:** attacks designed by someone who knows how the thymus gate works.
-5. **Long memory:** 100 background memories per scenario, where bounded occupancy should matter.
-6. **Ablations:** thymus without disclosure, without the same-origin rule, without the claim classifier.
-7. **Grader validation:** 100 held-out replies labelled blind by you, a Claude helper and GPT;
-   report agreement (Cohen's kappa) and grader accuracy.
-8. **Statistics:** bootstrap confidence intervals; McNemar tests between defences.
-9. **Practical demo:** the gate running inside an open-source memory library (Mem0).
+Status on 6 October 2026. Kaggle notebooks are private and named `thymus-run-<config>`
+(the first Llama run used the older name `thymus-memory-run`).
+
+| # | Experiment | Status |
+|---|---|---|
+| 1 | **Main table:** 6 defences × 491 scenarios, `qwen3:4b-instruct` | Moved from the Mac (too slow, ~1 day) to Kaggle (`kaggle/configs/qwen3-4b.json`); starts when the ablation notebook finishes, reusing its cache |
+| 2 | **Llama 3.1 8B**, 6 defences × 491 | Running on Kaggle |
+| 3 | **Frontier models:** Claude Opus 5.5 (Pro) and GPT-6-Astra (ChatGPT Plus via Codex), 36-scenario subset × 3 gates | Running on the Mac (`scripts/run_frontier_subset.sh`) |
+| 4 | **India extension:** 30 families × 3 languages | Done (in the benchmark) |
+| 5 | **Adaptive attacker:** 16 attacks written against the gate | Done (in the benchmark) |
+| 6 | **Ablations:** no-screen, any-origin, no-labels, hide (`scripts/run_ablations.sh`) | Running on Kaggle for qwen3; Llama next |
+| 7 | **Long memory:** 80 background facts per scenario (`--haystack 80`) | Built; Kaggle config `qwen3-4b-haystack.json` ready |
+| 8 | **Grader validation:** 100 held-out replies labelled blind (you, a Claude helper, GPT) with 4 attack labels (adopted / caveated / disclosed / absent) | Tooling ready; needs final runs |
+| 9 | **Statistics:** family-bootstrap 95% intervals; exact McNemar between defences | Done (in `thymus-report`) |
+| 10 | **Practical demo:** the gate inside an open-source memory library (Mem0) | Not started |
+| 11 | **Rerun** bank-customer-care, sim-plan and adaptive-flood-customer-care for runs started before 6 Oct 08:40 (phone numbers changed) | To do after Kaggle runs |
+| 12 | **More open models** (Gemma, a larger Qwen) on Kaggle | Optional, if GPU hours allow (30 h/week) |
 
 ## Who does what
 
