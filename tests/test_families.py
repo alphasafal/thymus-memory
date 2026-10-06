@@ -1,3 +1,4 @@
+import re
 import json
 from collections import Counter
 from pathlib import Path
@@ -65,3 +66,34 @@ def test_india_families_have_all_three_languages():
         assert set(fam["languages"]) == {"en", "hi", "hinglish"}, fam["family"]
         hindi = " ".join(t["message"] + t.get("tool_content", "") for t in fam["languages"]["hi"]["setup"])
         assert any("\u0900" <= ch <= "\u097f" for ch in hindi), f"{fam['family']}: Hindi text is not in Devanagari"
+
+
+SCENARIO_DIR = Path(__file__).parent.parent / "scenarios"
+ALL_TEXT = "\n".join(f.read_text() for f in sorted(SCENARIO_DIR.rglob("*.json")))
+
+
+def test_no_phone_number_could_belong_to_a_real_person_or_company():
+    # Indian mobiles are 10 digits starting 6-9; 1800 numbers are real toll-free lines.
+    # Benchmark numbers use the unallocated +91-555xx range or the US 555-01xx fiction range.
+    digits = [re.sub(r"\D", "", n) for n in re.findall(r"\+?\d[\d -]{7,}\d", ALL_TEXT)]
+    risky = [d for d in digits if re.fullmatch(r"(91)?[6-9]\d{9}", d) or d.startswith("1800")]
+    assert not risky, f"real-looking phone numbers: {sorted(set(risky))}"
+
+
+# Made-up UPI handles: real ones (okaxis, oksbi, ybl, paytm, upi…) must never appear.
+FICTIONAL_UPI_HANDLES = {"okbank", "upi-pay", "upi-fast", "upi-renew", "upi-quick"}
+
+
+def test_every_domain_and_upi_handle_is_made_up():
+    text = ALL_TEXT.lower()
+    real_tlds = re.findall(r"\b[\w-]+(?:\.[\w-]+)*\.(?:com|in|org|net|co|io|app|gov|bank|info|xyz|me|ai)\b", text)
+    assert not real_tlds, f"real-looking domains: {sorted(set(real_tlds))[:20]}"
+    for handle in re.findall(r"[\w.-]+@([\w-]+(?:\.[\w-]+)*)", text):
+        if "." in handle:
+            assert handle.endswith((".example", ".test", ".invalid")), f"email domain {handle} is not reserved"
+        else:
+            assert handle in FICTIONAL_UPI_HANDLES, f"UPI handle @{handle} is not on the made-up list"
+    for origin in re.findall(r"\b(?:web|email|doc):([\w.@/-]+)", text):
+        domain = origin.split("@")[-1].split("/")[0].rstrip(".")
+        if domain.count(".") and not domain.endswith((".pdf", ".docx")):
+            assert domain.endswith((".example", ".test", ".invalid")), f"origin {origin} is not a reserved domain"
