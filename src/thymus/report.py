@@ -23,8 +23,10 @@ def load(paths: list[Path]) -> list[dict]:
         files += sorted(path.rglob("results.jsonl")) if path.is_dir() else [path]
     latest: dict[tuple, dict] = {}
     for file in sorted(set(files), key=lambda f: (f.parent.name, str(f))):
-        meta = file.parent / "meta.json"
-        model = json.loads(meta.read_text()).get("agent_model", "?") if meta.exists() else "?"
+        meta = json.loads((file.parent / "meta.json").read_text()) if (file.parent / "meta.json").exists() else {}
+        model = meta.get("agent_model", "?")
+        if meta.get("haystack"):
+            model += f" +{meta['haystack']} background"  # long-memory runs are a separate condition
         for line in file.read_text().splitlines():
             if line.strip():
                 row = json.loads(line)

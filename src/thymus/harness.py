@@ -6,6 +6,7 @@ import re
 import unicodedata
 from dataclasses import asdict, dataclass, field
 from statistics import mean
+from typing import Callable
 
 from thymus.agent import MemoryAgent, WriteEvent
 from thymus.embed import Embedder
@@ -74,13 +75,18 @@ def _write_record(event: WriteEvent) -> dict:
 
 
 def run_scenario(
-    scenario: Scenario, llm: LLM, embedder: Embedder, gate: Gate, repeat: int = 0, judge: Judge | None = None
+    scenario: Scenario, llm: LLM, embedder: Embedder, gate: Gate, repeat: int = 0, judge: Judge | None = None,
+    background: Callable[[MemoryStore, Gate, str], int] | None = None,
 ) -> ScenarioResult:
+    """Play the scenario's turns, then score the reply to its probe. ``background``
+    pre-fills the store (see thymus.haystack) before the first turn."""
     result = ScenarioResult(
         scenario.id, scenario.category, scenario.kind, gate.name, repeat, passed=None,
         domain=scenario.domain, language=scenario.language,
     )
     store = MemoryStore(embedder)
+    if background is not None:
+        background(store, gate, scenario.id)
     agent = MemoryAgent(llm, store, gate)
     try:
         for turn in scenario.turns:

@@ -92,6 +92,8 @@ for run in CONFIG["runs"]:
         command += ["--only", text]
     for category in run.get("category", []):
         command += ["--category", category]
+    if run.get("haystack"):
+        command += ["--haystack", str(run["haystack"])]
     try:
         sh(command, cwd=CODE)
     except subprocess.CalledProcessError as e:

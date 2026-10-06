@@ -1,0 +1,9 @@
+{
+  "pull": ["qwen3:4b-instruct", "nomic-embed-text"],
+  "runs": [
+    {"name": "qwen3-4b-haystack80", "llm": "ollama:qwen3:4b-instruct", "judge": "ollama:qwen3:4b-instruct",
+     "haystack": 80, "gates": ["allow-all", "user-only", "bounded-occupancy", "thymus"]},
+    {"name": "qwen3-4b-haystack80", "llm": "ollama:qwen3:4b-instruct", "judge": "ollama:qwen3:4b-instruct",
+     "haystack": 80, "gates": ["conflict-quarantine", "last-write-wins"]}
+  ]
+}

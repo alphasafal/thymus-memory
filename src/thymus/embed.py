@@ -38,6 +38,22 @@ class OllamaEmbedder:
         return post_json(f"{self.host}/api/embed", body, self.timeout)["embeddings"]
 
 
+class MemoEmbedder:
+    """Remembers vectors by text for the length of a run. Every gate re-embeds the same
+    memories, and long-memory runs add the same background facts to every scenario."""
+
+    def __init__(self, inner: Embedder):
+        self.inner = inner
+        self.name = inner.name
+        self._vectors: dict[str, Vector] = {}
+
+    def embed(self, texts: list[str]) -> list[Vector]:
+        missing = [t for t in dict.fromkeys(texts) if t not in self._vectors]
+        if missing:
+            self._vectors.update(zip(missing, self.inner.embed(missing)))
+        return [self._vectors[t] for t in texts]
+
+
 _STOPWORDS = frozenset(
     "a an and are as at be by can could do does for from has have how i in is it its me my "
     "of on or our should so that the their them then there these they this to was we were "

@@ -69,6 +69,11 @@ class Gate:
         """How a recalled memory appears in the model's context."""
         return f"[turn {memory.created_at}] {memory.text}"
 
+    def background_trust(self, candidate: Candidate) -> Trust | None:
+        """Decision for a haystack fact that conflicts with nothing (see thymus.haystack):
+        the trust it would be stored with, or None if the gate would not store it."""
+        return "verified"
+
 
 class AllowAllGate(Gate):
     name = "allow-all"
@@ -81,6 +86,9 @@ class UserOnlyGate(Gate):
         if candidate.source == "user":
             return Decision("accept", "stated by a user")
         return Decision("reject", f"came from tool content ({candidate.origin})")
+
+    def background_trust(self, candidate: Candidate) -> Trust | None:
+        return "verified" if candidate.source == "user" else None
 
 
 def _ids(memories: list[Memory]) -> str:
@@ -163,6 +171,9 @@ class ThymusGate(Gate):
         if candidate.source == "user" or candidate.origin.startswith(self.trusted_origins):
             return "verified"
         return "unverified"
+
+    def background_trust(self, candidate: Candidate) -> Trust | None:
+        return self._trust(candidate)  # background facts are facts and conflict with nothing
 
     def review(self, candidate: Candidate, store: MemoryStore) -> Decision:
         if self.screen and candidate.source == "tool" and not candidate.origin.startswith(self.trusted_origins):

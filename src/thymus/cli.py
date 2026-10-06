@@ -10,9 +10,10 @@ from dataclasses import asdict
 from datetime import datetime
 from pathlib import Path
 
-from thymus.embed import Embedder, HashEmbedder, OllamaEmbedder
+from thymus.embed import Embedder, HashEmbedder, MemoEmbedder, OllamaEmbedder
 from thymus.gates import GATES, MAIN_GATES, make_gate
 from thymus.harness import run_scenario, summarize, summary_markdown
+from thymus.haystack import background_pool, fill
 from thymus.judge import MODES, Judge
 from thymus.llm import LLM, AnthropicLLM, CachedLLM, ClaudeCodeLLM, CodexLLM, EchoLLM, LLMUnavailable, OllamaLLM
 from thymus.scenarios import CATEGORIES, load_scenarios
@@ -59,7 +60,8 @@ def run_metadata(args: argparse.Namespace, llm: LLM, judge: Judge, scenarios: li
         "agent_model": llm.name,
         "grader": judge.name,
         "embedder": args.embedder,
-        "gates": args.gate or list(GATES),
+        "gates": args.gate or list(MAIN_GATES),
+        "haystack": args.haystack,
         "scenario_count": len(scenarios),
         "scenario_ids": [s.id for s in scenarios],
         "argv": sys.argv[1:],
@@ -90,6 +92,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--cache", type=Path, default=Path(".cache/llm"), help="response cache folder (default: %(default)s)")
     parser.add_argument("--no-cache", action="store_true", help="always call the model")
     parser.add_argument("--max-new-calls", type=int, help="stop after this many uncached model calls (agent and grader each)")
+    parser.add_argument("--haystack", type=int, default=0, metavar="N",
+                        help="long-memory run: start each scenario with N background facts from other families (default: 0)")
     args = parser.parse_args(argv)
 
     scenarios = load_scenarios(args.scenarios)
@@ -107,7 +111,7 @@ def main(argv: list[str] | None = None) -> int:
         return CachedLLM(model, args.cache, args.max_new_calls)
 
     llm = cached(make_llm(args.llm))
-    embedder = make_embedder(args.embedder)
+    embedder = MemoEmbedder(make_embedder(args.embedder))
     problem = preflight(llm)
     if problem:
         print(problem, file=sys.stderr)
@@ -118,6 +122,12 @@ def main(argv: list[str] | None = None) -> int:
         judge_llm = llm if args.judge == "same" else cached(make_llm(args.judge))
     grading = args.grading if judge_llm is not None else "keywords"
     judge = Judge(judge_llm, grading)
+    background = None
+    if args.haystack:
+        pool = background_pool(args.scenarios if args.scenarios.is_dir() else Path("scenarios"))
+
+        def background(store, gate, scenario_id):
+            return fill(store, gate, scenario_id, pool, args.haystack)
 
     run_dir = args.out / datetime.now().strftime("%Y%m%d-%H%M%S")
     run_dir.mkdir(parents=True, exist_ok=True)
@@ -132,7 +142,7 @@ def main(argv: list[str] | None = None) -> int:
                     for repeat in range(args.repeats):
                         if any(getattr(m, "exhausted", False) for m in (llm, judge.llm)):
                             break
-                        result = run_scenario(scenario, llm, embedder, gate, repeat, judge)
+                        result = run_scenario(scenario, llm, embedder, gate, repeat, judge, background)
                         results.append(result)
                         log.write(json.dumps(asdict(result)) + "\n")
                         log.flush()
