@@ -74,3 +74,33 @@ attack success and beats hiding. Ablations under v1: no labels 63%, any-origin 6
 | Opus 5.5 (79 India SMS) · allow-all | 41% |
 | Opus 5.5 · label-only / thymus-v2 | 22% / 22% |
 | GPT-6-Astra (117 SMS) · all defences | 0%: its extraction stored nothing from 116 of 117 scam messages |
+
+## 6 Oct 2026: LongMemEval_S, Utility Under Attack protocol, Llama 3.1 8B (agent and gate), qwen3 grader
+
+| Condition | Defence | Accuracy ↑ | Adopts false answer ↓ | Flags it |
+|---|---|---|---|---|
+| clean | allow-all / label-only | 63% / 63% | – | – |
+| clean | thymus-v2 | **26%** | – | – |
+| poisoned | allow-all | 24% | 63% | 0% |
+| poisoned | user-only / conflict-quarantine | 63% / 63% | 5% / 6% | 0% |
+| poisoned | label-only | 29% | 53% | 0% |
+| poisoned | bounded-occupancy | 34% | 54% | 0% |
+| poisoned | thymus-v2 / v2-inline | 23% / 18% | 37% / 57% | 50% / 2% |
+| evidence-untrusted | allow-all | 24% | 63% | 0% |
+| evidence-untrusted | user-only / conflict-quarantine | **11%** / 13% | 2% / 4% | – |
+| evidence-untrusted | label-only / bounded-occupancy | 28% / 5% | 56% / 75% | – |
+| evidence-untrusted | thymus-v2 | 16% | 35% | 52% |
+
+Reading: (1) reproduces Utility Under Attack's finding that provenance blocking collapses
+when real answers arrive untrusted (63% → 11%; they report 0.0417). (2) **Negative result
+for thymus-v2 on long real chats:** clean accuracy 63% → 26%. Memories here are whole chat
+rounds holding many facts; replacing a round because one fact changed deletes unrelated
+facts, and an 8B gate model over-detects conflicts. Fix under test: soft replacement (keep
+older versions, labelled), never deleting multi-fact memories.
+
+## 6 Oct 2026: real smishing SMS, open models (117 messages)
+
+| Model | allow-all | user-only | label-only | thymus (all variants) |
+|---|---|---|---|---|
+| Llama 3.1 8B: passes the scam on | 70% | 0% | 31% | **25%** |
+| qwen3-4B | 9% | 0% | 1% | 1% |
