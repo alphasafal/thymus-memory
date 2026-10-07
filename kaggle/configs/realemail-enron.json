@@ -1,0 +1,39 @@
+{
+  "pull": [
+    "llama3.1:8b",
+    "qwen3:4b-instruct",
+    "nomic-embed-text"
+  ],
+  "runs": [
+    {
+      "name": "realemail-enron-qwen3-4b",
+      "llm": "ollama:qwen3:4b-instruct",
+      "judge": "ollama:qwen3:4b-instruct",
+      "scenarios": "scenarios-real/enron-updates.json",
+      "gates": [
+        "allow-all",
+        "user-only",
+        "label-only",
+        "thymus",
+        "thymus-v2",
+        "thymus-v2-inline",
+        "thymus-v2-soft"
+      ]
+    },
+    {
+      "name": "realemail-enron-llama3.1-8b",
+      "llm": "ollama:llama3.1:8b",
+      "judge": "ollama:qwen3:4b-instruct",
+      "scenarios": "scenarios-real/enron-updates.json",
+      "gates": [
+        "allow-all",
+        "user-only",
+        "label-only",
+        "thymus",
+        "thymus-v2",
+        "thymus-v2-inline",
+        "thymus-v2-soft"
+      ]
+    }
+  ]
+}
