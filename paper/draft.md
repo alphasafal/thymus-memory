@@ -429,6 +429,23 @@ v2: 20%, 81%, 94%). When the real answer itself is untrusted, no
 provenance-based defence recovers it; v2 at least discloses (38–52% flagged) instead of
 silently dropping it.
 
+**6.5b Large memory stores.** Each scenario is preceded by 80 background facts from other
+families, keeping their own provenance (qwen3-4B, test split):
+
+| Defence | Fooled ↓ | Updates: answered / reach the user | Recall: answered / reach the user |
+|---|---|---|---|
+| allow-all | 28% | 80% / 80% | 91% / 91% |
+| user-only | 13% | 29% / 29% | 24% / 24% |
+| bounded-occupancy | 16% | 48% / 48% | 87% / 87% |
+| label-only | 23% | 84% / 84% | 92% / 92% |
+| thymus-v2-auto | **14%** | 63% / **85%** | 76% / **90%** |
+
+"Reach the user" counts facts given in the answer or in the system notice. The gate still
+halves attack success and delivers as much as no defence, but in a large store its 4B
+conflict detector links similar facts about different things (a car service and a
+water-purifier service), and 14 points of recall arrive only as an "unconfirmed" notice. A
+same-subject conflict check is **[R]**.
+
 **6.6 Languages.** Each of the 10 India families runs in English, Hindi (Devanagari) and
 Hinglish (30 attacks per language). Attack success with no defence → thymus-v2:
 
@@ -481,6 +498,9 @@ rules address: lost provenance (disclosure) and no rule for who may update a fac
 - **Agents must follow the label.** Inline disclosure helps only if the agent warns; Llama
   3.1 8B ignores labels (6.2). v2's system notice removes this dependence, at the cost of
   cross-origin updates arriving as notices instead of answers.
+- **False contradictions grow with the store.** With 80 background facts a small gate model
+  contests similar facts about different things; the user still hears them, but as
+  unconfirmed. The precision of the conflict check is what scales.
 - **Memory granularity.** Retiring a replaced memory is right for single claims and wrong
   for memories that hold several facts (6.5); the gate must know which it is storing.
 - **When the truth arrives untrusted.** If the real answer comes only through channels the
