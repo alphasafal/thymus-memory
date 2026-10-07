@@ -189,3 +189,17 @@ Reading: on real email the store-or-block dilemma is total: provenance quarantin
 update the undefended agent gets (more: it retires the old value) and is fooled by 3–18%.
 Single phishing messages contradict nothing, so v2 = v1 there; the gain comes from
 screening and labels, and Llama again ignores labels.
+
+## 7 Oct 2026: gate model ≠ agent model (Llama 3.1 8B agent, qwen3-4B gate), Kaggle, test split
+
+| Language | Fooled: Llama gate → qwen3 gate | Paired (exact McNemar) | Updates: Llama gate → qwen3 gate |
+|---|---|---|---|
+| English | 17% → 22% | 14 vs 9 discordant, p = 0.41 | 82% → 71% (p = 0.08) |
+| Hindi | 23% → 13% | 3 vs 6, p = 0.51 | 73% → 67% |
+| Hinglish | 27% → **3%** | 0 vs 7, **p = 0.016** | 87% → 83% |
+
+Overall: 17% fooled, 73% updates, 92% recall (Llama's own gate: 20%, 81%, 94%). v2 and
+v2-auto identical here (single-claim memories). Reading: the gate's judgments, not its
+rules, carry the language gap; a different 4B gate model removes Hinglish attacks almost
+entirely without costing updates, helps Hindi (not significant at n = 30), and is no
+better in English. Picking the gate model per language, or a stronger one, is the lever.

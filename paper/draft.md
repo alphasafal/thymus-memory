@@ -440,7 +440,12 @@ gate model's judgment. It fails to link, for example, two different customer-car
 for the same bank, and Hindi input yields more loosely worded facts, so it misses more often
 (37% of Hindi and Hinglish attacks are never contested, vs 28% in English). Since the rules
 are fixed and only these judgments are learned, the gate model can be chosen separately from
-the agent; a Llama agent with a 4B qwen3 gate model is **[R]**.
+the agent. Keeping Llama as the agent but running the gate's checks on qwen3-4B cuts
+Hinglish attacks from 27% to 3% (7 vs 0 discordant pairs, exact McNemar p = 0.016) without
+costing updates (87% → 83%), and Hindi from 23% to 13% (not significant at n = 30); English
+is unchanged in attacks (17% → 22%, p = 0.41) and loses some updates (82% → 71%, p = 0.08).
+The language gap lives in the gate's model, not its rules, so the gate model is a
+deployment choice to make per language.
 
 **6.7 Production assistants.** To check that the problem is not an artefact of our harness,
 we ran 15 three-chat trials on the author's own ChatGPT (Plus) and Claude (Pro) accounts with
