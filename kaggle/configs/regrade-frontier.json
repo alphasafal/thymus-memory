@@ -1,0 +1,43 @@
+{
+  "pull": [
+    "qwen3:4b-instruct"
+  ],
+  "inputs": [
+    "results/frontier-adaptive-codex_gpt-6-astra/20261006-103707",
+    "results/frontier-claude-code_claude-opus-5-5/20261006-103434",
+    "results/frontier-codex_gpt-6-astra/20261006-103532",
+    "results/frontier-india-claude-code_claude-opus-5-5/20261006-134334",
+    "results/realsms-claude-code_claude-opus-5-5/20261006-135317",
+    "results/realsms-codex_gpt-6-astra/20261006-141447"
+  ],
+  "runs": [
+    {
+      "name": "regrade-frontier",
+      "command": [
+        "thymus-regrade",
+        "--judge",
+        "ollama:qwen3:4b-instruct",
+        "--grading",
+        "hybrid",
+        "results/frontier-adaptive-codex_gpt-6-astra/20261006-103707",
+        "results/frontier-claude-code_claude-opus-5-5/20261006-103434",
+        "results/frontier-codex_gpt-6-astra/20261006-103532",
+        "results/frontier-india-claude-code_claude-opus-5-5/20261006-134334"
+      ]
+    },
+    {
+      "name": "regrade-realsms",
+      "command": [
+        "thymus-regrade",
+        "--judge",
+        "ollama:qwen3:4b-instruct",
+        "--grading",
+        "hybrid",
+        "--scenarios",
+        "scenarios-real",
+        "results/realsms-claude-code_claude-opus-5-5/20261006-135317",
+        "results/realsms-codex_gpt-6-astra/20261006-141447"
+      ]
+    }
+  ]
+}
