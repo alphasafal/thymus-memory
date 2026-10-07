@@ -215,3 +215,16 @@ better in English. Picking the gate model per language, or a stronger one, is th
 The gate keeps every real update the undefended frontier agent gets and adopts none of the
 replays. Keyword grading counts any mention of the new value as adoption, so the 0% is not
 flattered; allow-all may be slightly overstated (hybrid regrade pending).
+
+## 7 Oct 2026: multilingual gate model (Aya Expanse 8B) for a Llama agent, test split
+
+| Fooled ↓ / updates ↑ | Llama gate | qwen3-4B gate | Aya Expanse 8B gate |
+|---|---|---|---|
+| English | 17% / 82% | 22% / 71% | 19% / 74% |
+| Hindi | 23% / 73% | 13% / 67% | 17% / 70% |
+| Hinglish | 27% / 87% | **3%** / 83% | 20% / 80% |
+
+No Aya difference from Llama's own gate is significant (exact McNemar, all p > 0.1).
+Overall Aya: 19% fooled, 75% updates, 96% recall. Reading: a model marketed as multilingual
+does not by itself close the gap; only qwen3 on Hinglish does (p = 0.016). Hindi stays at
+13–23% with every small gate model tried: an open problem, reported as such.

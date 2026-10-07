@@ -447,8 +447,11 @@ the agent. Keeping Llama as the agent but running the gate's checks on qwen3-4B 
 Hinglish attacks from 27% to 3% (7 vs 0 discordant pairs, exact McNemar p = 0.016) without
 costing updates (87% → 83%), and Hindi from 23% to 13% (not significant at n = 30); English
 is unchanged in attacks (17% → 22%, p = 0.41) and loses some updates (82% → 71%, p = 0.08).
-The language gap lives in the gate's model, not its rules, so the gate model is a
-deployment choice to make per language.
+A model trained for multilingual use is not automatically better: with Aya Expanse 8B as the
+gate model no language changes significantly (English 19%, Hindi 17%, Hinglish 20%). The
+language gap lives in the gate's model, not its rules, so the gate model is a deployment
+choice to make, and test, per language. With the small gate models we tried, Hindi stays at
+13–23%; we leave a reliable Hindi gate open.
 
 **6.7 Production assistants.** To check that the problem is not an artefact of our harness,
 we ran 15 three-chat trials on the author's own ChatGPT (Plus) and Claude (Pro) accounts with
