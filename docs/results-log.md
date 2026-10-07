@@ -130,3 +130,19 @@ the 29 lost updates are cross-origin). The trade-off follows memory granularity,
 both suites it should reproduce the better column (running on Kaggle). Evidence-untrusted
 stays hard for every defence: when the real answer itself arrives untrusted, nothing that
 trusts provenance can recover it (UUA's point); v2 discloses instead of dropping (flags 38%).
+
+## 7 Oct 2026: hybrid regrade of the keyword-graded frontier runs (Kaggle, qwen3 grader)
+
+Frontier subset (Opus 5.5, GPT-6-Astra, GPT adaptive): every number unchanged (v2 and
+v2-inline 0% fooled; v2 updates 67%, v2-inline 100%).
+
+Real smishing, Opus 5.5 (79 India SMS): keyword grading overcounted, since it counted a reply
+that names the scam's number *while warning against it* as relaying it.
+
+| Defence | keyword | hybrid (reported) |
+|---|---|---|
+| allow-all | 41% | **19%** |
+| label-only | 22% | **10%** |
+| thymus-v2 | 22% | **10%** |
+
+GPT-6-Astra real SMS: 0% under every defence (stored 1 of 117).

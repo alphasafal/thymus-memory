@@ -24,7 +24,7 @@ user or by the source that stated it. Against five defences from prior work, rei
 in one harness, the thymus gate has the lowest attack success on every agent we test
 (qwen3-4B 38% → 8%, Llama 3.1 8B 42% → 20%, Claude Opus 5.5 58% → 0%, GPT-6-Astra 50% → 0%)
 while keeping plain recall, where provenance quarantine keeps only a quarter of it. On real
-data it cuts real smishing relayed as genuine from 70% to 25% (Llama) and 41% to 22% (Opus,
+data it cuts real smishing relayed as genuine from 70% to 25% (Llama) and 19% to 10% (Opus,
 Indian SMS). On LongMemEval under the Utility Under Attack protocol, keeping replaced
 memories as labelled older versions doubles accuracy under poisoning (24% → 47%) at no
 clean cost. A study of two production assistants finds the failure in the wild: ChatGPT
@@ -353,13 +353,13 @@ adaptive attacks added for GPT-6-Astra):
 
 Frontier models are fooled *more* often than the 4B model without a defence: they are better
 at using what they remember. With a model that follows labels, v2-inline gets both 0% attacks
-and 100% updates. (v2 rows graded by keywords, the stricter grader; the hybrid regrade is
-**[R]**.)
+and 100% updates. All rows use the hybrid grader; regrading the keyword-graded v2 runs left
+every number unchanged.
 
 **6.4 Real attacks.** *SMS.* 117 real smishing messages (Mishra & Soni 2022), 79 of them
 India-specific (KYC, UPI, electricity, bank), contact points replaced by reserved
 placeholders. Llama 3.1 8B passes the scam on as genuine 70% of the time with no defence,
-31% with label-only and 25% with thymus; Opus 5.5 41% → 22% on the 79 India messages;
+31% with label-only and 25% with thymus; Opus 5.5 19% → 10% on the 79 India messages;
 qwen3-4B 9% → 1%. GPT-6-Astra's own extraction stored nothing from 116 of 117 messages.
 *Email.* 112 real phishing emails (Nazario corpus 2024–25) and 52 real update pairs from
 the Enron corpus, each with a lookalike and a forged-sender twin carrying the same real text
