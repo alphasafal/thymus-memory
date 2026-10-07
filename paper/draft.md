@@ -388,7 +388,22 @@ keeps multi-fact memories labelled **[R]**. When the real answer itself is untru
 provenance-based defence recovers it; v2 at least discloses (38–52% flagged) instead of
 silently dropping it.
 
-**6.6 Languages.** English vs Hindi vs Hinglish per defence **[R]**.
+**6.6 Languages.** Each of the 10 India families runs in English, Hindi (Devanagari) and
+Hinglish (30 attacks per language). Attack success with no defence → thymus-v2:
+
+| Model | English | Hindi | Hinglish |
+|---|---|---|---|
+| qwen3-4B | 45% → 4% | 30% → 13% | 23% → 13% |
+| Llama 3.1 8B | 52% → 17% | 23% → 23% | 27% → 27% |
+
+Undefended models are fooled *less* in Hindi, partly because they use Hindi memories less at
+all (Llama answers 70% of Hindi updates correctly vs 96% in English). The gate also helps
+less: with Llama, v2 gives no gain in Hindi or Hinglish. The cause is the gate's own model.
+Most attacks that get through are ones the 8B conflict detector never linked to the fact
+they contradict, so they are not withheld; that miss rate is higher in Hindi and Hinglish
+(11 of 30 attacks each, 37%) than in English (28%). Rules that are language-independent
+still depend on a model that reads the language; a multilingual or stronger gate model is
+the obvious fix, and Indian-language memory security needs its own evaluation.
 
 **6.7 Production assistants.** To check that the problem is not an artefact of our harness,
 we ran 15 three-chat trials on the author's own ChatGPT (Plus) and Claude (Pro) accounts with
