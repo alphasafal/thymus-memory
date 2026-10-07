@@ -146,3 +146,16 @@ that names the scam's number *while warning against it* as relaying it.
 | thymus-v2 | 22% | **10%** |
 
 GPT-6-Astra real SMS: 0% under every defence (stored 1 of 117).
+
+## 7 Oct 2026: thymus-v2-auto (granularity-aware replacement), Llama 3.1 8B, Kaggle
+
+| Suite | thymus-v2 (hard) | thymus-v2-soft | **thymus-v2-auto** |
+|---|---|---|---|
+| LongMemEval clean: accuracy | 26% | 62% | **62%** |
+| LongMemEval poisoned: accuracy / adopts / flags | 23% / 37% / 50% | 47% / 32% / 60% | **47% / 32% / 60%** |
+| LongMemEval evidence-untrusted: accuracy / adopts | 16% / 35% | 12% / 53% | 12% / 53% |
+| Benchmark test split: fooled / updates / recall | 20% / 81% / 94% | – | **20% / 78% / 94%** |
+| Benchmark all 491, paired: attacks blocked / updates / recall | 143 / 127 / 148 | 168 / 104 / 148 | 144 / 123 / 148 |
+
+Auto matches soft on multi-fact memories and hard on single claims (paired: 1 attack more
+blocked, 4 updates fewer than hard, of 178 / 157). It is the final gate.

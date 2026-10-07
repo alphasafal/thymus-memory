@@ -164,6 +164,9 @@ similar earlier memories (facts from the same turn never conflict). Then:
 - a **tool** candidate replaces conflicting facts from its **own origin**, but only when the
   channel authenticates that origin (DKIM for email, a registered SMS sender ID, a signed
   calendar invite); a forged sender has the right origin and fails authentication;
+- a replaced memory that is a single claim is retired; one that holds several facts (a
+  whole chat round, a document) is kept and recalled as "older version: later updated", so
+  replacing one fact never deletes the others;
 - conflicting facts from **other origins**, and anything from a forged sender, are not
   replaced. The candidate is stored as *unverified*, with a link to what it contradicts. A
   user's statement that contradicts what a *different* user said is linked the same way.
@@ -383,8 +386,11 @@ rest. Keeping replaced memories as labelled older versions (*soft*) restores cle
 (62%) and doubles poisoned accuracy over no defence (24% → 47%). On the benchmark, whose
 memories are single claims, soft costs updates instead (Llama answers from the labelled older
 version: stale answers 16 → 48 of 157) while blocking more attacks (143 → 168 of 178). The
-right choice follows memory granularity; *thymus-v2-auto* retires replaced single claims and
-keeps multi-fact memories labelled **[R]**. When the real answer itself is untrusted, no
+right choice follows memory granularity, so the final gate (*thymus-v2-auto*) retires a
+replaced memory only if it is a single claim and otherwise keeps it labelled as an older
+version. It reproduces the better column on each suite: 62% clean and 47% poisoned on
+LongMemEval, and on the benchmark 20% fooled, 78% updates and 94% recall on Llama (hard
+v2: 20%, 81%, 94%). When the real answer itself is untrusted, no
 provenance-based defence recovers it; v2 at least discloses (38–52% flagged) instead of
 silently dropping it.
 
