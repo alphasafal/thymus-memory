@@ -68,19 +68,22 @@ pathogen so that other cells recognise and handle it. A memory gate can do the s
 1. **Self/non-self screening.** Content from tools is *non-self*. It may add facts about the
    world, but it may never speak for the user: no "the user prefers to pay at …", no "always
    recommend …".
-2. **Same-origin supersession.** A stored fact may be replaced by the user, or by the source
-   that stated it (the courier may move its own delivery date). Anyone else's contradicting
-   claim does not replace it.
+2. **Authenticated same-origin supersession.** A stored fact may be replaced by the user, or
+   by the source that stated it (the courier may move its own delivery date), and only when
+   the channel authenticates that source. Anyone else's contradicting claim, and a forged
+   sender, does not replace it. A replaced fact is retired; a replaced memory that also holds
+   other facts is kept and marked as an older version.
 3. **Disclose, don't decide.** A claim from an unvetted source, or one that contradicts
-   another source, is neither stored as truth nor thrown away. It is kept with its source and
-   recalled with a label ("unverified: from email:offers@bank-alerts.example; contradicts an
-   earlier memory"). The agent is told never to state such a claim as fact, and to tell the
-   user where it came from.
+   another source, is neither stored as truth nor thrown away. It is kept with its source.
+   Untrusted facts are recalled with their origin; *contested* claims are withheld from the
+   answering model and disclosed by the system in a notice ("I also have unconfirmed
+   information that contradicts this: a message from ⟨origin⟩ said ⟨claim⟩").
 
 The third rule changes the failure mode. A false claim that gets past a store-or-block gate is
-repeated as fact; a false claim that gets past a disclosing gate is repeated as *an unverified
-claim from a named source*, which is what a careful human assistant would say. And a real
-cross-channel update is no longer lost: the user hears it, with its source.
+repeated as fact; a false claim that gets past a disclosing gate reaches the user as *an
+unverified claim from a named source*, which is what a careful human assistant would say. And
+a real cross-channel update is no longer lost: the user hears it, with its source. Because
+the system, not the model, writes the notice, this works even for models that ignore labels.
 
 Measuring this needs a benchmark in which real and fake updates are matched. Existing
 benchmarks measure attacks [MINJA, AgentPoison, MemGauge] or updates [LongMemEval knowledge
@@ -89,35 +92,35 @@ updates looks perfect on one and is never penalised on the other.
 
 **Contributions.**
 
-1. **A matched-pair benchmark (491 scenarios).** 90 fact families from everyday life (work,
-   orders, travel, money, health and education, home, and 30 Indian families covering UPI,
-   KYC, electricity, FASTag, government schemes and more). Each family has a recall control,
-   a legitimate update and an attacker's fake update that share the setup and the question.
-   The Indian families come in English, Hindi (Devanagari) and Hinglish. Attacks cover
-   lookalike senders, other users of a shared assistant, other channels, spoofed senders and
-   instructions disguised as facts; 16 adaptive attacks were written against the thymus gate.
-2. **Scoring that separates "adopted" from "disclosed".** A reply that repeats a planted
-   claim as fact is scored differently from one that mentions it with a warning; copying the
-   label without a warning does not count. The hybrid grader is validated against
-   hand-labelled replies (98% on 58 development replies; **[R]** on a blind held-out set).
-3. **The thymus gate**, with provenance by construction (each candidate memory is extracted
-   from one channel, so its source never depends on the model's word).
+1. **A matched-pair benchmark (491 scenarios)**: 90 everyday fact families, 30 of them Indian
+   (UPI, KYC, electricity, FASTag, government schemes) in English, Hindi and Hinglish. Each
+   family has a recall control, a legitimate update and an attacker's twin sharing the setup
+   and the question; 16 adaptive attacks target our own gate.
+2. **Real-data evaluation on four public corpora**: 117 real smishing SMS (79 Indian), 112
+   real phishing emails, 31 real Enron update emails each replayed from lookalike and forged
+   senders (only provenance differs), and an exact reproduction of Utility Under Attack's
+   LongMemEval protocol.
+3. **The thymus gate**, whose rules are fixed and whose models only answer "is this a fact?"
+   and "does this contradict that?", giving guarantees that hold whatever those models output
+   (Section 3.4).
 4. **A head-to-head comparison** with five defences from prior work in one harness, on four
-   model families, with paired significance tests and ablations of each rule.
+   model families including Claude Opus 5.5 and GPT-6-Astra, with ablations, family-level
+   bootstrap intervals and paired tests, and a grader validated against human labels.
+5. **Evidence from production assistants**: in our own accounts, ChatGPT repeated 3 of 6
+   fake updates from memory in a new chat, once as something the user had said.
 
-**Results in brief [R].** On **[R]**, the thymus gate lowers strict attack success from
-**[R]** (no defence) to **[R]**, with update accuracy **[R]** (no defence: **[R]**). The
-store-or-block baselines move along the trade-off: user-only stops **[R]** of attacks but
-loses **[R]** of updates; conflict quarantine **[R]**. Frontier agents are not immune
-without a gate: on a 36-scenario subset, Claude Opus 5.5 states 58% of update-shaped attacks
-as fact and GPT-6-Astra 50% (open models on the same scenarios: **[R]**); with the gate both fall to
-8%, the remaining case being a spoofed calendar invite that the gate is not designed to stop,
-while update and recall accuracy stay at 100% (versus 33% under provenance quarantine).
-On these frontier agents, a label-only baseline (keep everything, label untrusted sources,
-no update rules) does exactly as well as the full gate: disclosure is what works. The
-screening and update rules **[R: add X on smaller models / adaptive attacks, or nothing
-measurable]**, and they give guarantees that hold whatever the model does (Section 3.4).
-Hiding contested claims instead of disclosing them **[R]**.
+**Results in brief.** Every store-or-block defence trades one failure for the other.
+Provenance quarantine keeps a quarter of plain recall on the benchmark and *none* of the real
+Enron updates; with no defence, a replayed Enron update fools Llama 3.1 8B 84% of the time.
+The thymus gate has the lowest attack success on every agent (qwen3-4B 38% → 8%, Llama 42% →
+20%, Opus 5.5 58% → 0%, GPT-6-Astra 50% → 0%) while keeping recall; on the Enron replays it is
+fooled 3% of the time and keeps 87% of real updates. Disclosure is the active ingredient:
+removing the labels returns attack success to the undefended level, and for a model that
+ignores labels only the system notice works. On LongMemEval it doubles accuracy under
+poisoning (24% → 47%) at no clean cost, once replacement respects memory granularity. Two
+limits remain: when the real answer itself arrives untrusted, no provenance rule recovers it
+(UUA's finding, which we reproduce), and the gate is only as good as the model making its
+judgments, which costs most in Hindi and Hinglish (Section 6.6).
 
 ## 2 Setting and threat model
 
