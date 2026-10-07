@@ -271,3 +271,26 @@ recall arrive as "unconfirmed"). Fix under test: a stricter same-subject conflic
 Telling the conflict detector that only facts about the same specific thing conflict
 recovers 6 points of large-store recall with no loss of safety anywhere. Gap to no defence
 (91%) remains; next: verify each claimed conflict pairwise.
+
+## 7 Oct 2026: thymus-v2-verified (same-subject check + pairwise confirmation), test split
+
+Fooled ↓ / updates answered (reach the user) / recall answered (reach the user):
+
+| Suite | allow-all | v2-auto | v2-precise | **v2-verified** |
+|---|---|---|---|---|
+| qwen3-4B, 80 background facts | 28% / 80 / 91 | 14% / 63 (85) / 76 (90) | 13% / 65 / 82 | 18% / 75 (83) / **89** |
+| qwen3-4B, normal | 38% / 95 / 98 | 8% / 69 (94) / 96 | 9% / 73 / 96 | 11% / **87** (94) / 96 |
+| Llama 3.1 8B, normal | 42% / 91 / 94 | 20% / 78 (92) / 94 | 18% / 79 / 94 | **10%** / 63 (89) / 94 |
+
+Paired vs v2-auto (exact McNemar): qwen3 large-store recall +13 pts (0 vs 19, p < 0.001),
+qwen3 updates +18 pts (1 vs 26, p < 0.001), qwen3 attacks +3 pts (p = 0.07, n.s.); Llama
+attacks −10 pts (19 vs 4 discordant, p = 0.003), Llama updates answered −15 pts (24 vs 3,
+p < 0.001: 22 cross-origin updates now arrive as notices).
+By language, fooled: Llama en 11%, hi **3%** (auto 23%), hinglish 13% (auto 23%); qwen3
+en 8%, hi 20% (v2 13%), hinglish 13%.
+
+Reading: confirming each claimed conflict on its own fixes the large-store recall loss and
+returns most updates as answers on qwen3. On Llama the cleaner store leads the gate to
+contest more real conflicts: safer (and Hindi attacks nearly vanish) but more updates come
+as notices. In every suite 83–96% of the right information reaches the user. Final gate:
+v2-verified; real-data and LongMemEval reruns queued.

@@ -1,0 +1,63 @@
+{
+  "pull": [
+    "llama3.1:8b",
+    "qwen3:4b-instruct",
+    "nomic-embed-text"
+  ],
+  "runs": [
+    {
+      "name": "realsms-qwen3-4b",
+      "llm": "ollama:qwen3:4b-instruct",
+      "judge": "ollama:qwen3:4b-instruct",
+      "scenarios": "scenarios-real/sms.json",
+      "gates": [
+        "thymus-v2-verified"
+      ]
+    },
+    {
+      "name": "realemail-phishing-qwen3-4b",
+      "llm": "ollama:qwen3:4b-instruct",
+      "judge": "ollama:qwen3:4b-instruct",
+      "scenarios": "scenarios-real/email-phishing.json",
+      "gates": [
+        "thymus-v2-verified"
+      ]
+    },
+    {
+      "name": "realemail-enron-qwen3-4b",
+      "llm": "ollama:qwen3:4b-instruct",
+      "judge": "ollama:qwen3:4b-instruct",
+      "scenarios": "scenarios-real/enron-updates.json",
+      "gates": [
+        "thymus-v2-verified"
+      ]
+    },
+    {
+      "name": "realsms-llama3.1-8b",
+      "llm": "ollama:llama3.1:8b",
+      "judge": "ollama:qwen3:4b-instruct",
+      "scenarios": "scenarios-real/sms.json",
+      "gates": [
+        "thymus-v2-verified"
+      ]
+    },
+    {
+      "name": "realemail-phishing-llama3.1-8b",
+      "llm": "ollama:llama3.1:8b",
+      "judge": "ollama:qwen3:4b-instruct",
+      "scenarios": "scenarios-real/email-phishing.json",
+      "gates": [
+        "thymus-v2-verified"
+      ]
+    },
+    {
+      "name": "realemail-enron-llama3.1-8b",
+      "llm": "ollama:llama3.1:8b",
+      "judge": "ollama:qwen3:4b-instruct",
+      "scenarios": "scenarios-real/enron-updates.json",
+      "gates": [
+        "thymus-v2-verified"
+      ]
+    }
+  ]
+}
