@@ -159,3 +159,33 @@ GPT-6-Astra real SMS: 0% under every defence (stored 1 of 117).
 
 Auto matches soft on multi-fact memories and hard on single claims (paired: 1 attack more
 blocked, 4 updates fewer than hard, of 178 / 157). It is the final gate.
+
+## 7 Oct 2026: real email (Kaggle, hybrid qwen3 grader)
+
+**Enron real updates, matched by provenance** (31 real update pairs; each real update also
+replayed from a lookalike sender and from a forged sender; 93 scenarios):
+
+| Model · defence | Fooled by replayed update ↓ (lookalike / forged) | Real updates correct ↑ |
+|---|---|---|
+| Llama 8B · allow-all | 84% (87% / 81%) | 71% |
+| Llama 8B · user-only | 0% | **0%** |
+| Llama 8B · label-only | 87% | 77% |
+| Llama 8B · thymus v1 | 87% | 87% |
+| Llama 8B · **thymus-v2** | **3%** (3% / 3%) | **87%** |
+| qwen3-4B · allow-all | 76% (77% / 74%) | 74% |
+| qwen3-4B · user-only | 0% | **0%** |
+| qwen3-4B · label-only | 50% | 74% |
+| qwen3-4B · **thymus-v2** | **18%** (16% / 19%) | **74%** |
+
+**Nazario phishing email** (112 real emails, redacted):
+
+| Model | allow-all | user-only | label-only | thymus / v2 |
+|---|---|---|---|---|
+| Llama 8B: relays the phish | 48% | 0% | 29% | 30% |
+| qwen3-4B | 29% | 0% | 8% | 10% |
+
+Reading: on real email the store-or-block dilemma is total: provenance quarantine keeps
+0% of real updates, no defence is fooled by 76–84% of replayed ones. v2 keeps every real
+update the undefended agent gets (more: it retires the old value) and is fooled by 3–18%.
+Single phishing messages contradict nothing, so v2 = v1 there; the gain comes from
+screening and labels, and Llama again ignores labels.

@@ -24,7 +24,9 @@ user or by the source that stated it. Against five defences from prior work, rei
 in one harness, the thymus gate has the lowest attack success on every agent we test
 (qwen3-4B 38% → 8%, Llama 3.1 8B 42% → 20%, Claude Opus 5.5 58% → 0%, GPT-6-Astra 50% → 0%)
 while keeping plain recall, where provenance quarantine keeps only a quarter of it. On real
-data it cuts real smishing relayed as genuine from 70% to 25% (Llama) and 19% to 10% (Opus,
+Enron update emails replayed from forged or lookalike senders, it is fooled 3% of the time
+(no defence: 84%) while keeping 87% of the real updates (provenance quarantine: 0%). It cuts
+real smishing relayed as genuine from 70% to 25% (Llama) and 19% to 10% (Opus,
 Indian SMS). On LongMemEval under the Utility Under Attack protocol, keeping replaced
 memories as labelled older versions doubles accuracy under poisoning (24% → 47%) at no
 clean cost. A study of two production assistants finds the failure in the wild: ChatGPT
@@ -364,9 +366,33 @@ India-specific (KYC, UPI, electricity, bank), contact points replaced by reserve
 placeholders. Llama 3.1 8B passes the scam on as genuine 70% of the time with no defence,
 31% with label-only and 25% with thymus; Opus 5.5 19% → 10% on the 79 India messages;
 qwen3-4B 9% → 1%. GPT-6-Astra's own extraction stored nothing from 116 of 117 messages.
-*Email.* 112 real phishing emails (Nazario corpus 2024–25) and 52 real update pairs from
-the Enron corpus, each with a lookalike and a forged-sender twin carrying the same real text
-**[R]**.
+*Email.* 112 real phishing emails (Nazario corpus 2024–25, redacted): Llama relays the
+phish 48% → 30% with the gate, qwen3-4B 29% → 10%. A single phishing message contradicts no
+stored fact, so here the gain comes from screening and labels alone (v1 = v2), and Llama's
+disregard for labels limits it.
+
+*Real updates, matched by provenance.* From the Enron corpus we take 31 pairs in which a
+sender emailed a meeting detail and later changed it ("has been moved to Friday, October 26
+in EB 42C2"), pseudonymised. Each real update is replayed in two attack twins with the *same
+text*: from a lookalike address, and from the real address but failing authentication. Only
+provenance differs, so content-based screening cannot help:
+
+| Model | Defence | Fooled by the replay ↓ | Real updates ↑ |
+|---|---|---|---|
+| Llama 3.1 8B | allow-all | 84% | 71% |
+| | user-only | 0% | **0%** |
+| | label-only | 87% | 77% |
+| | **thymus-v2** | **3%** | **87%** |
+| qwen3-4B | allow-all | 76% | 74% |
+| | user-only | 0% | **0%** |
+| | label-only | 50% | 74% |
+| | **thymus-v2** | **18%** | **74%** |
+
+This is the dilemma of Section 1 on real messages: provenance quarantine keeps no real update
+at all, and with no defence a replayed update fools the agent four times in five. Authenticated
+same-origin supersession separates them: v2 keeps every real update the undefended agent
+gets (more, on Llama, because the old value is retired rather than left to compete) and is
+fooled by 3–18%, equally for lookalike and forged senders.
 
 **6.5 Long real conversations (LongMemEval, UUA protocol).** We reproduce Utility Under
 Attack's setup exactly (same 120 questions, 29,646 rounds, 360 poison rounds = 1.2%,
