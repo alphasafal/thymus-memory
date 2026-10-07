@@ -522,7 +522,28 @@ effective under eight defences.
 
 ## 9 Conclusion
 
-**[R]**
+Agent memory has been defended as a gate that stores or blocks. On matched real and fake
+updates, and on real SMS, phishing and Enron email, that framing fails in both directions:
+blocking untrusted content loses the updates users need (none of the real Enron updates
+survive provenance quarantine), and storing it lets replayed updates through (80% for
+GPT-6-Astra, 84% for Llama 3.1 8B). Production assistants show the same failure: ChatGPT
+repeated forged updates from memory and attributed one to the user.
+
+The thymus gate replaces the binary decision with three rules: tool content cannot speak for
+the user, only an authenticated source (or the user) can replace its own facts, and anything
+else is kept and disclosed with its source instead of being decided on. Across four model
+families it has the lowest attack success of the defences we compare while keeping recall
+and real updates, and on real replayed updates it is fooled 0–18% of the time where no
+defence is fooled 56–84%. Its rules are fixed; its models only judge "is this a fact?" and
+"does this contradict that?", which makes its guarantees independent of those models and
+its remaining weaknesses visible: when the truth arrives only through untrusted channels,
+when a channel cannot authenticate its senders, and when the gate's model misreads a
+language, as with Hindi.
+
+Memory that cannot tell a real change from a forged one is a security problem (OWASP ASI06)
+and an accuracy problem for the person it describes (DPDP s. 8(3), GDPR Art. 5(1)(d)). We
+release the benchmark, the real-data sets with every contact point redacted, the gate and
+every cached model response, so that both can be measured, and improved, on the same scenarios.
 
 ## Ethics and open science
 
