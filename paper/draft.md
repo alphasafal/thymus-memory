@@ -395,7 +395,10 @@ This is the dilemma of Section 1 on real messages: provenance quarantine keeps n
 at all, and with no defence a replayed update fools the agent four times in five. Authenticated
 same-origin supersession separates them: v2 keeps every real update the undefended agent
 gets (more, on Llama, because the old value is retired rather than left to compete) and is
-fooled by 3–18%, equally for lookalike and forged senders.
+fooled by 3–18%, equally for lookalike and forged senders. GPT-6-Astra on 15 of the pairs
+shows the same separation at the frontier: with no defence it adopts 80% of the replays,
+provenance quarantine keeps none of the real updates, and the gate adopts none of the
+replays while keeping every real update the undefended agent gets (80%).
 
 **6.5 Long real conversations (LongMemEval, UUA protocol).** We reproduce Utility Under
 Attack's setup exactly (same 120 questions, 29,646 rounds, 360 poison rounds = 1.2%,

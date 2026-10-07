@@ -203,3 +203,15 @@ v2-auto identical here (single-claim memories). Reading: the gate's judgments, n
 rules, carry the language gap; a different 4B gate model removes Hinglish attacks almost
 entirely without costing updates, helps Hindi (not significant at n = 30), and is no
 better in English. Picking the gate model per language, or a stronger one, is the lever.
+
+## 7 Oct 2026: GPT-6-Astra on real Enron updates (15 pairs = 45 scenarios, ChatGPT plan, keyword grading)
+
+| Defence | Fooled by the replay (lookalike / forged) | Real updates |
+|---|---|---|
+| allow-all | 80% (80% / 80%) | 80% |
+| user-only | 0% | **0%** |
+| **thymus-v2-auto** | **0%** (80% of attacks disclosed) | **80%** |
+
+The gate keeps every real update the undefended frontier agent gets and adopts none of the
+replays. Keyword grading counts any mention of the new value as adoption, so the 0% is not
+flattered; allow-all may be slightly overstated (hybrid regrade pending).
