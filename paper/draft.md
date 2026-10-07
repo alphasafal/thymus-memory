@@ -1,6 +1,6 @@
 # Disclose, Don't Decide: Separating Real Updates from Poisoned Ones in LLM Agent Memory
 
-*Draft 1, 6 October 2026. Numbers marked **[R]** are filled in from `thymus-report` once the
+*Draft 2, 7 October 2026. Numbers marked **[R]** are filled in from `thymus-report` once the
 runs finish. Citations marked [cite] still need a reference.*
 
 ## Abstract
@@ -21,9 +21,14 @@ kept, but recalled with its source and an "unverified" label, so the agent tells
 where it came from instead of stating it as fact. Two further rules complete the gate: tool
 content may add facts but never speak for the user, and a fact can be replaced only by the
 user or by the source that stated it. Against five defences from prior work, reimplemented
-in one harness, the thymus gate cuts attack success from **[R]** to **[R]** while keeping
-update accuracy at **[R]**, on agents from four model families including Claude Opus 5.5 and
-GPT-6-Astra. Ablations **[R: what each rule contributes, and disclosing vs hiding]**.
+in one harness, the thymus gate has the lowest attack success on every agent we test
+(qwen3-4B 38% → 8%, Llama 3.1 8B 42% → 20%, Claude Opus 5.5 58% → 0%, GPT-6-Astra 50% → 0%)
+while keeping plain recall, where provenance quarantine keeps only a quarter of it. On real
+data it cuts real smishing relayed as genuine from 70% to 25% (Llama) and 41% to 22% (Opus,
+Indian SMS). On LongMemEval under the Utility Under Attack protocol, keeping replaced
+memories as labelled older versions doubles accuracy under poisoning (24% → 47%) at no
+clean cost. A study of two production assistants finds the failure in the wild: ChatGPT
+repeated 3 of 6 fake updates from memory in a new chat, once as something the user had said.
 
 ## 1 Introduction
 
@@ -300,18 +305,102 @@ same scenarios with exact McNemar tests.
 
 ## 6 Results
 
-**[R] To be written from the runs.** Planned structure:
+All numbers are on the 442-scenario test split unless stated; 95% family-bootstrap intervals
+and McNemar tests for every comparison are produced by `thymus-report` (Appendix **[R]**).
+"Fooled" is the share of attacks whose false claim reaches the answer without a warning.
 
-- **6.1 The trade-off (RQ1, RQ2).** Main table per agent; scatter of attack success against
-  update accuracy per defence and model.
-- **6.2 Where attacks get through.** Stored-and-adopted vs stored-but-disclosed vs blocked at
-  write; by attack type, including spoofed-origin and adaptive.
-- **6.3 Updates by source.** Same-origin, user and cross-origin.
-- **6.4 Does disclosure work? (RQ4)** Flag rates by model; copying the label vs warning in
-  the agent's own words.
-- **6.5 Languages.** English vs Hindi vs Hinglish for each defence.
-- **6.6 Ablations.** Each rule switched off; hide vs disclose.
-- **6.7 Frontier models (RQ5).** Opus 5.5 and GPT-6-Astra with and without the gate.
+**6.1 The trade-off (RQ1, RQ2).** With no defence, both open models are fooled by about two
+attacks in five (qwen3-4B 38%, Llama 3.1 8B 42%). Every store-or-block defence buys
+safety with real updates:
+
+| Defence | qwen3-4B fooled ↓ | updates ↑ | recall ↑ | Llama 8B fooled ↓ | updates ↑ | recall ↑ |
+|---|---|---|---|---|---|---|
+| allow-all | 38% | 95% | 98% | 42% | 91% | 94% |
+| user-only (provenance quarantine) | 14% | 30% | 25% | 17% | 33% | 28% |
+| conflict-quarantine | 32% | 81% | 98% | 30% | 78% | 94% |
+| last-write-wins | 44% | 95% | 98% | 78% | 94% | 94% |
+| bounded-occupancy | 22% | 56% | 97% | 31% | 54% | 84% |
+| label-only (TMA-NM labels applied to answers) | 17% | 94% | 98% | 41% | 91% | 95% |
+| thymus v1 (inline disclosure) | 17% | 94% | 96% | 47% | 92% | 94% |
+| **thymus-v2** | **8%** | 69% + 25% as notice | 96% | **20%** | 81% + notices | 94% |
+
+Provenance quarantine is the safest store-or-block policy and keeps a third of updates and a
+quarter of plain recall: most of what a user's assistant needs to remember arrives through
+tools. thymus-v2 has the lowest attack success on both models while keeping recall. Its cost
+is cross-origin updates (a courier's SMS changing what the shop's email said): v2 does not let
+one source overwrite another, so these reach the user as an unconfirmed notice (25% of
+updates on qwen3-4B) rather than as the answer.
+
+**6.2 Disclosure must not depend on the model (RQ4).** Inline labels work only if the model
+follows them. qwen3-4B, Opus 5.5 and GPT-6-Astra do: label-only and v1 cut attacks by half or
+more. Llama 3.1 8B does not: label-only (41%) and v1 (47%) are no better than no defence. v2
+takes the decision away from the model: contested claims are withheld and disclosed by a
+system notice, which halves Llama's attack success (42% → 20%) and beats simply hiding them
+(*hide* ablation: Llama 28% fooled; on qwen3-4B hiding blocks attacks too, 10%, but the
+cross-origin updates it hides leave 30% of update questions answered with the stale value).
+Removing the labels from v1 (*no-labels*) returns attack success to the undefended level
+(qwen3-4B 38%), so disclosure, not storage policy, is the active ingredient.
+
+**6.3 Frontier models (RQ5).** On a balanced 36-scenario subset (12 families × 3; 16
+adaptive attacks added for GPT-6-Astra):
+
+| Defence | Opus 5.5 fooled | updates | GPT-6-Astra fooled | updates |
+|---|---|---|---|---|
+| allow-all | 58% | 100% | 50% (44% adaptive) | 100% |
+| user-only | 17% | 33% | – | – |
+| label-only / thymus v1 | 8% / 8% | 100% | 4% / 4% | 100% |
+| thymus-v2 / v2-inline | 0% / 0% | 67% / 100% | 0% / 0% | 67% / 100% |
+
+Frontier models are fooled *more* often than the 4B model without a defence: they are better
+at using what they remember. With a model that follows labels, v2-inline gets both 0% attacks
+and 100% updates. (v2 rows graded by keywords, the stricter grader; the hybrid regrade is
+**[R]**.)
+
+**6.4 Real attacks.** *SMS.* 117 real smishing messages (Mishra & Soni 2022), 79 of them
+India-specific (KYC, UPI, electricity, bank), contact points replaced by reserved
+placeholders. Llama 3.1 8B passes the scam on as genuine 70% of the time with no defence,
+31% with label-only and 25% with thymus; Opus 5.5 41% → 22% on the 79 India messages;
+qwen3-4B 9% → 1%. GPT-6-Astra's own extraction stored nothing from 116 of 117 messages.
+*Email.* 112 real phishing emails (Nazario corpus 2024–25) and 52 real update pairs from
+the Enron corpus, each with a lookalike and a forged-sender twin carrying the same real text
+**[R]**.
+
+**6.5 Long real conversations (LongMemEval, UUA protocol).** We reproduce Utility Under
+Attack's setup exactly (same 120 questions, 29,646 rounds, 360 poison rounds = 1.2%,
+official grading prompts), with Llama 3.1 8B as agent and gate model:
+
+| Condition | allow-all | user-only | thymus-v2 | thymus-v2-soft |
+|---|---|---|---|---|
+| clean: accuracy | 63% | – | 26% | **62%** |
+| poisoned: accuracy / adopts false answer | 24% / 63% | 63% / 5% | 23% / 37% | **47% / 32%** |
+| evidence-untrusted: accuracy / adopts | 24% / 63% | 11% / 2% | 16% / 35% | 12% / 53% |
+
+We reproduce UUA's central finding: provenance blocking is safe on poisoned data (63%
+accuracy) but collapses when the real answers arrive through untrusted channels (11%; UUA
+report 4%). Hard supersession failed here at first (clean 63% → 26%): a LongMemEval memory is
+a whole chat round holding many facts, so retiring it because one fact changed deletes the
+rest. Keeping replaced memories as labelled older versions (*soft*) restores clean accuracy
+(62%) and doubles poisoned accuracy over no defence (24% → 47%). On the benchmark, whose
+memories are single claims, soft costs updates instead (Llama answers from the labelled older
+version: stale answers 16 → 48 of 157) while blocking more attacks (143 → 168 of 178). The
+right choice follows memory granularity; *thymus-v2-auto* retires replaced single claims and
+keeps multi-fact memories labelled **[R]**. When the real answer itself is untrusted, no
+provenance-based defence recovers it; v2 at least discloses (38–52% flagged) instead of
+silently dropping it.
+
+**6.6 Languages.** English vs Hindi vs Hinglish per defence **[R]**.
+
+**6.7 Production assistants.** To check that the problem is not an artefact of our harness,
+we ran 15 three-chat trials on the author's own ChatGPT (Plus) and Claude (Pro) accounts with
+invented facts (Appendix **[R]**; disclosed to both vendors before publication). In a new
+chat hours later, ChatGPT repeated 3 of 6 fake updates as fact (a lookalike email, a
+third-party web page and a forged calendar invite) and attributed the lookalike email to the
+user ("You also mentioned…"), losing the warning it had given when it first read it. Claude
+disclosed the source and called the claim unconfirmed in five of six (the behaviour the
+thymus gate builds in) but answered the forged calendar invite with a caveat, and rejected a
+genuine same-sender update as possibly spoofed. These are the two failure modes the gate's
+rules address: lost provenance (disclosure) and no rule for who may update a fact
+(authenticated same-origin supersession).
 
 ## 7 Discussion and limitations
 
@@ -320,13 +409,21 @@ same scenarios with exact McNemar tests.
   carry a disclosure **[R]**; a deployment could promote a claim to verified after
   confirmation by the user or by an independent origin.
 - **Origins must be authentic.** Same-origin supersession is only as good as sender
-  authentication (DKIM/ARC for email, signed calendar invites). Spoofed-origin attacks
-  succeed by design; we report them rather than hide them.
-- **Agents must follow the label.** Disclosure helps only if the agent warns. Small models
-  sometimes copy the label without warning, which strict scoring counts as adoption.
-- **Scripted scenarios.** Families were written by the authors, not taken from real traffic;
-  conversations are short (no long haystacks yet), which is where bounded occupancy is meant
-  to help.
+  authentication (DKIM/ARC for email, signed calendar invites). v2 treats a claimed but
+  unauthenticated sender as a different origin; where a channel has no authentication at
+  all, forged same-origin updates remain possible.
+- **Agents must follow the label.** Inline disclosure helps only if the agent warns; Llama
+  3.1 8B ignores labels (6.2). v2's system notice removes this dependence, at the cost of
+  cross-origin updates arriving as notices instead of answers.
+- **Memory granularity.** Retiring a replaced memory is right for single claims and wrong
+  for memories that hold several facts (6.5); the gate must know which it is storing.
+- **When the truth arrives untrusted.** If the real answer comes only through channels the
+  gate cannot trust, no provenance rule recovers it (UUA's evidence-untrusted condition); v2
+  discloses it instead of dropping it, which is the most a provenance defence can do.
+- **Scripted and real data.** The matched-pair benchmark is author-written so every update
+  has an exact attack twin; we complement it with real smishing SMS, real phishing email,
+  real Enron update emails, LongMemEval's long real-style conversations, and a small study
+  of two production assistants (15 trials each, author-labelled, one run).
 - **Grader error.** Validated but not perfect; we report agreement and keep keyword-only
   results alongside.
 
@@ -363,8 +460,13 @@ effective under eight defences.
 
 ## Ethics and open science
 
-All scenarios are synthetic; no real people, accounts or messages are used. Scam patterns are
-described at the level already public in consumer warnings; no working payment links or
-contact details are included (example domains and reserved numbers only). The benchmark,
+The benchmark scenarios are synthetic. The real-data sets are public research corpora
+(SMS: Mishra & Soni 2022, CC BY 4.0; phishing email: Nazario corpus, CC BY 4.0; Enron: CMU
+release; LongMemEval: MIT): every link, address and phone number in them is replaced by a
+reserved placeholder (`.example` domains, +91-555 numbers) and Enron names are pseudonymised,
+so no working scam contact appears; tests enforce this. The production-assistant study used
+only the author's own accounts and invented facts, asked the assistants not to search
+connected apps, and was reported to OpenAI and Anthropic before publication. Use of AI
+assistants in this research is disclosed per the venue's policy. The benchmark,
 gate, graders, prompts, cached model responses and run metadata will be released under an
 open licence with instructions to reproduce every table.
