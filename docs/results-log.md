@@ -259,3 +259,15 @@ service 26 Oct" vs a water-purifier service on 23 Oct); 20 of 35 recall misses a
 contests. The fact is withheld from the answer but still reaches the user in the notice, so
 v2 halves attacks while delivering as much as no defence, at a usability cost (14 points of
 recall arrive as "unconfirmed"). Fix under test: a stricter same-subject conflict check.
+
+## 7 Oct 2026: thymus-v2-precise (same-subject conflict check), paired with v2-auto, test split
+
+| Suite | Fooled: auto → precise | Updates answered | Recall answered |
+|---|---|---|---|
+| qwen3-4B, 80 background facts | 14% → 13% (p = 0.63) | 63% → 65% | 76% → **82%** (p = 0.022) |
+| qwen3-4B, normal | 8% → 9% (p = 0.50) | 69% → 73% (p = 0.06) | 96% → 96% |
+| Llama 3.1 8B, normal | 20% → 18% (p = 0.58) | 78% → 79% | 94% → 94% |
+
+Telling the conflict detector that only facts about the same specific thing conflict
+recovers 6 points of large-store recall with no loss of safety anywhere. Gap to no defence
+(91%) remains; next: verify each claimed conflict pairwise.

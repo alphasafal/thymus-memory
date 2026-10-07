@@ -323,3 +323,23 @@ def test_auto_replacement_retires_single_claims_and_keeps_multi_fact_memories():
     make_gate("thymus-v2-auto", EchoLLM()).apply_supersedes(store, (claim.id, round_.id))
     assert claim.status == "superseded"
     assert round_.status == "active" and round_.older
+
+
+def test_verified_conflict_check_drops_a_conflict_the_pair_check_rejects():
+    import json as _json
+    from thymus.conflicts import LLMConflictDetector
+
+    class Scripted:
+        name = "scripted"
+
+        def complete(self, system, prompt, schema=None):
+            if "same_thing" in _json.dumps(schema):
+                return _json.dumps({"same_thing": False, "different_values": True})
+            return _json.dumps({"conflicting_ids": [old.id]})
+
+    store = MemoryStore(HashEmbedder())
+    old = add(store, "Water purifier service on 23 October.", "tool", "email:care@aquapure.example")
+    new = cand("Car service booked for 26 October.", "tool", "email:service@motorcare.example")
+    new = Candidate(**{**new.__dict__, "created_at": old.created_at + 1})
+    assert LLMConflictDetector(Scripted()).find(new, store) == [old]
+    assert LLMConflictDetector(Scripted(), verify=True).find(new, store) == []

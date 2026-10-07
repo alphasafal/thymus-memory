@@ -342,6 +342,9 @@ GATES: dict[str, Callable[[LLM], Gate]] = {
     "thymus-v2-precise": lambda llm: ThymusGate(
         LLMConflictDetector(llm, same_subject=True), LLMClaimClassifier(llm), require_auth=True, contest_other_users=True,
         notice=True, soft_supersede="auto", name="thymus-v2-precise"),
+    "thymus-v2-verified": lambda llm: ThymusGate(
+        LLMConflictDetector(llm, same_subject=True, verify=True), LLMClaimClassifier(llm), require_auth=True,
+        contest_other_users=True, notice=True, soft_supersede="auto", name="thymus-v2-verified"),
     "thymus-v2-inline": lambda llm: ThymusGate(
         LLMConflictDetector(llm), LLMClaimClassifier(llm), require_auth=True, contest_other_users=True,
         name="thymus-v2-inline"),
@@ -353,7 +356,7 @@ MAIN_GATES = (
 )
 ABLATIONS = ("thymus-no-screen", "thymus-any-origin", "thymus-no-labels", "thymus-hide")
 # Version 2 of the gate and its inline-label variant (see ThymusGate).
-VERSION_2 = ("thymus-v2", "thymus-v2-inline", "thymus-v2-soft", "thymus-v2-auto", "thymus-v2-precise")
+VERSION_2 = ("thymus-v2", "thymus-v2-inline", "thymus-v2-soft", "thymus-v2-auto", "thymus-v2-precise", "thymus-v2-verified")
 
 
 def make_gate(name: str, llm: LLM) -> Gate:
