@@ -1,0 +1,27 @@
+{
+  "pull": [
+    "llama3.1:8b",
+    "qwen3:4b-instruct",
+    "nomic-embed-text"
+  ],
+  "runs": [
+    {
+      "name": "llama3.1-8b-gate-qwen3",
+      "command": [
+        "thymus-eval",
+        "--llm",
+        "ollama:llama3.1:8b",
+        "--gate-llm",
+        "ollama:qwen3:4b-instruct",
+        "--judge",
+        "ollama:qwen3:4b-instruct",
+        "--gate",
+        "thymus-v2",
+        "--gate",
+        "thymus-v2-auto",
+        "--out",
+        "results/llama3.1-8b-gate-qwen3"
+      ]
+    }
+  ]
+}

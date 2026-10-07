@@ -65,6 +65,7 @@ def run_metadata(args: argparse.Namespace, llm: LLM, judge: Judge, scenarios: li
         "git_commit": git("rev-parse", "HEAD"),
         "git_dirty": bool(git("status", "--porcelain", "--untracked-files=no")),
         "agent_model": llm.name,
+        "gate_model": args.gate_llm or llm.name,
         "grader": judge.name,
         "embedder": args.embedder,
         "gates": args.gate or list(MAIN_GATES),
@@ -87,6 +88,7 @@ def make_embedder(spec: str) -> Embedder:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="thymus-eval", description="Score memory write-gates on attack, update and benign scenarios.")
     parser.add_argument("--llm", default="ollama:qwen2.5:3b-instruct", help="agent model: echo | ollama:<model> | claude-code[:<model>] | codex[:<model>] | gemini-cli[:<model>] | anthropic:<model> (default: %(default)s)")
+    parser.add_argument("--gate-llm", help="model for the gates' conflict and claim checks (default: the agent model)")
     parser.add_argument("--judge", default="same", help="grading model: same (as --llm) | none | any --llm spec (default: %(default)s)")
     parser.add_argument("--grading", choices=MODES, default="hybrid", help="how replies are graded (default: %(default)s)")
     parser.add_argument("--embedder", default="ollama:nomic-embed-text", help="hash | ollama:<model> (default: %(default)s)")
@@ -123,7 +125,8 @@ def main(argv: list[str] | None = None) -> int:
     if problem:
         print(problem, file=sys.stderr)
         return 2
-    gates = [make_gate(name, llm) for name in (args.gate or MAIN_GATES)]
+    gate_llm = cached(make_llm(args.gate_llm)) if args.gate_llm else llm
+    gates = [make_gate(name, gate_llm) for name in (args.gate or MAIN_GATES)]
     judge_llm = None
     if args.judge != "none" and not (args.judge == "same" and isinstance(llm, EchoLLM)):
         judge_llm = llm if args.judge == "same" else cached(make_llm(args.judge))
