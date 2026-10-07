@@ -1,0 +1,26 @@
+{
+  "pull": [
+    "llama3.1:8b",
+    "aya-expanse:8b",
+    "qwen3:4b-instruct",
+    "nomic-embed-text"
+  ],
+  "runs": [
+    {
+      "name": "llama3.1-8b-gate-aya",
+      "command": [
+        "thymus-eval",
+        "--llm",
+        "ollama:llama3.1:8b",
+        "--gate-llm",
+        "ollama:aya-expanse:8b",
+        "--judge",
+        "ollama:qwen3:4b-instruct",
+        "--gate",
+        "thymus-v2-auto",
+        "--out",
+        "results/llama3.1-8b-gate-aya"
+      ]
+    }
+  ]
+}
