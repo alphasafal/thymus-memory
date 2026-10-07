@@ -242,3 +242,20 @@ haven't been able to confirm this": a caveat, which strict scoring counts as foo
 the forged email yielded several facts and only some were linked to the original; in the
 other the conflict was not detected, so the claim reached Opus as an unverified (labelled)
 memory and Opus disclosed it rather than adopting it silently. ~72 agent runs, ≈200 Opus calls.
+
+## 7 Oct 2026: long memory (80 background facts per scenario), qwen3-4B, Kaggle, test split
+
+| Defence | Fooled ↓ | Updates: answered / reach the user* | Recall: answered / reach the user* |
+|---|---|---|---|
+| allow-all | 28% | 80% / 80% | 91% / 91% |
+| user-only | 13% | 29% / 29% | 24% / 24% |
+| bounded-occupancy | 16% | 48% / 48% | 87% / 87% |
+| label-only | 23% | 84% / 84% | 92% / 92% |
+| thymus-v2 / v2-auto | **14%** (6% lenient) | 63% / **85%** | 76% / **90%** |
+
+*answered, or disclosed in the system notice. Reading: in a big store the 4B conflict
+detector raises false contradictions between *similar* facts about *different* things ("car
+service 26 Oct" vs a water-purifier service on 23 Oct); 20 of 35 recall misses are such false
+contests. The fact is withheld from the answer but still reaches the user in the notice, so
+v2 halves attacks while delivering as much as no defence, at a usability cost (14 points of
+recall arrive as "unconfirmed"). Fix under test: a stricter same-subject conflict check.

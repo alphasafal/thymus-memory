@@ -15,6 +15,14 @@ different values: a different city, time, date, name, number, status or choice.
 Memories about different facts do not conflict, even if they share a topic.
 Return the ids of the conflicting existing memories, or an empty list."""
 
+# Stricter variant: in a large store, similar facts about different things (a car service and
+# a water-purifier service) are the main source of false conflicts.
+CONFLICT_SYSTEM_SAME_SUBJECT = CONFLICT_SYSTEM + """
+Two memories conflict only if they are about the SAME specific thing: the same appointment,
+order, account, bill, person, trip or item. Facts of the same kind about different things
+never conflict (a car service and a water-purifier service; one bank's helpline and another
+bank's; two different flights). When unsure whether it is the same thing, it does not conflict."""
+
 CONFLICT_SCHEMA = {
     "type": "object",
     "properties": {"conflicting_ids": {"type": "array", "items": {"type": "integer"}}},
@@ -30,9 +38,10 @@ class ConflictDetector(Protocol):
 class LLMConflictDetector:
     """Asks the model which of the k most similar active memories the candidate contradicts."""
 
-    def __init__(self, llm: LLM, k: int = 5):
+    def __init__(self, llm: LLM, k: int = 5, same_subject: bool = False):
         self.llm = llm
         self.k = k
+        self.system = CONFLICT_SYSTEM_SAME_SUBJECT if same_subject else CONFLICT_SYSTEM
 
     def find(self, candidate: Candidate, store: MemoryStore) -> list[Memory]:
         # Only memories from earlier turns can be updated by this one: facts that arrive
@@ -45,7 +54,7 @@ class LLMConflictDetector:
             return []
         existing = "\n".join(f"[id {m.id}] {m.text}" for m in neighbours)
         prompt = f"<new>\n{candidate.text}\n</new>\n\n<existing>\n{existing}\n</existing>"
-        raw = self.llm.complete(CONFLICT_SYSTEM, prompt, schema=CONFLICT_SCHEMA)
+        raw = self.llm.complete(self.system, prompt, schema=CONFLICT_SCHEMA)
         try:
             values = json.loads(raw).get("conflicting_ids", [])
         except (json.JSONDecodeError, AttributeError):
