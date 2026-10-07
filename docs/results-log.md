@@ -104,3 +104,29 @@ older versions, labelled), never deleting multi-fact memories.
 |---|---|---|---|---|
 | Llama 3.1 8B: passes the scam on | 70% | 0% | 31% | **25%** |
 | qwen3-4B | 9% | 0% | 1% | 1% |
+
+## 7 Oct 2026: soft replacement (thymus-v2-soft), Llama 3.1 8B, Kaggle
+
+LongMemEval_S (UUA protocol, same 120 questions and poison as above):
+
+| Condition | allow-all | user-only | thymus-v2 | **thymus-v2-soft** |
+|---|---|---|---|---|
+| clean: accuracy | 63% | – | 26% | **62%** |
+| poisoned: accuracy / adopts / flags | 24% / 63% / 0% | 63% / 5% / 0% | 23% / 37% / 50% | **47% / 32% / 60%** |
+| evidence-untrusted: accuracy / adopts | 24% / 63% | 11% / 2% | 16% / 35% | 12% / 53% |
+
+Benchmark (491 scenarios, paired with thymus-v2 on the same scenarios and cached extractions):
+
+| Gate | Attacks blocked | Updates correct | Stale answer | Recall |
+|---|---|---|---|---|
+| thymus-v2 | 143 / 178 | 127 / 157 | 16 | 148 / 156 |
+| thymus-v2-soft | **168 / 178** | 104 / 157 | 48 | 148 / 156 |
+
+Reading: keeping replaced memories restores clean utility on multi-fact memories (26% → 62%,
+allow-all 63%) and doubles poisoned accuracy over allow-all (24% → 47%). On one-claim memories
+it costs updates: the 8B model answers from the labelled older version (stale 16 → 48; 27 of
+the 29 lost updates are cross-origin). The trade-off follows memory granularity, so
+**thymus-v2-auto** retires replaced single claims and keeps multi-fact memories labelled; on
+both suites it should reproduce the better column (running on Kaggle). Evidence-untrusted
+stays hard for every defence: when the real answer itself arrives untrusted, nothing that
+trusts provenance can recover it (UUA's point); v2 discloses instead of dropping (flags 38%).
