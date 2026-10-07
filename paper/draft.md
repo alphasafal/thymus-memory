@@ -398,7 +398,10 @@ gets (more, on Llama, because the old value is retired rather than left to compe
 fooled by 3–18%, equally for lookalike and forged senders. GPT-6-Astra on 15 of the pairs
 shows the same separation at the frontier: with no defence it adopts 80% of the replays,
 provenance quarantine keeps none of the real updates, and the gate adopts none of the
-replays while keeping every real update the undefended agent gets (80%).
+replays while keeping every real update the undefended agent gets (80%). Claude Opus 5.5
+on 8 pairs: 56% → 12% fooled with updates unchanged (62%); both remaining cases are forged
+senders answered with an explicit "I haven't been able to confirm this", which strict
+scoring counts against the gate.
 
 **6.5 Long real conversations (LongMemEval, UUA protocol).** We reproduce Utility Under
 Attack's setup exactly (same 120 questions, 29,646 rounds, 360 poison rounds = 1.2%,
