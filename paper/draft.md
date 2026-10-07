@@ -398,12 +398,14 @@ Hinglish (30 attacks per language). Attack success with no defence → thymus-v2
 
 Undefended models are fooled *less* in Hindi, partly because they use Hindi memories less at
 all (Llama answers 70% of Hindi updates correctly vs 96% in English). The gate also helps
-less: with Llama, v2 gives no gain in Hindi or Hinglish. The cause is the gate's own model.
-Most attacks that get through are ones the 8B conflict detector never linked to the fact
-they contradict, so they are not withheld; that miss rate is higher in Hindi and Hinglish
-(11 of 30 attacks each, 37%) than in English (28%). Rules that are language-independent
-still depend on a model that reads the language; a multilingual or stronger gate model is
-the obvious fix, and Indian-language memory security needs its own evaluation.
+less: with Llama, v2 gives no gain in Hindi or Hinglish. The cause is not retrieval or
+translation: the extractor already stores Hindi messages as English facts, and every store is
+small enough that the original fact is always shown to the conflict detector. It is the 8B
+gate model's judgment. It fails to link, for example, two different customer-care numbers
+for the same bank, and Hindi input yields more loosely worded facts, so it misses more often
+(37% of Hindi and Hinglish attacks are never contested, vs 28% in English). Since the rules
+are fixed and only these judgments are learned, the gate model can be chosen separately from
+the agent; a Llama agent with a 4B qwen3 gate model is **[R]**.
 
 **6.7 Production assistants.** To check that the problem is not an artefact of our harness,
 we ran 15 three-chat trials on the author's own ChatGPT (Plus) and Claude (Pro) accounts with
