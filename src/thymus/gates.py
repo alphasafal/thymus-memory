@@ -39,6 +39,7 @@ Ablations switch off one part of the thymus gate at a time:
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 from typing import Callable, Literal
 
@@ -59,12 +60,25 @@ class Decision:
     contradicts: tuple[int, ...] = ()  # ids this memory disagrees with but does not replace
 
 
+def holds_several_claims(text: str) -> bool:
+    """More than one sentence, or longer than any single extracted claim (those stay under 200
+    characters): replacing one fact in such a memory must not delete the rest."""
+    sentences = [part for part in re.split(r"(?<=[.!?])\s+", text.strip()) if part]
+    return len(sentences) > 1 or len(text) > 300
+
+
 class Gate:
     name = "base"
-    soft_supersede = False  # replaced memories are kept as labelled older versions instead of retired
+    # Replaced memories: False retires them, True keeps them as labelled older versions,
+    # "auto" retires single claims and keeps memories holding several (e.g. whole chat rounds).
+    soft_supersede: bool | str = False
 
     def apply_supersedes(self, store: MemoryStore, ids: tuple[int, ...]) -> None:
-        if self.soft_supersede:
+        if self.soft_supersede == "auto":
+            multi = {m.id for m in store.all() if m.id in ids and holds_several_claims(m.text)}
+            store.mark_older(tuple(i for i in ids if i in multi))
+            store.retire(tuple(i for i in ids if i not in multi))
+        elif self.soft_supersede:
             store.mark_older(ids)
         else:
             store.retire(ids)
@@ -176,7 +190,7 @@ class ThymusGate(Gate):
         require_auth: bool = False,
         contest_other_users: bool = False,
         notice: bool = False,
-        soft_supersede: bool = False,
+        soft_supersede: bool | str = False,
         name: str = "thymus",
     ):
         self.detector = detector
@@ -322,6 +336,9 @@ GATES: dict[str, Callable[[LLM], Gate]] = {
     "thymus-v2-soft": lambda llm: ThymusGate(
         LLMConflictDetector(llm), LLMClaimClassifier(llm), require_auth=True, contest_other_users=True, notice=True,
         soft_supersede=True, name="thymus-v2-soft"),
+    "thymus-v2-auto": lambda llm: ThymusGate(
+        LLMConflictDetector(llm), LLMClaimClassifier(llm), require_auth=True, contest_other_users=True, notice=True,
+        soft_supersede="auto", name="thymus-v2-auto"),
     "thymus-v2-inline": lambda llm: ThymusGate(
         LLMConflictDetector(llm), LLMClaimClassifier(llm), require_auth=True, contest_other_users=True,
         name="thymus-v2-inline"),
@@ -333,7 +350,7 @@ MAIN_GATES = (
 )
 ABLATIONS = ("thymus-no-screen", "thymus-any-origin", "thymus-no-labels", "thymus-hide")
 # Version 2 of the gate and its inline-label variant (see ThymusGate).
-VERSION_2 = ("thymus-v2", "thymus-v2-inline", "thymus-v2-soft")
+VERSION_2 = ("thymus-v2", "thymus-v2-inline", "thymus-v2-soft", "thymus-v2-auto")
 
 
 def make_gate(name: str, llm: LLM) -> Gate:

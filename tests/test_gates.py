@@ -310,3 +310,16 @@ def test_soft_replacement_keeps_the_old_memory_labelled():
     hard = make_gate("thymus-v2", EchoLLM())
     hard.apply_supersedes(store, (old.id,))
     assert old.status == "superseded"
+
+
+def test_auto_replacement_retires_single_claims_and_keeps_multi_fact_memories():
+    from thymus.gates import holds_several_claims, make_gate
+
+    store = MemoryStore(HashEmbedder())
+    claim = add(store, "Order A1023 arrives 8 October.", "tool", "email:orders@shop.example", trust="unverified")
+    round_ = add(store, "[2023/05/02] user: I moved to Pune. I also adopted a cat named Miso. assistant: Congrats!",
+                 "user", None)
+    assert not holds_several_claims(claim.text) and holds_several_claims(round_.text)
+    make_gate("thymus-v2-auto", EchoLLM()).apply_supersedes(store, (claim.id, round_.id))
+    assert claim.status == "superseded"
+    assert round_.status == "active" and round_.older
