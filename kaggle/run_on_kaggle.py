@@ -77,7 +77,14 @@ subprocess.Popen(["ollama", "serve"], stdout=server_log, stderr=subprocess.STDOU
                  env={**os.environ, "OLLAMA_KEEP_ALIVE": "24h"})
 wait_for_ollama()
 for model in CONFIG["pull"]:
-    sh(["ollama", "pull", model])
+    for attempt in range(6):  # the model registry sometimes answers 503 for a minute or two
+        try:
+            sh(["ollama", "pull", model])
+            break
+        except subprocess.CalledProcessError:
+            if attempt == 5:
+                raise
+            time.sleep(30 * (attempt + 1))
 sh(["nvidia-smi"])
 sh([sys.executable, "-m", "pip", "install", "-q", "-e", str(CODE)])
 for command in CONFIG.get("setup", []):  # e.g. download a public dataset into data/
