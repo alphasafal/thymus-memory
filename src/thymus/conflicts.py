@@ -59,6 +59,13 @@ VERIFY_SCHEMA = {
     "additionalProperties": False,
 }
 
+# Candidate third wording (see scripts/verifier_check.py): small models also call two facts
+# different things when only one names a provider or brand.
+VERIFY_SYSTEM_NAMED = VERIFY_SYSTEM + """
+A name, brand or provider that appears in only one of the facts does not make them different
+things: "the yoga class" and "the FitLife yoga class" can be the same class. Answer same_thing
+false only when the facts show two different things."""
+
 # The first wording, kept to reproduce the runs made with it (see docs/results-log.md).
 VERIFY_SYSTEM_FIRST = """You compare two facts from a personal assistant's memory.
 same_thing: are both about the SAME specific thing (the same appointment, order, account, bill,

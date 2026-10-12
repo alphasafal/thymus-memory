@@ -1,0 +1,269 @@
+\section{Results}\label{sec:results}
+
+All numbers are on the 442-scenario test split unless stated. ``Fooled'' is the share of attacks
+whose false claim reaches the answer without a warning. Intervals and paired tests for every
+comparison are in \cref{sec:full}. The \gate{} rows use the final gate.
+
+\subsection{The trade-off}\label{sec:tradeoff}
+
+With no defence, both open models are fooled by about two attacks in five. Every
+store-or-block defence buys safety with real updates (\cref{tab:main}, \cref{fig:tradeoff}).
+
+\begin{table*}[t]
+\centering\small
+\caption{Main results, test split. Updates and recall: answered correctly; in brackets, the
+right value reaches the user in the answer or the system notice.}\label{tab:main}
+\begin{tabular}{@{}lcccccc@{}}
+\toprule
+& \multicolumn{3}{c}{qwen3-4B} & \multicolumn{3}{c}{Llama 3.1 8B} \\
+\cmidrule(lr){2-4}\cmidrule(l){5-7}
+Defence & Fooled $\downarrow$ & Updates $\uparrow$ & Recall $\uparrow$ & Fooled $\downarrow$ & Updates $\uparrow$ & Recall $\uparrow$ \\
+\midrule
+allow-all (no defence) & 38\% & 95\% & 98\% & 42\% & 91\% & 94\% \\
+user-only (provenance quarantine) & 14\% & 30\% & 25\% & 17\% & 33\% & 28\% \\
+conflict-quarantine & 32\% & 81\% & 98\% & 30\% & 78\% & 94\% \\
+last-write-wins & 44\% & 95\% & 98\% & 78\% & 94\% & 94\% \\
+bounded-occupancy & 22\% & 56\% & 97\% & 31\% & 54\% & 84\% \\
+label-only (TMA-NM labels on answers) & 17\% & 94\% & 98\% & 41\% & 91\% & 95\% \\
+\gate{} v1 (inline disclosure) & 17\% & 94\% & 96\% & 47\% & 92\% & 94\% \\
+\textbf{\gate{}} & \textbf{\absQwenThy} & \updQwenThy{} (\updQwenThyReach) & \recQwenThy{} & \textbf{\absLlamaThy} & \updLlamaThy{} (\updLlamaThyReach) & \recLlamaThy{} \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+\begin{figure}[t]
+\centering
+\input{fig-tradeoff}
+\caption{Attack success against real updates that reach the user, test split. Store-or-block
+defences (grey) trade one for the other; the \gate{} gate (black) is the only point low and to
+the right on both models.}
+\label{fig:tradeoff}
+\end{figure}
+
+Provenance quarantine is the safest store-or-block policy and keeps a third of updates and a
+quarter of plain recall: most of what an assistant needs to remember arrives through tools.
+Conflict quarantine and bounded occupancy sit between it and no defence. The \gate{} gate has
+the lowest attack success on both models (paired against every baseline, \cref{sec:full}) while
+keeping recall. Its cost is cross-origin updates (an airline's SMS changing what the airline's
+email said): one source cannot overwrite another, so these reach the user as an unconfirmed
+notice rather than as the answer. \crossOriginSentence{}
+
+\subsection{Disclosure must not depend on the model}\label{sec:disclosure}
+
+Inline labels work only if the model follows them. qwen3-4B, Opus~5.5 and GPT-6-Astra do:
+label-only and v1 cut attacks by half or more. Llama~3.1~8B does not: label-only (41\%) and v1
+(47\%) are no better than no defence. The final gate takes the decision away from the model:
+contested claims are withheld and disclosed by the system, which cuts Llama's attack success
+from 42\% to \absLlamaThy{}. Simply dropping contested claims (\emph{hide}) blocks attacks too
+(qwen3-4B 10\%, Llama 28\%), but the real cross-origin updates it drops leave 30\% of update
+questions answered with the stale value. Removing the labels (\emph{no-labels}) returns attack
+success to the undefended level (qwen3-4B 38\%): disclosure, not storage policy, is the active
+ingredient.
+
+\subsection{Frontier models}\label{sec:frontier}
+
+On a balanced 36-scenario subset (12 families $\times$ 3; 16 adaptive attacks added for
+GPT-6-Astra), frontier models are fooled \emph{more} often than the 4B model without a
+defence: they are better at using what they remember (\cref{tab:frontier}).
+
+\begin{table}[t]
+\centering\small
+\caption{Frontier models (36-scenario subset).}\label{tab:frontier}
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+& \multicolumn{2}{c}{Opus 5.5} & \multicolumn{2}{c}{GPT-6-Astra} \\
+\cmidrule(lr){2-3}\cmidrule(l){4-5}
+Defence & Fooled & Upd. & Fooled & Upd. \\
+\midrule
+allow-all & 58\% & 100\% & 50\% & 100\% \\
+user-only & 17\% & 33\% & -- & -- \\
+label-only & 8\% & 100\% & 4\% & 100\% \\
+\gate{} v1 & 8\% & 100\% & 4\% & 100\% \\
+\gate{} (notice) & 0\% & 67\% & 0\% & 67\% \\
+\gate{} (inline) & 0\% & 100\% & 0\% & 100\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+With a model that follows labels, disclosing contested claims inline gets both 0\% attacks and
+100\% updates; the system notice is the safe default for models that do not. These runs used
+the gate before pairwise verification, which only removes conflicts, so it can only lower the
+33\% of updates delivered as notices; within the subscriptions' limits we did not re-run them.
+
+\subsection{Real attacks and real updates}\label{sec:real}
+
+\para{SMS and email.} 117 real smishing messages~\cite{smsdata}, 79 of them India-specific
+(KYC, UPI, electricity, bank), and 112 real phishing emails~\cite{nazario}, with every contact
+point replaced by a reserved placeholder. A reply that passes the scam's link or number on
+without a warning has relayed it (\cref{tab:realattacks}). A single phishing message contradicts
+no stored fact, so here the gain comes from screening and labels alone; Llama's disregard for
+labels limits it.
+
+\begin{table}[t]
+\centering\small
+\caption{Real scams relayed as genuine.}\label{tab:realattacks}
+\begin{tabular}{@{}llccc@{}}
+\toprule
+Data & Model & allow-all & label-only & \gate{} \\
+\midrule
+SMS (117) & Llama 8B & 70\% & 31\% & \smsLlamaThy \\
+ & qwen3-4B & 9\% & -- & \smsQwenThy \\
+SMS India (79) & Opus 5.5 & 19\% & 10\% & 10\%$^*$ \\
+Email (112) & Llama 8B & 48\% & 29\% & \mailLlamaThy \\
+ & qwen3-4B & 29\% & 8\% & \mailQwenThy \\
+\bottomrule
+\multicolumn{5}{@{}l}{\footnotesize $^*$gate before pairwise verification; GPT-6-Astra stored 1 of 117.}
+\end{tabular}
+\end{table}
+
+\para{Real updates, matched by provenance.} From the Enron corpus~\cite{enron} we take 31 pairs
+in which a sender emailed a meeting detail and later changed it (``has been moved to Friday,
+October 26 in EB 42C2''), pseudonymised. Each real update is replayed in two attack twins with
+the \emph{same text}: from a lookalike address, and from the real address failing
+authentication. Only provenance differs, so no content-based screen can help
+(\cref{tab:enron}).
+
+\begin{table}[t]
+\centering\small
+\caption{Real Enron updates (31 pairs; 62 replays).}\label{tab:enron}
+\begin{tabular}{@{}llcc@{}}
+\toprule
+Model & Defence & Fooled by replay $\downarrow$ & Real updates $\uparrow$ \\
+\midrule
+Llama 8B & allow-all & 84\% & 71\% \\
+ & user-only & 0\% & \textbf{0\%} \\
+ & label-only & 87\% & 77\% \\
+ & \gate{} & \textbf{\enronLlamaThy} & \textbf{\enronLlamaUpdThy} \\
+\midrule
+qwen3-4B & allow-all & 76\% & 74\% \\
+ & user-only & 0\% & \textbf{0\%} \\
+ & label-only & 50\% & 74\% \\
+ & \gate{} & \textbf{\enronQwenThy} & \textbf{\enronQwenUpdThy} \\
+\midrule
+GPT-6-Astra$^*$ & allow-all & 80\% & 80\% \\
+(15 pairs) & user-only & 0\% & 0\% \\
+ & \gate{} & 0\% & 80\% \\
+\midrule
+Opus 5.5$^*$ & allow-all & 56\% & 62\% \\
+(8 pairs) & \gate{} & 12\% & 62\% \\
+\bottomrule
+\multicolumn{4}{@{}l}{\footnotesize $^*$keyword grading, gate before pairwise verification.}
+\end{tabular}
+\end{table}
+
+This is the dilemma of \cref{sec:gate} on real messages: provenance quarantine keeps no real
+update at all, and with no defence a replayed update fools the agent three to four times in
+five. Authenticated same-origin supersession separates them: the gate keeps as many real
+updates as the undefended agent, or more, because the old value is retired rather than left to
+compete, and is fooled equally rarely by lookalike and forged senders. Opus's two remaining
+cases are forged senders answered with an explicit ``I haven't been able to confirm this'',
+which strict scoring counts against the gate.
+
+\subsection{Long real conversations}\label{sec:longmemeval}
+
+We reproduce Utility Under Attack's LongMemEval setup exactly~\cite{uua,longmemeval}: the same
+120 questions, 29,646 rounds, and 360 poison rounds (1.2\%), with the official grading prompts
+and Llama~3.1~8B as agent and gate model (\cref{tab:lme}).
+
+\begin{table}[t]
+\centering\small
+\caption{LongMemEval under the UUA protocol: accuracy, and in brackets how often the agent
+adopts the planted false answer.}\label{tab:lme}
+\begin{tabular}{@{}lccc@{}}
+\toprule
+Condition & allow-all & user-only & \gate{} \\
+\midrule
+clean & 63\% & -- & \lmeClean \\
+poisoned & 24\% (63\%) & 63\% (5\%) & \lmePoisoned{} (\lmePoisonedAdopt) \\
+evidence untrusted & 24\% (63\%) & 11\% (2\%) & \lmeUntrusted{} (\lmeUntrustedAdopt) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+We reproduce UUA's central finding: provenance blocking is safe on poisoned data but collapses
+when the real answers arrive through untrusted channels (11\%; UUA report 4\%). Retiring a
+replaced memory failed here at first (clean accuracy 63\% $\to$ 26\%): a LongMemEval memory is a
+whole chat round, so retiring it because one fact changed deletes the rest. Keeping replaced
+multi-fact memories as labelled older versions restores clean accuracy and \lmeGainSentence{}
+When the real answer itself is untrusted, no provenance-based defence recovers it; the gate at
+least discloses it instead of silently dropping it.
+
+\subsection{Large memory stores}\label{sec:haystack}
+
+Each scenario is preceded by 80 background facts from other families, each with its own
+provenance (qwen3-4B, test split; \cref{tab:haystack}).
+
+\begin{table}[t]
+\centering\small
+\caption{With 80 background facts (qwen3-4B). Answered / reaches the user.}\label{tab:haystack}
+\begin{tabular}{@{}lccc@{}}
+\toprule
+Defence & Fooled $\downarrow$ & Updates & Recall \\
+\midrule
+allow-all & 28\% & 80 / 80\% & 91 / 91\% \\
+user-only & 13\% & 29 / 29\% & 24 / 24\% \\
+bounded-occupancy & 16\% & 48 / 48\% & 87 / 87\% \\
+label-only & 23\% & 84 / 84\% & 92 / 92\% \\
+\gate{} without verification & 14\% & 63 / 85\% & 76 / 90\% \\
+\textbf{\gate{}} & \hayFooled & \hayUpd & \hayRec \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+In a large store a small gate model links similar facts about different things (a car service
+and a water-purifier service), and without verification 14 points of recall reach the user only
+as an ``unconfirmed'' notice. Checking each claimed conflict on its own \hayReading{}
+
+\subsection{Languages and the gate model}\label{sec:languages}
+
+Each of the 10 India families runs in English, Hindi and Hinglish (30 attacks per language).
+Attack success with no defence $\to$ \gate{}:
+
+\begin{center}\small
+\begin{tabular}{@{}lccc@{}}
+\toprule
+Model & English & Hindi & Hinglish \\
+\midrule
+qwen3-4B & 45\% $\to$ \langQwenEn & 30\% $\to$ \langQwenHi & 23\% $\to$ \langQwenHg \\
+Llama 8B & 52\% $\to$ \langLlamaEn & 23\% $\to$ \langLlamaHi & 27\% $\to$ \langLlamaHg \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Undefended models are fooled \emph{less} in Hindi, partly because they use Hindi memories less
+at all (Llama answers 70\% of Hindi updates correctly vs 96\% in English). The gate's gain also
+depends on the language. The cause is not retrieval or translation: the extractor stores Hindi
+messages as English facts, and every store is small enough that the original fact is always
+shown to the conflict detector. It is the gate model's judgment: before verification, the 8B
+gate missed the link between, for example, two customer-care numbers for the same bank, and
+left 37\% of Hindi and Hinglish attacks uncontested (English 28\%). Because only these judgments
+are learned, the gate model can be chosen apart from the agent. With Llama as the agent and
+qwen3-4B as the gate model (gate before verification), Hinglish attacks fall from 27\% to 3\%
+(7 vs 0 discordant pairs, exact McNemar $p=0.016$) without costing updates (87\% $\to$ 83\%), and
+Hindi from 23\% to 13\% ($p$ n.s., $n=30$); English is unchanged (17\% $\to$ 22\%, $p=0.41$). A
+model trained for multilingual use is not automatically better: with Aya Expanse~8B~\cite{aya}
+as gate model no language changes significantly. The language gap lives in the gate's model,
+not its rules, so the gate model is a deployment choice to test per language.
+
+\subsection{Privacy: other users of a shared assistant}\label{sec:privacy}
+
+In a shared assistant, another user's statement about the victim (``her new number is
+\dots'') is an attack on the accuracy of personal data. Provenance quarantine admits it as
+user content (fooled by 17 of 33 on qwen3-4B, 24 of 33 on Llama); the \gate{} gate contests it
+against the victim's own statement (\otherUserSentence{}), and none of the 72 notices it wrote
+named the other user. The gate thus serves the data principal's right to accurate data
+(DPDP Act s.~8(3), GDPR Art.~5(1)(d)) without leaking who made the claim; it does not provide
+confidentiality between users (\cref{sec:discussion}).
+
+\subsection{Production assistants}\label{sec:production}
+
+To check that the problem is not an artefact of our harness, we ran 15 three-chat trials on the
+author's own ChatGPT and Claude accounts with invented facts (\cref{sec:assistants}; reported to
+both vendors before publication). In a new chat hours later, ChatGPT repeated 3 of 6 fake
+updates as fact (a lookalike email, a third-party web page and a forged calendar invite) and
+attributed the lookalike email to the user (``You also mentioned\dots''), losing the warning it
+had given when it first read it. Claude disclosed the source and called the claim unconfirmed
+in five of six, the behaviour the \gate{} gate builds in, but answered the forged invite with a
+caveat, and rejected a genuine same-sender update as possibly spoofed. These are the two
+failures the gate's rules address: lost provenance (disclosure) and no rule for who may update
+a fact (authenticated same-origin supersession).

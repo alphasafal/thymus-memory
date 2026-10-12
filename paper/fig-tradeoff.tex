@@ -1,0 +1,31 @@
+% Figure: attack success vs real updates reaching the user (test split). Store-or-block
+% baselines in grey; the thymus gate's coordinates come from numbers.tex.
+\begin{tikzpicture}
+\pgfplotsset{
+  tradeoff/.style={width=0.6\columnwidth, height=0.55\columnwidth, xmin=20, xmax=100, ymin=0, ymax=80,
+    xlabel={updates reaching user (\%)}, xlabel style={font=\scriptsize}, ticklabel style={font=\scriptsize},
+    title style={font=\footnotesize, yshift=-1ex}, grid=major, grid style={black!10}},
+  base/.style={only marks, mark=*, mark size=1.6pt, black!45},
+  thy/.style={only marks, mark=*, mark size=2.4pt, black},
+  lbl/.style={font=\tiny, black!70}}
+\begin{axis}[tradeoff, title={qwen3-4B}, ylabel={fooled (\%)}, ylabel style={font=\scriptsize}, name=q]
+  \addplot[base] coordinates {(95,38) (30,14) (81,32) (95,44) (56,22) (94,17)};
+  \node[lbl, anchor=west] at (axis cs:30,14) {user-only};
+  \node[lbl, anchor=south] at (axis cs:95,44) {LWW};
+  \node[lbl, anchor=east] at (axis cs:95,38) {none};
+  \node[lbl, anchor=north] at (axis cs:56,22) {bounded};
+  \node[lbl, anchor=east] at (axis cs:81,32) {conflict-q};
+  \node[lbl, anchor=south east] at (axis cs:94,17) {labels};
+  \addplot[thy] coordinates {(\updQwenThyReachNum,\absQwenThyNum)};
+  \node[font=\tiny\bfseries, anchor=north east] at (axis cs:\updQwenThyReachNum,\absQwenThyNum) {thymus};
+\end{axis}
+\begin{axis}[tradeoff, title={Llama 3.1 8B}, at={(q.east)}, anchor=west, xshift=0.6em, yticklabels={}]
+  \addplot[base] coordinates {(91,42) (33,17) (78,30) (94,78) (54,31) (91,41)};
+  \node[lbl, anchor=west] at (axis cs:33,17) {user-only};
+  \node[lbl, anchor=north east] at (axis cs:94,78) {LWW};
+  \node[lbl, anchor=north] at (axis cs:54,31) {bounded};
+  \node[lbl, anchor=south east] at (axis cs:91,42) {none, labels};
+  \addplot[thy] coordinates {(\updLlamaThyReachNum,\absLlamaThyNum)};
+  \node[font=\tiny\bfseries, anchor=north east] at (axis cs:\updLlamaThyReachNum,\absLlamaThyNum) {thymus};
+\end{axis}
+\end{tikzpicture}

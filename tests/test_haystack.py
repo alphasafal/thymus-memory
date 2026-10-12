@@ -58,3 +58,14 @@ def test_cli_runs_with_a_haystack(tmp_path):
     assert code == 0
     meta = next(out.rglob("meta.json")).read_text()
     assert '"haystack": 20' in meta
+
+
+def test_background_never_comes_from_a_family_about_the_same_thing():
+    from thymus.haystack import related_groups
+
+    by_family = {b.family: b.text for b in POOL}
+    for scenario, banned in (("fake-update-standup", "standup-time"), ("electricity-bill-india--hi--attack", "electricity-bill")):
+        s = MemoryStore(HashEmbedder())
+        fill(s, AllowAllGate(), scenario, POOL, 80)
+        assert by_family[banned] not in {m.text for m in s.all()}
+    assert related_groups()["loan-emi"] == related_groups()["car-loan-emi"]
