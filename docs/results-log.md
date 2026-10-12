@@ -294,3 +294,50 @@ returns most updates as answers on qwen3. On Llama the cleaner store leads the g
 contest more real conflicts: safer (and Hindi attacks nearly vanish) but more updates come
 as notices. In every suite 83–96% of the right information reaches the user. Final gate:
 v2-verified; real-data and LongMemEval reruns queued.
+
+## 12 Oct 2026: the first verifier wording drops real conflicts on real data (negative result)
+
+Reruns with v2-verified (first wording), Kaggle, hybrid qwen3 grader:
+
+| Suite | v2 / v2-auto | v2-verified, first wording |
+|---|---|---|
+| Enron replays, Llama: fooled / real updates | 3% / 87% | 13% / 81% |
+| Enron replays, qwen3: fooled / real updates | 18% / 74% | 31% / 77% |
+| Phishing relayed, Llama / qwen3 | 30% / 10% | 30% / 10% |
+| SMS relayed, Llama / qwen3 | 25% / 1% | 25% / 1% |
+| LongMemEval clean / poisoned acc. (adopts, flags) | 62% / 47% (32%, 60%) | 63% / 32% (48%, 8%) |
+| LongMemEval evidence-untrusted acc. (adopts) | 12% (53%) | 13% (66%) |
+
+Diagnosis from the cached verifier answers:
+- Asked "same specific thing?" directly, small models read a changed detail as a different
+  thing: "Meeting Tue Sep 11, 3-4 PM, EB3321" vs "The meeting is rescheduled for Sept 13 at
+  3 PM in EB3321" → same_thing = false. qwen3 confirmed only 16 of 48 Enron conflicts.
+- LongMemEval memories are whole chat rounds; the verifier confirmed 13% of claimed conflicts
+  (607 of 4,706), so poisoned rounds went uncontested (flags 60% → 8%).
+
+Fixes: (1) the verifier first names what each fact is about without its details, then
+compares; (2) only single claims are verified pairwise; multi-fact memories keep the first
+verdict (the same granularity rule as replacement).
+
+Calibration round 1 (455 labelled pairs, real conflicts kept / non-conflicts kept):
+
+| Pairs | qwen3 first → named-subject | Llama first → named-subject |
+|---|---|---|
+| benchmark real conflicts (241) | 91 → 188 | 235 → 167 |
+| Enron real conflicts (45) | 20 → 38 | 41 → 36 |
+| similar background pairs, not conflicts (120) | 0 → 5 | 68 → 5 |
+
+The run-derived "haystack non-conflicts" (49) turned out to be mostly real conflicts: the
+haystack put facts from overlapping families in the background (the standup-time family
+behind the hand-written standup scenarios; electricity-bill behind electricity-bill-india;
+"The EMI is ₹14,200" behind loan-emi). Background facts were also elliptical extracted
+sentences ("The deadline is 30 November"). **Haystack bug, fixed**: background memories are
+now each family's original message (which names its subject), and families about the same
+thing (eval/haystack_related.json, X / X-india) never supply each other's background. The
+earlier large-store numbers over-counted false contests for every defence; all haystack
+runs are redone.
+
+Calibration round 2 (clean labels, hard negatives from unrelated background messages, a
+third wording that says a brand named in only one fact is not a different thing, split by
+family: choose on half A, report on half B) is running; then every suite is rerun with the
+chosen wording.
