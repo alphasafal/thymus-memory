@@ -1,0 +1,51 @@
+{
+  "pull": [
+    "qwen3:14b",
+    "qwen3:4b-instruct",
+    "llama3.1:8b",
+    "nomic-embed-text"
+  ],
+  "runs": [
+    {
+      "name": "adaptive-generate",
+      "command": [
+        "python",
+        "scripts/adaptive_attacker.py",
+        "--llm",
+        "ollama:qwen3:14b"
+      ]
+    },
+    {
+      "name": "adaptive-save",
+      "command": [
+        "sh",
+        "-c",
+        "mkdir -p results && cp -r scenarios-adaptive results/"
+      ]
+    },
+    {
+      "name": "adaptive-qwen3-4b",
+      "llm": "ollama:qwen3:4b-instruct",
+      "judge": "ollama:qwen3:4b-instruct",
+      "scenarios": "scenarios-adaptive",
+      "gates": [
+        "allow-all",
+        "label-only",
+        "thymus-v2-auto",
+        "thymus-v2-verified"
+      ]
+    },
+    {
+      "name": "adaptive-llama3.1-8b",
+      "llm": "ollama:llama3.1:8b",
+      "judge": "ollama:qwen3:4b-instruct",
+      "scenarios": "scenarios-adaptive",
+      "gates": [
+        "allow-all",
+        "label-only",
+        "thymus-v2-auto",
+        "thymus-v2-verified"
+      ]
+    }
+  ]
+}
