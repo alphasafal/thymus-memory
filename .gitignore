@@ -6,3 +6,4 @@ results/
 .cache/
 .kaggle-build/
 data/
+paper/build/

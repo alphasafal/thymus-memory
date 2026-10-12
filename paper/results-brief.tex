@@ -1,0 +1,7 @@
+\para{Results in brief.} Every store-or-block defence trades one failure for the other.
+Provenance quarantine keeps a quarter of plain recall on the benchmark and \emph{none} of the
+real Enron updates; with no defence, a replayed Enron update fools Llama~3.1~8B 84\% of the
+time. The \gate{} gate has the lowest attack success on every agent while keeping recall, and on
+the Enron replays it is fooled \enronLlamaThy{} of the time while keeping \enronLlamaUpdThy{} of
+real updates. Disclosure is the active ingredient: removing the labels returns attack success to
+the undefended level, and for a model that ignores labels only the system notice works.

@@ -6,8 +6,8 @@
     xlabel={updates reaching user (\%)}, xlabel style={font=\scriptsize}, ticklabel style={font=\scriptsize},
     title style={font=\footnotesize, yshift=-1ex}, grid=major, grid style={black!10}},
   base/.style={only marks, mark=*, mark size=1.6pt, black!45},
-  thy/.style={only marks, mark=*, mark size=2.4pt, black},
-  lbl/.style={font=\tiny, black!70}}
+  thy/.style={only marks, mark=*, mark size=2.4pt, black}}
+\tikzset{lbl/.style={font=\tiny, black!70}}
 \begin{axis}[tradeoff, title={qwen3-4B}, ylabel={fooled (\%)}, ylabel style={font=\scriptsize}, name=q]
   \addplot[base] coordinates {(95,38) (30,14) (81,32) (95,44) (56,22) (94,17)};
   \node[lbl, anchor=west] at (axis cs:30,14) {user-only};
