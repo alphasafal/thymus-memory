@@ -22,15 +22,6 @@
       ]
     },
     {
-      "name": "qwen3-4b-haystack80",
-      "llm": "ollama:qwen3:4b-instruct",
-      "judge": "ollama:qwen3:4b-instruct",
-      "gates": [
-        "thymus-v2-verified"
-      ],
-      "haystack": 80
-    },
-    {
       "name": "realsms-qwen3-4b",
       "llm": "ollama:qwen3:4b-instruct",
       "judge": "ollama:qwen3:4b-instruct",
