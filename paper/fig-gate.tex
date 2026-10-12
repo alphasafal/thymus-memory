@@ -1,0 +1,30 @@
+% Figure 1: the write and recall paths of the thymus gate.
+\begin{tikzpicture}[
+  font=\footnotesize, >=Stealth, node distance=4mm and 6mm,
+  box/.style={draw, rounded corners=2pt, align=center, minimum height=7mm, inner sep=3pt, fill=white},
+  rule/.style={box, fill=black!6},
+  out/.style={box, draw=black!60, dashed},
+  lab/.style={font=\scriptsize\itshape, inner sep=1pt}]
+  % write path
+  \node[box] (in) {candidate memory\\[-1pt]\scriptsize source, origin, speaker};
+  \node[rule, right=of in] (screen) {\textbf{1 Screen}\\[-1pt]\scriptsize fact / preference / instruction};
+  \node[out, below=6mm of screen] (rej) {reject\\[-1pt]\scriptsize tool cannot speak for user};
+  \node[rule, right=of screen] (detect) {\textbf{2 Conflicts}\\[-1pt]\scriptsize detect, then verify each pair};
+  \node[box, right=of detect, yshift=6mm] (super) {replace\\[-1pt]\scriptsize retire claim / mark round older};
+  \node[box, right=of detect, yshift=-6mm] (contest) {keep, \emph{contested}\\[-1pt]\scriptsize linked to what it contradicts};
+  \draw[->] (in) -- (screen);
+  \draw[->] (screen) -- node[lab, right] {not a fact} (rej);
+  \draw[->] (screen) -- node[lab, above] {fact} (detect);
+  \draw[->] (detect.east) -- ++(2mm,0) |- node[lab, above, pos=.75] {user, or same authenticated origin} (super.west);
+  \draw[->] (detect.east) -- ++(2mm,0) |- node[lab, below, pos=.75] {other origin, or forged} (contest.west);
+  % recall path
+  \node[box, below=16mm of in] (q) {user question};
+  \node[box, right=of q] (recall) {recall top-$k$};
+  \node[rule, right=of recall] (disc) {\textbf{3 Disclose}};
+  \node[box, right=of disc, yshift=6mm] (model) {model answers\\[-1pt]\scriptsize untrusted facts labelled with origin};
+  \node[box, right=of disc, yshift=-6mm] (notice) {system notice\\[-1pt]\scriptsize ``a message from \textlangle origin\textrangle\ said \dots''};
+  \draw[->] (q) -- (recall);
+  \draw[->] (recall) -- (disc);
+  \draw[->] (disc.east) -- ++(2mm,0) |- (model.west);
+  \draw[->] (disc.east) -- ++(2mm,0) |- node[lab, below, pos=.75] {contested: withheld} (notice.west);
+\end{tikzpicture}

@@ -343,3 +343,15 @@ def test_verified_conflict_check_drops_a_conflict_the_pair_check_rejects():
     new = Candidate(**{**new.__dict__, "created_at": old.created_at + 1})
     assert LLMConflictDetector(Scripted()).find(new, store) == [old]
     assert LLMConflictDetector(Scripted(), verify=True).find(new, store) == []
+    # A whole chat round is about many things: the pair check is skipped and the first verdict stands.
+    round_ = add(store, "[2023/05/02] user: The purifier visit moved. I also booked the car in. assistant: Noted!",
+                 "user", None)
+    new = Candidate(**{**new.__dict__, "created_at": round_.created_at + 1})
+
+    class Rounds(Scripted):
+        def complete(self, system, prompt, schema=None):
+            if "same_thing" in _json.dumps(schema):
+                return _json.dumps({"thing_a": "", "thing_b": "", "same_thing": False, "different_values": True})
+            return _json.dumps({"conflicting_ids": [round_.id]})
+
+    assert LLMConflictDetector(Rounds(), verify=True).find(new, store) == [round_]

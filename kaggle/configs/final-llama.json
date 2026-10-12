@@ -1,0 +1,44 @@
+{
+  "pull": [
+    "llama3.1:8b",
+    "qwen3:4b-instruct",
+    "nomic-embed-text"
+  ],
+  "runs": [
+    {
+      "name": "realemail-enron-llama3.1-8b",
+      "llm": "ollama:llama3.1:8b",
+      "judge": "ollama:qwen3:4b-instruct",
+      "gates": [
+        "thymus-v2-verified"
+      ],
+      "scenarios": "scenarios-real/enron-updates.json"
+    },
+    {
+      "name": "llama3.1-8b",
+      "llm": "ollama:llama3.1:8b",
+      "judge": "ollama:qwen3:4b-instruct",
+      "gates": [
+        "thymus-v2-verified"
+      ]
+    },
+    {
+      "name": "realsms-llama3.1-8b",
+      "llm": "ollama:llama3.1:8b",
+      "judge": "ollama:qwen3:4b-instruct",
+      "gates": [
+        "thymus-v2-verified"
+      ],
+      "scenarios": "scenarios-real/sms.json"
+    },
+    {
+      "name": "realemail-phishing-llama3.1-8b",
+      "llm": "ollama:llama3.1:8b",
+      "judge": "ollama:qwen3:4b-instruct",
+      "gates": [
+        "thymus-v2-verified"
+      ],
+      "scenarios": "scenarios-real/email-phishing.json"
+    }
+  ]
+}

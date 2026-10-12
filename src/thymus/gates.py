@@ -39,14 +39,13 @@ Ablations switch off one part of the thymus gate at a time:
 
 from __future__ import annotations
 
-import re
 from dataclasses import dataclass
 from typing import Callable, Literal
 
 from thymus.claims import ClaimClassifier, LLMClaimClassifier
 from thymus.conflicts import ConflictDetector, LLMConflictDetector
 from thymus.llm import LLM
-from thymus.memory import Candidate, Memory, MemoryStore, Trust
+from thymus.memory import Candidate, Memory, MemoryStore, Trust, holds_several_claims
 
 Action = Literal["accept", "reject", "quarantine"]
 
@@ -58,13 +57,6 @@ class Decision:
     supersedes: tuple[int, ...] = ()  # ids of memories to retire if this one is stored
     trust: Trust = "verified"
     contradicts: tuple[int, ...] = ()  # ids this memory disagrees with but does not replace
-
-
-def holds_several_claims(text: str) -> bool:
-    """More than one sentence, or longer than any single extracted claim (those stay under 200
-    characters): replacing one fact in such a memory must not delete the rest."""
-    sentences = [part for part in re.split(r"(?<=[.!?])\s+", text.strip()) if part]
-    return len(sentences) > 1 or len(text) > 300
 
 
 class Gate:

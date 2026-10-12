@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import re
+
 from dataclasses import dataclass, field
 from typing import Literal
 
@@ -97,3 +99,10 @@ class MemoryStore:
 
     def all(self) -> list[Memory]:
         return list(self._memories)
+
+
+def holds_several_claims(text: str) -> bool:
+    """More than one sentence, or longer than any single extracted claim (those stay under 200
+    characters): replacing one fact in such a memory must not delete the rest."""
+    sentences = [part for part in re.split(r"(?<=[.!?])\s+", text.strip()) if part]
+    return len(sentences) > 1 or len(text) > 300

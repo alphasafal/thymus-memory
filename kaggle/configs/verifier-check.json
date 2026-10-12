@@ -1,0 +1,7 @@
+{
+  "pull": ["qwen3:4b-instruct", "llama3.1:8b"],
+  "runs": [
+    {"name": "verifier-qwen3", "command": ["python", "scripts/verifier_check.py", "--llm", "ollama:qwen3:4b-instruct"]},
+    {"name": "verifier-llama", "command": ["python", "scripts/verifier_check.py", "--llm", "ollama:llama3.1:8b"]}
+  ]
+}

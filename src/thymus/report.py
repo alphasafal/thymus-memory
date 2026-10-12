@@ -220,6 +220,17 @@ def main(argv: list[str] | None = None) -> int:
             f"| {row_label} | {counts[(True, True)] / n:.0%} | {counts[(True, False)] / n:.0%} | "
             f"{counts[(False, True)] / n:.0%} | {counts[(False, False)] / n:.0%} |"
         )
+
+    # What disclosure costs the user: how often an answer carries a system notice, and how
+    # often an update reaches the user only through one.
+    print("\n### Disclosure burden: answers carrying a system notice\n")
+    print("| Gate | Recall/benign | Updates | Attacks | Updates answered only in the notice |")
+    print("|---|---|---|---|---|")
+    for row_label in labels:
+        def noticed(group):
+            return pct([bool(r.get("notice")) for r in group if label(r) == row_label])
+        only = [bool(r.get("update_in_notice")) and not r["passed"] for r in updates if label(r) == row_label]
+        print(f"| {row_label} | {noticed(benign)} | {noticed(updates)} | {noticed(attacks)} | {pct(only)} |")
     return 0
 
 

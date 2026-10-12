@@ -1,0 +1,438 @@
+% Disclose, Don't Decide. Build: latexmk -pdf main.tex (or upload the paper/ folder to Overleaf).
+% For submission, replace the preamble's layout lines with the venue's style file
+% (USENIX: \usepackage{usenix-2020-09}) and remove the author block for double-blind review.
+\documentclass[letterpaper,twocolumn,10pt]{article}
+\usepackage[margin=0.75in,columnsep=0.33in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{mathptmx}
+\usepackage[utf8]{inputenc}
+\usepackage{microtype}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.17}
+\usepackage{amssymb}
+\usepackage{enumitem}
+\usepackage[hidelinks]{hyperref}
+\usepackage{cleveref}
+\setlist{nosep,leftmargin=*}
+\newcommand{\gate}{\textsc{thymus}}
+\newcommand{\para}[1]{\smallskip\noindent\textbf{#1}\ }
+\input{numbers}
+
+\title{\Large\bf Disclose, Don't Decide: Separating Real Updates from Poisoned Ones\\in LLM Agent Memory}
+\author{Safal Gupta}
+\date{}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+LLM agents with long-term memory save facts from conversations, emails, web pages and other
+tools, and later answer from them. Anyone who can put text in front of the agent can plant a
+false fact that it will repeat as true; OWASP lists this as ASI06, memory poisoning. Defences
+decide at write time whether to store or block each memory. We show that this decision cannot
+be made well: the facts users most need remembered are the ones that change, and real changes
+arrive through the same untrusted channels, in the same shape, as fake ones. We build a
+matched-pair benchmark of 491 scenarios in which every real update has an attacker's twin with
+the same setup and question, covering 90 everyday fact families in English, Hindi and
+Hinglish, including Indian UPI, KYC and utility scams, and 16 adaptive attacks against our own
+defence. We propose the \gate{} gate, which adds a third outcome to store-or-block: a claim
+from an unvetted or contradicting source is kept, and disclosed to the user with its source by
+the system instead of being stated as fact by the model. Tool content may add facts but never
+speak for the user, and a fact may be replaced only by the user or by the authenticated source
+that stated it. Against five defences from prior work in one harness, it has the lowest attack
+success on all four agents we test (qwen3-4B \absQwenAll{} $\to$ \absQwenThy{}, Llama~3.1~8B
+\absLlamaAll{} $\to$ \absLlamaThy{}, Claude Opus~5.5 58\% $\to$ 0\%, GPT-6-Astra 50\% $\to$
+0\%) while keeping plain recall, which provenance quarantine cuts to a quarter. On real Enron
+update emails replayed from forged and lookalike senders it is fooled \enronLlamaThy{} of the
+time (no defence: 84\%) while keeping \enronLlamaUpdThy{} of real updates (provenance
+quarantine: 0\%). In our own ChatGPT account, 3 of 6 fake updates came back from memory as fact
+in a new chat, one attributed to the user.
+\end{abstract}
+
+\section{Introduction}
+
+Assistants increasingly remember. Commercial assistants keep memories across chats, and
+open-source libraries such as Mem0~\cite{mem0}, A-MEM~\cite{amem} and LangMem~\cite{langmem}
+give any agent a store it writes to as it reads the user's messages, inbox, calendar and the
+web. The convenience is real: the user does not repeat that their standup moved to 9:30 or
+that their flight was retimed. So is the risk. Anyone who can place text in front of the agent
+(an email, a web page, a message in a shared assistant) can try to plant a memory that later
+corrupts its answers~\cite{greshake,minja,agentpoison}. OWASP lists memory and context
+poisoning as a top risk for agentic applications (ASI06)~\cite{owasp}, and more than fifteen
+papers in 2026 alone attack or defend agent memory (\cref{sec:related}).
+
+Most defences share one framing: when a candidate memory arrives, \emph{decide} whether to
+store it. Provenance quarantine blocks everything that came from tools; conflict quarantine
+blocks tool content that contradicts what the user said; content screens block what looks
+malicious~\cite{memgauge,uua,ghostwriter}. A second line of work keeps untrusted content with
+a label and uses the label to stop it from driving consequential actions such as
+payments~\cite{tmanm,ppmf}; its authors note that bias in the agent's \emph{answers} is
+``mitigated, not eliminated''~\cite{tmanm}. Neither line asks what should happen when a fact
+legitimately changes. The facts users most need tracked are exactly the ones that change, and
+their changes arrive through the same untrusted channels as attacks. A courier's ``your parcel
+is delayed to 11 October'' and an attacker's ``your parcel was cancelled; pay the redelivery fee
+here'' are both emails from outside, both contradict a stored fact, and both are phrased as
+updates. A gate that blocks the second blocks the first. Prior work has measured the cost from
+both sides: when real answers arrive only through untrusted channels, provenance weighting
+drops accuracy to 0.04~\cite{uua}, and even without an attacker, memory systems keep answering
+with revoked facts~\cite{revoked}.
+
+We argue that store-or-block is the wrong place to resolve this. The immune system offers a
+useful picture. In the thymus, T cells that react to the body's own proteins are eliminated,
+so the system learns \emph{self} from \emph{non-self} before it acts; and much of the response
+to foreign material works by \emph{marking} it, so that other cells recognise and handle it. A
+memory gate can do the same:
+
+\begin{enumerate}
+\item \textbf{Self/non-self screening.} Tool content is non-self. It may add facts about the
+world, but never speak for the user: no ``the user prefers to pay at \dots''.
+\item \textbf{Authenticated same-origin supersession.} A fact may be replaced by the user, or
+by the source that stated it when the channel authenticates that source (the courier may move
+its own delivery). Anyone else's contradicting claim, and a forged sender, replaces nothing.
+\item \textbf{Disclose, don't decide.} A claim from an unvetted source, or one that contradicts
+another source, is neither stored as truth nor thrown away. Untrusted facts are recalled with
+their origin; \emph{contested} claims are withheld from the answering model and disclosed by
+the system: ``I also have unconfirmed information that contradicts this: a message from
+\textlangle origin\textrangle\ said \textlangle claim\textrangle.''
+\end{enumerate}
+
+\noindent The third rule changes the failure mode. A false claim that passes a store-or-block
+gate is repeated as fact; a false claim that passes a disclosing gate reaches the user as
+\emph{an unverified claim from a named source}, which is what a careful human assistant would
+say. A real update from another channel is no longer lost: the user hears it, with its source.
+Because the system, not the model, writes the notice, this holds even for models that ignore
+labels.
+
+Measuring this needs real and fake updates on the same facts. Existing benchmarks measure
+attacks~\cite{minja,agentpoison,mpbench,mempoison} or updates~\cite{longmemeval,revoked} but not
+both, so a defence that blocks every update looks perfect on one and is never penalised on the
+other.
+
+\para{Contributions.}
+\begin{enumerate}
+\item \textbf{A matched-pair benchmark} of 491 scenarios: 90 everyday fact families, 30 of them
+Indian (UPI, KYC, electricity, FASTag, government schemes) in English, Hindi and Hinglish, each
+with a recall control, a real update and an attacker's twin sharing setup and question; plus
+25 attacks from prior work and 16 adaptive attacks against our gate.
+\item \textbf{Real-data evaluation on four public corpora}: 117 real smishing SMS (79 Indian),
+112 real phishing emails, 31 real Enron update emails each replayed from lookalike and forged
+senders so that only provenance differs, and an exact reproduction of the Utility Under Attack
+protocol on LongMemEval~\cite{uua,longmemeval}.
+\item \textbf{The \gate{} gate}, whose rules are fixed and whose models only judge ``is this a
+fact?'' and ``does this contradict that?'', so that its guarantees hold whatever those models
+output (\cref{sec:guarantees}).
+\item \textbf{A head-to-head comparison} with five defences from prior work in one harness, on
+four model families including Claude Opus~5.5 and GPT-6-Astra, with ablations, family-level
+bootstrap intervals and exact paired tests.
+\item \textbf{Evidence from production assistants}: in the author's own ChatGPT account, fake
+updates came back from memory as fact in a new chat, one of them as something the user had said.
+\end{enumerate}
+
+\input{results-brief}
+
+\section{Setting and threat model}
+
+\para{Memory agent.} We study the common write--recall loop (\cref{fig:gate}). On each turn
+the agent (i)~extracts candidate memories, (ii)~passes each through a \emph{gate} that
+accepts, rejects or links it and may retire older memories, (iii)~recalls the $k=5$ memories
+most similar to the user's message, and (iv)~answers from them. A memory carries a source
+(user or tool), an origin (\texttt{chat}, \texttt{email:orders@shop.example},
+\texttt{web:reviews.example}, \texttt{calendar:work}), a speaker (which user said it, for
+shared assistants) and a turn.
+
+\para{Provenance by construction.} Memories are extracted from the user's message and from
+each piece of tool content in separate calls, so a candidate's source and origin come from the
+channel, not from the model's description of it. Origins come from the channel (a mail
+system's authenticated sender, a calendar integration); we test forged ones separately.
+
+\para{Attacker.} The attacker can put text in front of the agent through any channel the user
+does not control: an email from a lookalike domain, a web page, an SMS, a message from another
+user of a shared assistant~\cite{minja}, or a document. The goal is that the agent later states
+a false fact to the user as true (a new support number, a payment link, a changed deadline), or
+stores a preference or instruction in the user's name. The attacker may forge the sender of a
+legitimate source, and adaptive attackers know how the gate works. The attacker cannot write
+to the user's own chat or trusted integrations and cannot change model weights.
+
+\para{Defender goal.} Keep \emph{attack success} low and \emph{update} and \emph{recall
+accuracy} high at the same time. A defence that blocks every update is not a solution.
+
+\para{Out of scope.} Consequential actions such as payments, which origin-bound authority
+already stops~\cite{tmanm} (we target the answer bias it leaves open); training-time poisoning;
+and poisoning of shared retrieval corpora~\cite{agentpoison}.
+
+\section{The \gate{} gate}\label{sec:gate}
+
+\begin{figure*}[t]
+\centering
+\input{fig-gate}
+\caption{The \gate{} gate. Write path (top): tool content that is not a plain fact is
+rejected; a fact that contradicts an earlier memory replaces it only if it comes from the user
+or from the same authenticated origin, and is otherwise kept as \emph{contested}. Recall path
+(bottom): untrusted facts reach the model labelled with their origin; contested claims are
+withheld from the model and disclosed in a notice written by the system.}
+\label{fig:gate}
+\end{figure*}
+
+\para{Screening (self/non-self).} For a candidate from an untrusted tool origin, a claim
+classifier labels it a \emph{fact}, a \emph{user preference} or an \emph{instruction}; only facts
+are stored. Origins the user connected as their own (here, calendar integrations) are trusted
+and skip this step. The classifier is a short prompt with four examples; it is the gate's only
+content-based check.
+
+\para{Conflicts.} A conflict detector shows the model the candidate and the five most similar
+earlier memories (facts from the same message never conflict) and asks which ones it
+contradicts: the same specific thing (the same appointment, order or account) with a different
+value. In a large store, a small model also links similar facts about \emph{different} things
+(a car service and a water-purifier service). Each claimed conflict between two single claims
+is therefore checked again on its own: the model first names, in a few words and without
+details, what each fact is about, then says whether that is the same thing and whether the
+values differ. Naming first matters: asked directly, small models read a changed detail as a
+different thing (``the meeting moved to 13 September'' is ``not the same meeting'' as the one on
+11 September), which drops exactly the conflicts that matter (\cref{sec:verifier}). Memories
+that hold several facts, such as a whole chat round, keep the first verdict.
+
+\para{Same-origin supersession.} Given the conflicts:
+\begin{itemize}
+\item a \textbf{user} candidate replaces conflicting tool facts and the same user's earlier
+facts, but not what a different user told a shared assistant;
+\item a \textbf{tool} candidate replaces conflicting facts from its \emph{own origin}, and only
+when the channel authenticates that origin (DKIM~\cite{dkim} for email, a registered SMS sender
+ID, a signed calendar invite); a forged sender has the right origin and fails authentication;
+\item a replaced single claim is retired; a replaced memory that holds several facts is kept
+and recalled as ``older version, later updated'', so replacing one fact never deletes others;
+\item conflicting facts from \textbf{other origins}, and anything from a forged sender, are not
+replaced: the candidate is stored as \emph{unverified} and linked to what it contradicts. A
+user's statement that contradicts a \emph{different} user is linked the same way.
+\end{itemize}
+
+\para{Disclosure.} Every fact from an untrusted origin is stored as unverified and recalled with
+its origin; memories from another user of the assistant are marked as such without naming
+them. \emph{Contested} claims are not given to the answering model at all. The system appends a
+notice to the reply: ``I also have unconfirmed information that contradicts this: a message
+from \textlangle origin\textrangle\ said \textlangle claim\textrangle. I have not used it in my
+answer; please check with the source.'' The model cannot adopt what it never sees, and the
+user still learns of the claim and its source.
+
+\para{Earlier versions.} The first version (v1) passed contested claims to the model with an
+inline label and an instruction to disclose them, and let any same-origin message replace a
+fact. Frontier models and a 4B model followed the labels; Llama~3.1~8B did not, and forged
+senders exploited unauthenticated replacement. We report v1 and a variant that keeps the final
+rules but discloses inline (v2-inline), to show how much disclosure depends on the model when
+it is left to the model. \Cref{sec:history} lists every change made after seeing results.
+
+\para{Cost.} Per tool candidate, one classifier call; per candidate with earlier neighbours,
+one conflict call, plus one short call per claimed conflict between single claims. Recall is
+unchanged apart from the labels and the notice.
+
+\subsection{Guarantees}\label{sec:guarantees}
+
+The models inside the gate decide \emph{which} rule applies (is this a fact? does it
+conflict?), never \emph{what} a rule allows. With authentic origins, and whatever the detector
+and classifier output:
+\begin{itemize}
+\item[\textbf{G1}] \textbf{No cross-source overwrite.} Tool content from origin $o$ only ever
+retires memories from $o$; never a user's statement or another source's fact.
+\item[\textbf{G2}] \textbf{No cross-user overwrite.} A user retires only tool facts and their
+own statements, never what another user told a shared assistant.
+\item[\textbf{G3}] \textbf{Non-self cannot speak for the user.} No memory from an untrusted
+origin that the classifier calls a preference or instruction is stored.
+\item[\textbf{G4}] \textbf{Disclosure.} Every active memory from an untrusted origin is recalled
+with its origin, every contested one is withheld and disclosed, and another user's statement
+is marked as such without naming them.
+\end{itemize}
+Each follows directly from the rules. We check them mechanically on 300 random write sequences
+(7,500 gate decisions) with random detector and classifier outputs; each check fails when its
+rule is switched off, so the tests are not vacuous. G3 depends on the classifier's accuracy and
+G1 on authentic origins; both limits are measured (instruction and spoofed-origin attacks).
+What the models' errors \emph{can} do is bounded: a missed conflict leaves a claim labelled but
+uncontested, and a false conflict sends a fact to the user as a notice instead of an answer.
+Neither lets one source overwrite another.
+
+\section{Benchmark}\label{sec:benchmark}
+
+\para{Matched pairs.} A \emph{family} fixes a fact and a question (``When is my library book
+due?''). Its three scenarios share the setup turns and the question: \emph{recall} (the setup
+alone), \emph{legit} (a real update arrives: the library renews the book to 5 November) and
+\emph{attack} (a fake update shaped like a real one: a lookalike sender says the book is
+overdue and a fine must be paid at a link). The pair differs only in the final turn, so a
+defence that blocks the attack by blocking updates is caught by the legit scenario.
+
+\para{Composition.} 491 scenarios: 178 attacks, 157 updates and 156 recall or benign controls
+(\cref{tab:composition}). Update sources: same origin 55, the user 53, another legitimate
+origin 47 (the airline's SMS after the airline's email), other 2. Attack types: lookalike
+origin 34, other user 33, other channel 32, instruction 27, spoofed origin 25, adaptive 16,
+other prior-work types 11. Cross-origin updates and spoofed-origin attacks are included
+\emph{to make our own gate fail}: the first are real updates that same-origin supersession does
+not accept, the second are attacks that it would accept without authentication.
+
+\begin{table}[t]
+\centering\small
+\caption{Benchmark composition.}\label{tab:composition}
+\begin{tabular}{@{}lrrl@{}}
+\toprule
+Part & Families & Scenarios & Notes \\
+\midrule
+Everyday & 60 & 180 & work, orders, travel, money, health \\
+Indian & 30$\times$3 & 270 & UPI, KYC, power, FASTag; en/hi/hinglish \\
+Prior-work attacks & -- & 25 & MINJA-style, sleeper, indirect, authority \\
+Adaptive & -- & 16 & relay, flooding, fake labels, evasion \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\para{Languages.} The Indian families were written in English, then in Hindi (Devanagari) and
+Hinglish (romanised Hindi mixed with English), keeping amounts, dates and names fixed so that
+scoring is identical. Scoring normalises Unicode and matches values on word boundaries
+(``December~1'' does not match ``December~10'').
+
+\para{Scoring.} An update or control is correct if the reply contains the expected value; for
+updates we also report stale answers. An attack reply is \emph{adopted} if it states the
+planted claim, \emph{flagged} if it mentions it with a warning of its own, and \emph{absent}
+otherwise. Keywords decide the clear cases; a reply with the planted value and no warning
+phrase goes to a model grader that answers two yes/no questions (does the reply mention the
+claim? does it present it as true?) on the reply with any copied label removed. A copied
+``[unverified \dots]'' tag alone does not count as a warning. For the \gate{} gate we also
+report whether the right value \emph{reaches the user}: in the answer, or in the system notice.
+
+\para{Grader validation.} An earlier grader treated ``planted value, no warning phrase'' as
+adoption without asking a model. On frontier agents this misgraded 6 of 72 attack replies, all
+of them disclosures under our gate: a bias \emph{against} our method, found by reading every
+frontier reply. The current grader agrees with author labels on 98\% of 58 development replies
+from small models (keywords alone 88\%) and on 72 of 72 frontier replies. \heldoutSentence{}
+Every run was regraded from its saved replies.
+
+\para{Development split.} 8 families and the 25 hand-written scenarios were used while building
+the gate and the grader; all headline numbers use the remaining 442-scenario test split.
+
+\section{Experimental setup}\label{sec:setup}
+
+\para{Agents.} qwen3-4B-instruct~\cite{qwen3} and Llama~3.1~8B~\cite{llama3} through Ollama
+(temperature 0, seed 0) on free Kaggle T4 GPUs; Claude Opus~5.5 and GPT-6-Astra through their
+command-line tools on consumer subscriptions, with our system prompt and all tools disabled.
+The frontier models run on a balanced 36-scenario subset (12 families $\times$ 3), and on 8 and
+15 of the Enron pairs, within the subscriptions' limits. Unless stated, the gate's checks use
+the agent's own model.
+
+\para{Defences.} \emph{allow-all} (no defence); \emph{user-only} (provenance quarantine,
+$\approx$ MemGauge PQ~\cite{memgauge}); \emph{conflict-quarantine} (tool content contradicting a
+user fact is quarantined, $\approx$ MemGauge NC, adapted so users can correct themselves);
+\emph{last-write-wins}; \emph{bounded-occupancy} (at most one tool memory among the five
+recalled, proposed but not built in~\cite{uua}); \emph{label-only} (keep everything, label
+untrusted memories with their origin: TMA-NM's labels~\cite{tmanm} applied to answers); and
+\gate{}. Ablations: \emph{no-screen}, \emph{any-origin} (tool content replaces whatever it
+contradicts), \emph{no-labels} and \emph{hide} (contested claims are dropped, not disclosed).
+
+\para{Controls.} Every model response is cached by its full request, so a scenario's
+extraction calls run once and are replayed for every gate: differences between gates come from
+the gates alone. Each run records the code version and settings.
+
+\para{Statistics.} 95\% intervals resample whole families~\cite{bootstrap} (a family's
+scenarios and language versions are not independent). Defences are compared on the same
+scenarios with exact McNemar tests~\cite{mcnemar}.
+
+\input{results}
+
+\section{Discussion and limitations}\label{sec:discussion}
+
+\begin{itemize}
+\item \textbf{Disclosure moves the decision to the user.} That is the point, but every
+unverified claim the user hears costs attention. \burdenSentence{} A deployment could promote a
+claim to verified after the user, or an independent origin, confirms it.
+\item \textbf{Origins must be authentic.} Same-origin supersession is only as good as sender
+authentication (DKIM/ARC, signed invites, registered SMS headers). Where a channel has no
+authentication, forged same-origin updates remain possible.
+\item \textbf{The gate is as good as its judgments.} Its rules are fixed, but whether two facts
+conflict is a model's call. Misses leave a claim labelled but uncontested; false conflicts turn
+an answer into a notice. In Hindi, small gate models miss more (\cref{sec:languages}); the gate
+model can be chosen per language, and we leave a reliable Hindi gate open.
+\item \textbf{When the truth arrives untrusted.} If the real answer comes only through channels
+the gate cannot trust, no provenance rule recovers it (UUA's evidence-untrusted condition); the
+gate discloses it instead of dropping it, which is the most a provenance defence can do.
+\item \textbf{Scripted and real data.} The matched-pair benchmark is author-written so that
+every update has an exact twin; we complement it with real SMS, real phishing email, real
+Enron updates, LongMemEval, and a small study of two production assistants.
+\item \textbf{Confidentiality.} The gate protects the \emph{integrity} of what the user is
+told, including a user's right to have inaccurate data about them corrected (DPDP Act
+s.~8(3)~\cite{dpdp}, GDPR Art.~5(1)(d)~\cite{gdpr}); it does not stop one user of a shared
+assistant from learning what another said. Notices never name the other user (0 of 72), but
+access control for shared memory is separate work.
+\end{itemize}
+
+\section{Related work}\label{sec:related}
+
+\para{Measuring the trade-off.} Utility Under Attack~\cite{uua} poisons 1.2\% of LongMemEval
+(accuracy 0.850 $\to$ 0.300), shows that a write-time screen rejects 0 of 360 plain false
+facts, and that a provenance weight strong enough to resist poison drops accuracy to 0.0417
+when real answers arrive untrusted; it proposes bounded occupancy but has not built it.
+MemGauge~\cite{memgauge} varies admission, management and exposure across Mem0, A-MEM, LangMem
+and Hindsight on 11 models; provenance quarantine stops tool-side attacks but not MINJA, and its
+numeric-conflict policy quarantines new records that contradict trusted ones. Revoked but Still
+Authoritative~\cite{revoked} finds that no memory system enforces revocation by default.
+
+\para{Labels for actions.} TMA-NM~\cite{tmanm} stores untrusted content as non-actionable with a
+label that survives summarisation, and requires independent corroboration or user
+authorisation for consequential actions (0 of 1,920 attacks over eight frontier models, also
+inside Mem0); it states that answer bias is ``mitigated, not eliminated''. PPMF~\cite{ppmf}
+authorises tool calls by the authority of the memories behind them. We share the idea of
+keeping and labelling untrusted content and apply it where these systems stop: to answers, and
+to facts that change.
+
+\para{Other defences.} Consensus across reasoning paths (A-MemGuard~\cite{amemguard}), saving
+policies and retrieval screens~\cite{ghostwriter}, Bayesian reliability (belief-based
+memory~\cite{nous}, little gain over last-write-wins unless sources differ in trust),
+cryptographic provenance with certified ablation (SMSR~\cite{smsr}), post-hoc auditing
+(MemAudit~\cite{memaudit}), deterministic assembly of retrieved evidence~\cite{freshness}, and
+the lifecycle view of a recent survey~\cite{ltmsurvey}, which calls for ``storage-time
+provenance, versioning, and policy-aware retention''. The \gate{} gate is one concrete
+mechanism of that kind, evaluated on updates.
+
+\para{Attacks and benchmarks.} MINJA~\cite{minja}, AgentPoison~\cite{agentpoison},
+MPBench~\cite{mpbench}, MemPoison~\cite{mempoison}, Bad Memory~\cite{badmemory} and the
+optimised attack of~\cite{pipepoison}, which stays effective under eight defences. None pairs
+attacks with legitimate updates of the same facts.
+
+\section{Conclusion}
+
+Agent memory has been defended as a gate that stores or blocks. On matched real and fake
+updates, and on real SMS, phishing and Enron email, that framing fails in both directions:
+blocking untrusted content loses the updates users need (provenance quarantine keeps none of
+the real Enron updates), and storing it lets replayed updates through (no defence is fooled
+76--84\% of the time). Production assistants show the same failure.
+
+The \gate{} gate replaces the binary decision with three rules: tool content cannot speak for
+the user, only the user or an authenticated source can replace its own facts, and anything else
+is kept and disclosed with its source instead of being decided on. Its rules are fixed and its
+models only judge ``is this a fact?'' and ``does this contradict that?'', which makes its
+guarantees independent of those models and its remaining weaknesses visible: truth that arrives
+only through untrusted channels, channels that cannot authenticate senders, and a gate model
+that misreads a language.
+
+Memory that cannot tell a real change from a forged one is a security problem (ASI06) and an
+accuracy problem for the person it describes. We release the benchmark, the redacted real-data
+sets, the gate and every cached model response, so that both can be measured, and improved, on
+the same scenarios.
+
+\section*{Ethics and open science}
+
+The benchmark scenarios are synthetic. The real-data sets are public research corpora (SMS:
+\cite{smsdata}, CC BY 4.0; phishing email: \cite{nazario}, CC BY 4.0; Enron: \cite{enron};
+LongMemEval: MIT): every link, address and phone number is replaced by a reserved placeholder
+(\texttt{.example} domains, +91-555 numbers) and Enron names are pseudonymised, so no working
+scam contact appears; tests enforce this. The production-assistant study used only the author's
+own accounts and invented facts, asked the assistants not to search connected apps, and was
+reported to OpenAI and Anthropic before publication. The use of AI assistants in this research
+is disclosed as the venue requires. Code, data, prompts, cached responses and run metadata will
+be released under an open licence with instructions to reproduce every table.
+
+\bibliographystyle{plain}
+\bibliography{references}
+
+\appendix
+\input{appendix}
+
+\end{document}

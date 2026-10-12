@@ -18,7 +18,7 @@
    No memory system masters all four skills; selective forgetting is worst (at most 28% on
    multi-hop). Read for: the FactConsolidation task, a ready-made test of the "update" side.
 
-4. **Don't Ask the LLM to Track Freshness: A Deterministic Recipe for Memory Conflict Resolution** (2026)
+4. **Reliable Post-Retrieval Assembly for Agent Memory: Separating Evidence Extraction from Policy Execution** (Reddy & Challaram, 2026; title corrected 12 Oct 2026)
    [arXiv:2606.01435](https://arxiv.org/abs/2606.01435)
    Version-aware, deterministic aggregation beats asking the model to resolve conflicts. Read for:
    the versioning part of the gate.

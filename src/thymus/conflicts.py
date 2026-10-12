@@ -6,7 +6,7 @@ import json
 from typing import Protocol
 
 from thymus.llm import LLM
-from thymus.memory import Candidate, Memory, MemoryStore
+from thymus.memory import Candidate, Memory, MemoryStore, holds_several_claims
 
 CONFLICT_SYSTEM = """You check a personal assistant's memory for contradictions.
 You get a NEW memory and a list of EXISTING memories, each with an id.
@@ -33,12 +33,39 @@ CONFLICT_SCHEMA = {
 
 # Second check for each claimed conflict, one pair at a time: small models confuse similar
 # facts about different things far less often when they see only the two facts.
-VERIFY_SYSTEM = """You compare two facts from a personal assistant's memory.
+# The model first names what each fact is about without its details. Asked directly, small
+# models read a changed detail as a different thing ("the meeting moved to Sept 13" is "not
+# the same meeting" as the Sept 11 one), which drops exactly the conflicts that matter.
+VERIFY_SYSTEM = """You compare two facts from a personal assistant's memory: A (older) and B (newer).
+thing_a, thing_b: name the specific thing each fact is about in a few words, leaving out its
+details (time, date, place, number, status). "The meeting with Ben moved to Friday 4 pm in
+room 3" is about "meeting with Ben". If B does not say which thing it is about ("the meeting
+has been moved", "it is now at 5 pm"), it is about A's thing whenever that fits.
+same_thing: are thing_a and thing_b the same specific thing (the same appointment, meeting,
+order, account, bill, person, trip or item)? A meeting moved to another day or room is still
+the same meeting. Things of the same kind that are clearly different are not the same thing
+(a car service and a water-purifier service; two banks' helplines; two different flights).
+different_values: do A and B give different values for some detail of it (time, date, place,
+number, name, status), so both cannot be true now?"""
+VERIFY_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "thing_a": {"type": "string"},
+        "thing_b": {"type": "string"},
+        "same_thing": {"type": "boolean"},
+        "different_values": {"type": "boolean"},
+    },
+    "required": ["thing_a", "thing_b", "same_thing", "different_values"],
+    "additionalProperties": False,
+}
+
+# The first wording, kept to reproduce the runs made with it (see docs/results-log.md).
+VERIFY_SYSTEM_FIRST = """You compare two facts from a personal assistant's memory.
 same_thing: are both about the SAME specific thing (the same appointment, order, account, bill,
 person, trip or item)? Facts of the same kind about different things are not the same thing.
 different_values: if so, do they give different values for it (time, date, place, number,
 name, status), so both cannot be true now?"""
-VERIFY_SCHEMA = {
+VERIFY_SCHEMA_FIRST = {
     "type": "object",
     "properties": {"same_thing": {"type": "boolean"}, "different_values": {"type": "boolean"}},
     "required": ["same_thing", "different_values"],
@@ -77,7 +104,12 @@ class LLMConflictDetector:
             return []
         ids = {int(v) for v in values if isinstance(v, int) or (isinstance(v, str) and v.isdigit())}
         found = [m for m in neighbours if m.id in ids]
-        return [m for m in found if self._confirmed(candidate.text, m.text)] if self.verify else found
+        if not self.verify:
+            return found
+        # Only single claims are compared pairwise: a memory holding a whole chat round is about
+        # many things at once, so "is it the same thing?" has no answer and the first verdict stands.
+        return [m for m in found if holds_several_claims(m.text) or holds_several_claims(candidate.text)
+                or self._confirmed(candidate.text, m.text)]
 
     def _confirmed(self, new: str, old: str) -> bool:
         raw = self.llm.complete(VERIFY_SYSTEM, f"<a>\n{old}\n</a>\n\n<b>\n{new}\n</b>", schema=VERIFY_SCHEMA)
