@@ -78,6 +78,7 @@ def run_metadata(args: argparse.Namespace, llm: LLM, judge: Judge, scenarios: li
         "embedder": args.embedder,
         "gates": args.gate or list(MAIN_GATES),
         "haystack": args.haystack,
+        "store": args.store,
         "scenario_count": len(scenarios),
         "scenario_ids": [s.id for s in scenarios],
         "argv": sys.argv[1:],
@@ -109,6 +110,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--cache", type=Path, default=Path(".cache/llm"), help="response cache folder (default: %(default)s)")
     parser.add_argument("--no-cache", action="store_true", help="always call the model")
     parser.add_argument("--max-new-calls", type=int, help="stop after this many uncached model calls (agent and grader each)")
+    parser.add_argument("--store", choices=("builtin", "mem0"), default="builtin",
+                        help="memory backend: the built-in store or Mem0 (needs `pip install thymus-memory[mem0]`)")
     parser.add_argument("--cost", action="store_true",
                         help="record model calls, approximate tokens and seconds per scenario and job (use with --no-cache for real latency)")
     parser.add_argument("--haystack", type=int, default=0, metavar="N",
@@ -151,6 +154,21 @@ def main(argv: list[str] | None = None) -> int:
         def background(store, gate, scenario_id):
             return fill(store, gate, scenario_id, pool, args.haystack)
 
+    store_factory = None
+    if args.store == "mem0":
+        import uuid
+
+        from thymus.integrations.mem0 import Mem0Store, make_mem0
+
+        kind, _, embed_model = args.embedder.partition(":")
+        if kind != "ollama":
+            print("--store mem0 needs an ollama embedder", file=sys.stderr)
+            return 1
+        mem0_backend = make_mem0(embed_model or "nomic-embed-text")
+
+        def store_factory():
+            return Mem0Store(mem0_backend, uuid.uuid4().hex)
+
     run_dir = args.out / datetime.now().strftime("%Y%m%d-%H%M%S")
     run_dir.mkdir(parents=True, exist_ok=True)
     (run_dir / "meta.json").write_text(json.dumps(run_metadata(args, llm, judge, scenarios), indent=2) + "\n")
@@ -164,7 +182,7 @@ def main(argv: list[str] | None = None) -> int:
                     for repeat in range(args.repeats):
                         if any(getattr(m, "exhausted", False) for m in (llm, judge.llm)):
                             break
-                        result = run_scenario(scenario, llm, embedder, gate, repeat, judge, background, usage)
+                        result = run_scenario(scenario, llm, embedder, gate, repeat, judge, background, usage, store_factory)
                         results.append(result)
                         log.write(json.dumps(asdict(result)) + "\n")
                         log.flush()

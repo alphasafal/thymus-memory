@@ -9,6 +9,7 @@ dependencies = []
 
 [project.optional-dependencies]
 anthropic = ["anthropic"]
+mem0 = ["mem0ai>=2.2", "ollama"]
 
 [project.scripts]
 thymus-eval = "thymus.cli:main"

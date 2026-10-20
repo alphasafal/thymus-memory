@@ -61,6 +61,18 @@ class WriteEvent:
     memory_id: int | None
 
 
+def write(candidate: Candidate, gate: Gate, store: MemoryStore) -> WriteEvent:
+    """Let the gate decide on one candidate memory and carry out its decision."""
+    decision = gate.review(candidate, store)
+    memory_id = None
+    if decision.action == "accept":
+        memory_id = store.add(candidate, trust=decision.trust, contradicts=decision.contradicts).id
+        gate.apply_supersedes(store, decision.supersedes)
+    elif decision.action == "quarantine":
+        memory_id = store.add(candidate, status="quarantined").id
+    return WriteEvent(candidate, decision, memory_id)
+
+
 class MemoryAgent:
     def __init__(self, llm: LLM, store: MemoryStore, gate: Gate, k: int = 5):
         self.llm = llm
@@ -105,14 +117,7 @@ class MemoryAgent:
             for text in self._extract(source, origin, content, turn.message):
                 authenticated = turn.tool_authenticated if source == "tool" else True
                 candidate = Candidate(text, source, origin, turn.speaker, self.clock, authenticated)
-                decision = self.gate.review(candidate, self.store)
-                memory_id = None
-                if decision.action == "accept":
-                    memory_id = self.store.add(candidate, trust=decision.trust, contradicts=decision.contradicts).id
-                    self.gate.apply_supersedes(self.store, decision.supersedes)
-                elif decision.action == "quarantine":
-                    memory_id = self.store.add(candidate, status="quarantined").id
-                events.append(WriteEvent(candidate, decision, memory_id))
+                events.append(write(candidate, self.gate, self.store))
         return events
 
     def _extract(self, source: Source, origin: str, content: str, request: str) -> list[str]:

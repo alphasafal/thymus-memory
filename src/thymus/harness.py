@@ -82,15 +82,17 @@ def _write_record(event: WriteEvent) -> dict:
 def run_scenario(
     scenario: Scenario, llm: LLM, embedder: Embedder, gate: Gate, repeat: int = 0, judge: Judge | None = None,
     background: Callable[[MemoryStore, Gate, str], int] | None = None, usage: Usage | None = None,
+    store_factory: Callable[[], MemoryStore] | None = None,
 ) -> ScenarioResult:
     """Play the scenario's turns, then score the reply to its probe. ``background``
     pre-fills the store (see thymus.haystack) before the first turn. With ``usage`` (shared by
-    CountingLLM wrappers), the scenario's model use is recorded in ``cost``, grading excluded."""
+    CountingLLM wrappers), the scenario's model use is recorded in ``cost``, grading excluded.
+    ``store_factory`` swaps the built-in store for another backend (e.g. Mem0)."""
     result = ScenarioResult(
         scenario.id, scenario.category, scenario.kind, gate.name, repeat, passed=None,
         domain=scenario.domain, language=scenario.language,
     )
-    store = MemoryStore(embedder)
+    store = store_factory() if store_factory is not None else MemoryStore(embedder)
     if background is not None:
         background(store, gate, scenario.id)
     agent = MemoryAgent(llm, store, gate)
