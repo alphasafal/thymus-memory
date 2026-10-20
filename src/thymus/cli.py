@@ -10,6 +10,7 @@ from dataclasses import asdict
 from datetime import datetime
 from pathlib import Path
 
+from thymus.cost import CountingLLM, Usage
 from thymus.embed import Embedder, HashEmbedder, MemoEmbedder, OllamaEmbedder
 from thymus.gates import GATES, MAIN_GATES, make_gate
 from thymus.harness import run_scenario, summarize, summary_markdown
@@ -41,10 +42,17 @@ def make_llm(spec: str) -> LLM:
     )
 
 
+def is_echo(llm: LLM) -> bool:
+    """True for the offline fake model, also behind cache or counting wrappers."""
+    while hasattr(llm, "inner"):
+        llm = llm.inner
+    return isinstance(llm, EchoLLM)
+
+
 def preflight(llm: LLM) -> str | None:
     """A model that leaks its reasoning into answers (some 'thinking' builds do when
     thinking is switched off) silently ruins a whole run. Catch it with one cheap call."""
-    if isinstance(llm, EchoLLM):
+    if is_echo(llm):
         return None
     reply = llm.complete("Answer with one word.", "What is the capital of France?")
     if "paris" not in reply.lower() or len(reply) > 80:
@@ -101,6 +109,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--cache", type=Path, default=Path(".cache/llm"), help="response cache folder (default: %(default)s)")
     parser.add_argument("--no-cache", action="store_true", help="always call the model")
     parser.add_argument("--max-new-calls", type=int, help="stop after this many uncached model calls (agent and grader each)")
+    parser.add_argument("--cost", action="store_true",
+                        help="record model calls, approximate tokens and seconds per scenario and job (use with --no-cache for real latency)")
     parser.add_argument("--haystack", type=int, default=0, metavar="N",
                         help="long-memory run: start each scenario with N background facts from other families (default: 0)")
     args = parser.parse_args(argv)
@@ -114,10 +124,12 @@ def main(argv: list[str] | None = None) -> int:
         print("no scenarios matched", file=sys.stderr)
         return 1
 
+    usage = Usage() if args.cost else None
+
     def cached(model: LLM) -> LLM:
-        if args.no_cache or isinstance(model, EchoLLM):
-            return model
-        return CachedLLM(model, args.cache, args.max_new_calls)
+        if not (args.no_cache or isinstance(model, EchoLLM)):
+            model = CachedLLM(model, args.cache, args.max_new_calls)
+        return CountingLLM(model, usage) if usage is not None else model
 
     llm = cached(make_llm(args.llm))
     embedder = MemoEmbedder(make_embedder(args.embedder))
@@ -128,7 +140,7 @@ def main(argv: list[str] | None = None) -> int:
     gate_llm = cached(make_llm(args.gate_llm)) if args.gate_llm else llm
     gates = [make_gate(name, gate_llm) for name in (args.gate or MAIN_GATES)]
     judge_llm = None
-    if args.judge != "none" and not (args.judge == "same" and isinstance(llm, EchoLLM)):
+    if args.judge != "none" and not (args.judge == "same" and is_echo(llm)):
         judge_llm = llm if args.judge == "same" else cached(make_llm(args.judge))
     grading = args.grading if judge_llm is not None else "keywords"
     judge = Judge(judge_llm, grading)
@@ -152,7 +164,7 @@ def main(argv: list[str] | None = None) -> int:
                     for repeat in range(args.repeats):
                         if any(getattr(m, "exhausted", False) for m in (llm, judge.llm)):
                             break
-                        result = run_scenario(scenario, llm, embedder, gate, repeat, judge, background)
+                        result = run_scenario(scenario, llm, embedder, gate, repeat, judge, background, usage)
                         results.append(result)
                         log.write(json.dumps(asdict(result)) + "\n")
                         log.flush()

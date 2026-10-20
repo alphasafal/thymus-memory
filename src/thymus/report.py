@@ -231,7 +231,64 @@ def main(argv: list[str] | None = None) -> int:
             return pct([bool(r.get("notice")) for r in group if label(r) == row_label])
         only = [bool(r.get("update_in_notice")) and not r["passed"] for r in updates if label(r) == row_label]
         print(f"| {row_label} | {noticed(benign)} | {noticed(updates)} | {noticed(attacks)} | {pct(only)} |")
+
+    print(confirmation_burden(rows, labels))
+    print(cost_table(rows, labels))
     return 0
+
+
+def held_for_confirmation(write: dict) -> bool:
+    """A write the gate did not trust: quarantined, or stored unverified (results saved before
+    writes recorded their trust say so in the reason)."""
+    if write.get("action") == "quarantine":
+        return True
+    if "trust" in write:
+        return write["trust"] == "unverified"
+    return write.get("action") == "accept" and "unverified" in write.get("reason", "")
+
+
+def confirmation_burden(rows: list[dict], labels: list[str]) -> str:
+    """How often the user would be asked, under three ways of involving them:
+    confirm every memory that came from outside the user (the safe default the paper argues
+    against), confirm only what this gate did not trust, or (v2) disclose a contested claim
+    only when an answer depends on it. Counts are per 100 scenarios; no model calls needed."""
+    out = ["\n### Confirmation burden: user questions per 100 scenarios\n",
+           "| Gate | Confirm every outside memory | Confirm what the gate distrusts | Disclose at answer time |",
+           "|---|---|---|---|"]
+    for row_label in labels:
+        rs = [r for r in rows if label(r) == row_label and not r.get("error")]
+        if not rs:
+            continue
+        n = len(rs) / 100
+        outside = sum(1 for r in rs for w in r.get("writes", []) if w.get("source") == "tool")
+        distrusted = sum(1 for r in rs for w in r.get("writes", []) if held_for_confirmation(w))
+        notices = sum(1 for r in rs if r.get("notice"))
+        out.append(f"| {row_label} | {outside / n:.0f} | {distrusted / n:.0f} | {notices / n:.0f} |")
+    return "\n".join(out)
+
+
+def cost_table(rows: list[dict], labels: list[str]) -> str:
+    """Model use added by each gate, from runs made with `thymus-eval --cost`."""
+    from thymus.cost import gate_overhead
+
+    measured = [r for r in rows if r.get("cost")]
+    if not measured:
+        return ""
+    out = ["\n### Cost: gate-only model use (classify, conflict, verify)\n",
+           "| Gate | Writes / scenario | Gate calls / write | Gate tokens / write | Gate seconds / write | "
+           "Agent calls / scenario |", "|---|---|---|---|---|---|"]
+    for row_label in labels:
+        rs = [r for r in measured if label(r) == row_label]
+        writes = sum(len(r.get("writes", [])) for r in rs)
+        if not rs or not writes:
+            continue
+        over = [gate_overhead(r["cost"]) for r in rs]
+        agent_calls = sum(r["cost"].get(j, {}).get("calls", 0) for r in rs for j in ("extract", "answer"))
+        out.append(f"| {row_label} | {writes / len(rs):.1f} | {sum(o['calls'] for o in over) / writes:.2f} | "
+                   f"{sum(o['tokens'] for o in over) / writes:.0f} | {sum(o['seconds'] for o in over) / writes:.2f} | "
+                   f"{agent_calls / len(rs):.1f} |")
+    out.append("\nTokens are estimated as characters / 4. Seconds are real only for uncached runs (`--no-cache`).")
+    return "\n".join(out)
 
 
 if __name__ == "__main__":

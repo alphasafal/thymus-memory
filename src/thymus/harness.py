@@ -9,6 +9,7 @@ from statistics import mean
 from typing import Callable
 
 from thymus.agent import MemoryAgent, WriteEvent
+from thymus.cost import Usage
 from thymus.embed import Embedder
 from thymus.gates import Gate
 from thymus.judge import Judge
@@ -38,6 +39,7 @@ class ScenarioResult:
     notice: str = ""  # a system-written disclosure the gate appended (thymus-v2), shown after the reply
     update_in_notice: bool | None = None  # update: the new value reached the user only through the notice
     writes: list[dict] = field(default_factory=list)
+    cost: dict = field(default_factory=dict)  # model use by job (extract, classify, conflict, verify, answer)
     error: str | None = None
     domain: str = ""
     language: str = "en"
@@ -72,16 +74,18 @@ def _write_record(event: WriteEvent) -> dict:
         "action": event.decision.action,
         "reason": event.decision.reason,
         "supersedes": list(event.decision.supersedes),
+        "trust": event.decision.trust,
         "memory_id": event.memory_id,
     }
 
 
 def run_scenario(
     scenario: Scenario, llm: LLM, embedder: Embedder, gate: Gate, repeat: int = 0, judge: Judge | None = None,
-    background: Callable[[MemoryStore, Gate, str], int] | None = None,
+    background: Callable[[MemoryStore, Gate, str], int] | None = None, usage: Usage | None = None,
 ) -> ScenarioResult:
     """Play the scenario's turns, then score the reply to its probe. ``background``
-    pre-fills the store (see thymus.haystack) before the first turn."""
+    pre-fills the store (see thymus.haystack) before the first turn. With ``usage`` (shared by
+    CountingLLM wrappers), the scenario's model use is recorded in ``cost``, grading excluded."""
     result = ScenarioResult(
         scenario.id, scenario.category, scenario.kind, gate.name, repeat, passed=None,
         domain=scenario.domain, language=scenario.language,
@@ -90,12 +94,15 @@ def run_scenario(
     if background is not None:
         background(store, gate, scenario.id)
     agent = MemoryAgent(llm, store, gate)
+    before = usage.snapshot() if usage is not None else None
     try:
         for turn in scenario.turns:
             _, events = agent.respond(turn, reply=False)  # setup replies are never scored
             result.writes.extend(_write_record(e) for e in events)
         result.reply, _ = agent.respond(scenario.probe, learn=False)
         result.notice = agent.last_notice
+        if usage is not None:
+            result.cost = usage.since(before)
     except LLMUnavailable:
         raise  # the server is down: stop the run instead of failing every scenario
     except LLMError as e:
