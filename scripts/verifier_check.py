@@ -19,14 +19,8 @@ import json
 from pathlib import Path
 
 from thymus.cli import make_llm
-from thymus.conflicts import VERIFY_SCHEMA, VERIFY_SCHEMA_FIRST, VERIFY_SYSTEM, VERIFY_SYSTEM_FIRST, VERIFY_SYSTEM_NAMED
+from thymus.conflicts import VERIFY_WORDINGS as WORDINGS
 from thymus.llm import CachedLLM
-
-WORDINGS = {
-    "first": (VERIFY_SYSTEM_FIRST, VERIFY_SCHEMA_FIRST),
-    "named-subject": (VERIFY_SYSTEM, VERIFY_SCHEMA),
-    "named-subject+brand": (VERIFY_SYSTEM_NAMED, VERIFY_SCHEMA),
-}
 
 
 def main() -> None:

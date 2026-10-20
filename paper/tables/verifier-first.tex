@@ -1,0 +1,13 @@
+\begin{table}[t]\centering\scriptsize
+\caption{Final gate with the \emph{first} verifier wording (superseded): fooled and real updates answered. These runs prompted the wording change in \cref{sec:history}.}\label{tab:verifier-first}
+\begin{tabular}{@{}lcc@{}}\toprule
+Suite & Fooled & Updates \\ \midrule
+Enron replays, qwen3-4B & 31\% & 77\% \\
+phishing, qwen3-4B & 10\% & -- \\
+SMS, qwen3-4B & 1\% & -- \\
+Enron replays, Llama 3.1 8B & 13\% & 81\% \\
+phishing, Llama 3.1 8B & 30\% & -- \\
+SMS, Llama 3.1 8B & 25\% & -- \\
+LongMemEval clean, Llama 3.1 8B & -- & 63\% (accuracy) \\
+LongMemEval poisoned, Llama 3.1 8B & 48\% & 32\% (accuracy) \\
+\bottomrule\end{tabular}\end{table}

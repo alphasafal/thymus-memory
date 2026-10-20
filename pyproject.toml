@@ -3,6 +3,7 @@ name = "thymus-memory"
 version = "0.1.0"
 description = "Write-gates that keep poisoned memories out of LLM agent memory, and a harness that measures what they cost."
 readme = "README.md"
+license = { text = "MIT" }
 requires-python = ">=3.10"
 dependencies = []
 

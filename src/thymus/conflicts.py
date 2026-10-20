@@ -79,6 +79,15 @@ VERIFY_SCHEMA_FIRST = {
     "additionalProperties": False,
 }
 
+# Verifier wordings by name. "named-subject" was chosen on half A of the labelled pairs
+# (eval/verifier_pairs.jsonl, results in paper appendix) and is frozen as the final gate's.
+VERIFY_WORDINGS = {
+    "first": (VERIFY_SYSTEM_FIRST, VERIFY_SCHEMA_FIRST),
+    "named-subject": (VERIFY_SYSTEM, VERIFY_SCHEMA),
+    "named-subject+brand": (VERIFY_SYSTEM_NAMED, VERIFY_SCHEMA),
+}
+FINAL_WORDING = "named-subject"
+
 
 class ConflictDetector(Protocol):
     def find(self, candidate: Candidate, store: MemoryStore) -> list[Memory]: ...
@@ -87,11 +96,13 @@ class ConflictDetector(Protocol):
 class LLMConflictDetector:
     """Asks the model which of the k most similar active memories the candidate contradicts."""
 
-    def __init__(self, llm: LLM, k: int = 5, same_subject: bool = False, verify: bool = False):
+    def __init__(self, llm: LLM, k: int = 5, same_subject: bool = False, verify: bool = False,
+                 wording: str = FINAL_WORDING):
         self.llm = llm
         self.k = k
         self.system = CONFLICT_SYSTEM_SAME_SUBJECT if same_subject else CONFLICT_SYSTEM
         self.verify = verify
+        self.verify_system, self.verify_schema = VERIFY_WORDINGS[wording]
 
     def find(self, candidate: Candidate, store: MemoryStore) -> list[Memory]:
         # Only memories from earlier turns can be updated by this one: facts that arrive
@@ -119,7 +130,7 @@ class LLMConflictDetector:
                 or self._confirmed(candidate.text, m.text)]
 
     def _confirmed(self, new: str, old: str) -> bool:
-        raw = self.llm.complete(VERIFY_SYSTEM, f"<a>\n{old}\n</a>\n\n<b>\n{new}\n</b>", schema=VERIFY_SCHEMA)
+        raw = self.llm.complete(self.verify_system, f"<a>\n{old}\n</a>\n\n<b>\n{new}\n</b>", schema=self.verify_schema)
         try:
             answer = json.loads(raw)
             return bool(answer.get("same_thing")) and bool(answer.get("different_values"))

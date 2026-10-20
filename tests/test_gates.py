@@ -355,3 +355,30 @@ def test_verified_conflict_check_drops_a_conflict_the_pair_check_rejects():
             return _json.dumps({"conflicting_ids": [round_.id]})
 
     assert LLMConflictDetector(Rounds(), verify=True).find(new, store) == [round_]
+
+
+def test_verifier_wording_is_selectable_and_the_final_wording_is_frozen():
+    import json as _json
+    from thymus.conflicts import FINAL_WORDING, VERIFY_SYSTEM, VERIFY_WORDINGS, LLMConflictDetector
+
+    seen = []
+
+    class Recording:
+        name = "recording"
+
+        def complete(self, system, prompt, schema=None):
+            if "same_thing" in _json.dumps(schema):
+                seen.append(system)
+                return _json.dumps({"thing_a": "", "thing_b": "", "same_thing": True, "different_values": True})
+            return _json.dumps({"conflicting_ids": [old.id]})
+
+    store = MemoryStore(HashEmbedder())
+    old = add(store, "Standup at 9:30.", "tool", "calendar:work")
+    new = Candidate(**{**cand("Standup moved to 10:30.", "tool", "calendar:work").__dict__,
+                       "created_at": old.created_at + 1})
+    for wording, (system, _) in VERIFY_WORDINGS.items():
+        assert LLMConflictDetector(Recording(), verify=True, wording=wording).find(new, store) == [old]
+        assert seen[-1] == system
+    assert FINAL_WORDING == "named-subject" and VERIFY_WORDINGS[FINAL_WORDING][0] == VERIFY_SYSTEM
+    LLMConflictDetector(Recording(), verify=True).find(new, store)
+    assert seen[-1] == VERIFY_SYSTEM
