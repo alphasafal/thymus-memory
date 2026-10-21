@@ -1,0 +1,214 @@
+{
+  "pull": [
+    "qwen3:4b-instruct",
+    "llama3.1:8b",
+    "nomic-embed-text"
+  ],
+  "setup": [
+    "pip install -q 'mem0ai>=2.2' ollama"
+  ],
+  "runs": [
+    {
+      "name": "cost-qwen3-4b",
+      "llm": "ollama:qwen3:4b-instruct",
+      "judge": "none",
+      "gates": [
+        "allow-all"
+      ],
+      "only": [
+        "standup-time--",
+        "apollo-deadline--",
+        "manager-name--",
+        "offsite-venue--",
+        "performance-review--",
+        "library-due-date--",
+        "return-pickup--",
+        "pharmacy-refill--",
+        "family-trip-city--",
+        "flight-gate--",
+        "sip-date--",
+        "credit-card-due--"
+      ],
+      "args": [
+        "--cost",
+        "--no-cache"
+      ]
+    },
+    {
+      "name": "cost-qwen3-4b",
+      "llm": "ollama:qwen3:4b-instruct",
+      "judge": "none",
+      "gates": [
+        "thymus-v3"
+      ],
+      "only": [
+        "standup-time--",
+        "apollo-deadline--",
+        "manager-name--",
+        "offsite-venue--",
+        "performance-review--",
+        "library-due-date--",
+        "return-pickup--",
+        "pharmacy-refill--",
+        "family-trip-city--",
+        "flight-gate--",
+        "sip-date--",
+        "credit-card-due--"
+      ],
+      "args": [
+        "--cost",
+        "--no-cache"
+      ]
+    },
+    {
+      "name": "cost-qwen3-4b",
+      "llm": "ollama:qwen3:4b-instruct",
+      "judge": "none",
+      "gates": [
+        "thymus-v2-verified"
+      ],
+      "only": [
+        "standup-time--",
+        "apollo-deadline--",
+        "manager-name--",
+        "offsite-venue--",
+        "performance-review--",
+        "library-due-date--",
+        "return-pickup--",
+        "pharmacy-refill--",
+        "family-trip-city--",
+        "flight-gate--",
+        "sip-date--",
+        "credit-card-due--"
+      ],
+      "args": [
+        "--cost",
+        "--no-cache"
+      ]
+    },
+    {
+      "name": "cost-qwen3-4b",
+      "llm": "ollama:qwen3:4b-instruct",
+      "judge": "none",
+      "gates": [
+        "label-only"
+      ],
+      "only": [
+        "standup-time--",
+        "apollo-deadline--",
+        "manager-name--",
+        "offsite-venue--",
+        "performance-review--",
+        "library-due-date--",
+        "return-pickup--",
+        "pharmacy-refill--",
+        "family-trip-city--",
+        "flight-gate--",
+        "sip-date--",
+        "credit-card-due--"
+      ],
+      "args": [
+        "--cost",
+        "--no-cache"
+      ]
+    },
+    {
+      "name": "cost-qwen3-4b",
+      "llm": "ollama:qwen3:4b-instruct",
+      "judge": "none",
+      "gates": [
+        "user-only"
+      ],
+      "only": [
+        "standup-time--",
+        "apollo-deadline--",
+        "manager-name--",
+        "offsite-venue--",
+        "performance-review--",
+        "library-due-date--",
+        "return-pickup--",
+        "pharmacy-refill--",
+        "family-trip-city--",
+        "flight-gate--",
+        "sip-date--",
+        "credit-card-due--"
+      ],
+      "args": [
+        "--cost",
+        "--no-cache"
+      ]
+    },
+    {
+      "name": "mem0-qwen3-4b",
+      "llm": "ollama:qwen3:4b-instruct",
+      "judge": "ollama:qwen3:4b-instruct",
+      "gates": [
+        "thymus-v3"
+      ],
+      "args": [
+        "--store",
+        "mem0"
+      ]
+    },
+    {
+      "name": "mem0-qwen3-4b",
+      "llm": "ollama:qwen3:4b-instruct",
+      "judge": "ollama:qwen3:4b-instruct",
+      "gates": [
+        "allow-all"
+      ],
+      "args": [
+        "--store",
+        "mem0"
+      ]
+    },
+    {
+      "name": "mem0-qwen3-4b",
+      "llm": "ollama:qwen3:4b-instruct",
+      "judge": "ollama:qwen3:4b-instruct",
+      "gates": [
+        "thymus-v2-verified"
+      ],
+      "args": [
+        "--store",
+        "mem0"
+      ]
+    },
+    {
+      "name": "mem0-llama3.1-8b",
+      "llm": "ollama:llama3.1:8b",
+      "judge": "ollama:qwen3:4b-instruct",
+      "gates": [
+        "thymus-v3"
+      ],
+      "args": [
+        "--store",
+        "mem0"
+      ]
+    },
+    {
+      "name": "mem0-llama3.1-8b",
+      "llm": "ollama:llama3.1:8b",
+      "judge": "ollama:qwen3:4b-instruct",
+      "gates": [
+        "allow-all"
+      ],
+      "args": [
+        "--store",
+        "mem0"
+      ]
+    },
+    {
+      "name": "mem0-llama3.1-8b",
+      "llm": "ollama:llama3.1:8b",
+      "judge": "ollama:qwen3:4b-instruct",
+      "gates": [
+        "thymus-v2-verified"
+      ],
+      "args": [
+        "--store",
+        "mem0"
+      ]
+    }
+  ]
+}

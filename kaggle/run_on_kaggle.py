@@ -122,6 +122,7 @@ for run in CONFIG["runs"]:
         command += ["--scenarios", run["scenarios"]]
     if run.get("haystack"):
         command += ["--haystack", str(run["haystack"])]
+    command += run.get("args", [])  # any other thymus-eval flags, e.g. --cost, --store mem0
     try:
         sh(command, cwd=CODE)
     except subprocess.CalledProcessError as e:
