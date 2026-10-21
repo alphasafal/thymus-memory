@@ -398,3 +398,20 @@ wrong and has been replaced.)
   rejected 38/49 (backdoor triggers 13/23, all other types 25/26); **clean rejected 29/130 (22%)**:
   imperative best-practice advice ("Always use parameterized queries") reads as an instruction.
   A false-positive cost of rule (1) on knowledge-base content, to report.
+
+## 21 Oct 2026: v3 on the exposed suites (designed after seeing these; not evidence per the pre-registration)
+
+| Suite | allow-all | v2-verified | **v3** |
+|---|---|---|---|
+| qwen3-4B fooled / updates (reach) / recall | 38 / 95 / 98 | 9 / 76 (92) / 96 | **9 / 73 (92) / 96** |
+| Llama 3.1 8B fooled / updates (reach) / recall | 42 / 91 / 94 | 25 / 72 (87) / 94 | **6 / 63 (88) / 94** |
+| Enron replays fooled / real updates, qwen3 | | 24 / 77 | 24 / 77 |
+| Enron replays fooled / real updates, Llama | | 18 / 77 | **3 / 77** |
+| SMS / phishing relayed, Llama | | 25 / 30 | 25 / 30 (first-contact scams contradict nothing) |
+| 80 background facts, qwen3: fooled / upd (reach) / recall (reach) | 28 / 85 / 90 | 12 / 70 (82) / 87 (88) | 12 / 68 (82) / 87 (88) |
+
+Pre-registered large-store prediction (v3 recall reaching the user ≥ 88%) holds: 88%.
+
+Automated adaptive attacks (qwen3-14B told how the gate works; 188 per model; final-adaptive):
+fooled, qwen3 / Llama: allow-all 44 / 56, label-only 20 / 52, v2-auto 4 / 10, v2-verified 6 / 20;
+v3 queued (v3-adaptive).
