@@ -151,7 +151,7 @@ def full_table(model: str, rows: list[dict]) -> str:
     out = [f"\\paragraph{{{title}, test split.}} Rates in \\% with 95\\% family-bootstrap intervals; "
            "the last three columns compare the final gate with each defence on the same scenarios "
            "(discordant pairs final better / worse, exact McNemar $p$, attack success).", "",
-           "\\begin{center}\\scriptsize\\begin{tabular}{@{}lccccc@{}}\\toprule",
+           "\\begin{center}\\scriptsize\\resizebox{\\columnwidth}{!}{\\begin{tabular}{@{}lccccc@{}}\\toprule",
            "Defence & Fooled & Updates & Recall & better/worse & $p$ \\\\ \\midrule"]
     mine = {r["scenario_id"]: r for r in by_gate(rows, FINAL)}
     for g in gates:
@@ -169,7 +169,7 @@ def full_table(model: str, rows: list[dict]) -> str:
             paired = f"{better}/{worse}", ("$<$0.001" if p < 0.001 else f"{p:.3f}")
         out.append(f"{NAMES.get(g, g)} & {ci_cell(rs, fooled)} & {ci_cell(rs, updated)} & "
                    f"{ci_cell(rs, recalled)} & {paired[0]} & {paired[1]} \\\\")
-    out += ["\\bottomrule\\end{tabular}\\end{center}", ""]
+    out += ["\\bottomrule\\end{tabular}}\\end{center}", ""]
     return "\n".join(out)
 
 
