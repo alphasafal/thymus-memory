@@ -11,6 +11,7 @@
       "haystack": 80,
       "gates": [
         "thymus-v2-verified",
+        "thymus-v3",
         "allow-all",
         "label-only",
         "thymus-v2-auto",
