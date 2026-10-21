@@ -94,6 +94,96 @@
       "gates": [
         "user-only"
       ]
+    },
+    {
+      "name": "fresh-model-qwen3-4b",
+      "llm": "ollama:qwen3:4b-instruct",
+      "judge": "ollama:qwen3:4b-instruct",
+      "scenarios": "scenarios-fresh",
+      "gates": [
+        "thymus-v3"
+      ]
+    },
+    {
+      "name": "fresh-model-qwen3-4b",
+      "llm": "ollama:qwen3:4b-instruct",
+      "judge": "ollama:qwen3:4b-instruct",
+      "scenarios": "scenarios-fresh",
+      "gates": [
+        "allow-all"
+      ]
+    },
+    {
+      "name": "fresh-model-qwen3-4b",
+      "llm": "ollama:qwen3:4b-instruct",
+      "judge": "ollama:qwen3:4b-instruct",
+      "scenarios": "scenarios-fresh",
+      "gates": [
+        "thymus-v2-verified"
+      ]
+    },
+    {
+      "name": "fresh-model-qwen3-4b",
+      "llm": "ollama:qwen3:4b-instruct",
+      "judge": "ollama:qwen3:4b-instruct",
+      "scenarios": "scenarios-fresh",
+      "gates": [
+        "label-only"
+      ]
+    },
+    {
+      "name": "fresh-model-qwen3-4b",
+      "llm": "ollama:qwen3:4b-instruct",
+      "judge": "ollama:qwen3:4b-instruct",
+      "scenarios": "scenarios-fresh",
+      "gates": [
+        "user-only"
+      ]
+    },
+    {
+      "name": "fresh-model-llama3.1-8b",
+      "llm": "ollama:llama3.1:8b",
+      "judge": "ollama:qwen3:4b-instruct",
+      "scenarios": "scenarios-fresh",
+      "gates": [
+        "thymus-v3"
+      ]
+    },
+    {
+      "name": "fresh-model-llama3.1-8b",
+      "llm": "ollama:llama3.1:8b",
+      "judge": "ollama:qwen3:4b-instruct",
+      "scenarios": "scenarios-fresh",
+      "gates": [
+        "allow-all"
+      ]
+    },
+    {
+      "name": "fresh-model-llama3.1-8b",
+      "llm": "ollama:llama3.1:8b",
+      "judge": "ollama:qwen3:4b-instruct",
+      "scenarios": "scenarios-fresh",
+      "gates": [
+        "thymus-v2-verified"
+      ]
+    },
+    {
+      "name": "fresh-model-llama3.1-8b",
+      "llm": "ollama:llama3.1:8b",
+      "judge": "ollama:qwen3:4b-instruct",
+      "scenarios": "scenarios-fresh",
+      "gates": [
+        "label-only"
+      ]
+    },
+    {
+      "name": "fresh-model-llama3.1-8b",
+      "llm": "ollama:llama3.1:8b",
+      "judge": "ollama:qwen3:4b-instruct",
+      "scenarios": "scenarios-fresh",
+      "gates": [
+        "user-only"
+      ]
     }
   ]
 }
