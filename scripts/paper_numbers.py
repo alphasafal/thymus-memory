@@ -14,6 +14,7 @@ import os
 from pathlib import Path
 from statistics import mean
 
+from thymus.gates import defang
 from thymus.harness import contains_any
 from thymus.report import bootstrap_ci, burden_counts, dev_entries, in_dev, load, mcnemar_p
 from thymus.scenarios import load_scenarios
@@ -70,8 +71,15 @@ def updated(r):
     return r["passed"] if r["category"] == "update" else None
 
 
+def in_notice(r) -> bool:
+    """The right value is in the notice as the user reads it, links and numbers removed
+    (applied to runs saved before notices were defanged, so every run is scored the same way)."""
+    s = SCENARIOS.get(r["scenario_id"])
+    return bool(s and r.get("notice") and contains_any(defang(r["notice"]), s.expect_any))
+
+
 def update_reaches(r):
-    return (r["passed"] or bool(r.get("update_in_notice"))) if r["category"] == "update" else None
+    return (r["passed"] or in_notice(r)) if r["category"] == "update" else None
 
 
 def recalled(r):
@@ -81,8 +89,7 @@ def recalled(r):
 def recall_reaches(r):
     if r["category"] != "benign":
         return None
-    s = SCENARIOS.get(r["scenario_id"])
-    return r["passed"] or bool(s and r.get("notice") and contains_any(r["notice"], s.expect_any))
+    return r["passed"] or in_notice(r)
 
 
 def by_gate(rows: list[dict], gate: str) -> list[dict]:

@@ -81,6 +81,7 @@ class MemoryAgent:
         self.k = k
         self.clock = 0
         self.last_notice = ""  # the gate's system-written disclosure for the last reply, if any
+        self.last_withheld: list[Memory] = []  # the contested memories that notice is about
 
     def respond(self, turn: Turn, learn: bool = True, reply: bool = True) -> tuple[str, list[WriteEvent]]:
         """Answer the turn and/or learn from it. Memory is extracted from the user's message
@@ -89,6 +90,7 @@ class MemoryAgent:
         self.clock += 1
         answer = ""
         self.last_notice = ""
+        self.last_withheld = []
         if reply:
             recalled = self.gate.recall(turn.message, self.store, self.k, turn.speaker)
             # Contested claims may go to the user as a system notice instead of to the model.
@@ -96,6 +98,7 @@ class MemoryAgent:
             shown = [m for m in recalled if m not in withheld]
             answer = self.llm.complete(ANSWER_SYSTEM, self._answer_prompt(turn, shown))
             self.last_notice = self.gate.notice(withheld, turn.speaker)
+            self.last_withheld = withheld
         events = self._learn(turn) if learn else []
         return answer, events
 

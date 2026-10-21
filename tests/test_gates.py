@@ -382,3 +382,15 @@ def test_verifier_wording_is_selectable_and_the_final_wording_is_frozen():
     assert FINAL_WORDING == "named-subject" and VERIFY_WORDINGS[FINAL_WORDING][0] == VERIFY_SYSTEM
     LLMConflictDetector(Recording(), verify=True).find(new, store)
     assert seen[-1] == VERIFY_SYSTEM
+
+
+def test_notices_never_repeat_links_addresses_or_phone_numbers_but_keep_new_values():
+    from thymus.gates import defang
+
+    assert defang("Pay Rs 3,499 at bijli-update.example tonight.") == "Pay Rs 3,499 at [link removed] tonight."
+    assert defang("Visit https://pay.example/x9?a=1 now") == "Visit [link removed] now"
+    assert defang("Mail kyc@novabank-kyc.example") == "Mail [address removed]"
+    assert defang("Call +91 55508-55012 to unblock.") == "Call [number removed] to unblock."
+    for kept in ("Standup moved to 10:30 on 11 October.", "Flight AI-302 now leaves from Gate 18 at 6:40 PM.",
+                 "The EMI is Rs 14,200 from 5 November.", "Room 2A, floor 3."):
+        assert defang(kept) == kept

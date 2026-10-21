@@ -39,6 +39,8 @@ Ablations switch off one part of the thymus gate at a time:
 
 from __future__ import annotations
 
+import re
+
 from dataclasses import dataclass
 from typing import Callable, Literal
 
@@ -272,13 +274,27 @@ class ThymusGate(Gate):
             return ""
         claims = "; ".join(
             f"{'another user of this assistant' if m.source == 'user' else 'a message from ' + m.origin} said: "
-            f'"{m.text}"'
+            f'"{defang(m.text)}"'
             for m in sorted(memories, key=lambda m: m.created_at)
         )
         return (
             f"Note: I also have unconfirmed information that contradicts this. {claims}. "
             "I have not used it in my answer; please check with the source directly before acting on it."
         )
+
+
+_LINK = re.compile(r"(?:https?://)?\b[\w-]+(?:\.[\w-]+)*\.[A-Za-z]{2,}\b(?:/\S*)?")
+_EMAIL = re.compile(r"\b[\w.+-]+@[\w-]+(?:\.[\w-]+)+\b")
+_PHONE = re.compile(r"\+?\d[\d\s-]{5,}\d")
+
+
+def defang(text: str) -> str:
+    """What a notice may repeat of a contested claim: links, email addresses and phone numbers
+    are removed, so the system never hands the user an attacker's contact in its own voice.
+    Times, dates and amounts stay, so a real update's new value still reaches the user."""
+    text = _EMAIL.sub("[address removed]", text)
+    text = _LINK.sub("[link removed]", text)
+    return _PHONE.sub(lambda m: "[number removed]" if sum(c.isdigit() for c in m.group()) >= 7 else m.group(), text)
 
 
 def contested(memory: Memory, speaker: str) -> bool:

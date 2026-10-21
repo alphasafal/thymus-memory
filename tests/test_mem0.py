@@ -98,4 +98,6 @@ def test_thymus_memory_withholds_a_forged_update_and_discloses_it_to_the_user():
     assert forged.decision.action == "accept" and not forged.decision.supersedes  # replaces nothing
     hits = memory.search("When does the parcel arrive?")
     assert [r["metadata"]["thymus_id"] for r in hits["results"]] == [1]  # the model sees only the original
-    assert "pay.example" in hits["notice"] and "unconfirmed" in hits["notice"]  # the user hears the claim, labelled
+    notice = hits["notice"]
+    assert "14 October" in notice and "unconfirmed" in notice  # the user hears the claim, labelled
+    assert "pay.example" not in notice and "[link removed]" in notice  # but never the attacker's link
