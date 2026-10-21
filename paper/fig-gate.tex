@@ -10,8 +10,8 @@
   \node[grule, right=of in] (screen) {\textbf{1 Screen}\\[-1pt]\scriptsize fact / preference / instruction};
   \node[gout, below=6mm of screen] (rej) {reject\\[-1pt]\scriptsize tool cannot speak for user};
   \node[grule, right=of screen] (detect) {\textbf{2 Conflicts}\\[-1pt]\scriptsize detect, then verify each pair};
-  \node[gbox, right=19mm of detect, yshift=7mm] (super) {replace\\[-1pt]\scriptsize retire claim / mark round older};
-  \node[gbox, right=19mm of detect, yshift=-7mm] (contest) {keep, \emph{contested}\\[-1pt]\scriptsize linked to what it contradicts};
+  \node[gbox, right=27mm of detect, yshift=7mm] (super) {replace\\[-1pt]\scriptsize retire claim / mark round older};
+  \node[gbox, right=27mm of detect, yshift=-7mm] (contest) {keep, \emph{contested}\\[-1pt]\scriptsize linked to what it contradicts};
   \draw[->] (in) -- (screen);
   \draw[->] (screen) -- node[glab, right] {not a fact} (rej);
   \draw[->] (screen) -- node[glab, above] {fact} (detect);
@@ -21,8 +21,8 @@
   \node[gbox, below=16mm of in] (q) {user question};
   \node[gbox, right=of q] (recall) {recall top-$k$};
   \node[grule, right=of recall] (disc) {\textbf{3 Disclose}};
-  \node[gbox, right=17mm of disc, yshift=7mm] (model) {model answers\\[-1pt]\scriptsize untrusted facts labelled with origin};
-  \node[gbox, right=17mm of disc, yshift=-7mm] (notice) {system notice\\[-1pt]\scriptsize ``a message from \textlangle origin\textrangle\ said \dots''};
+  \node[gbox, right=22mm of disc, yshift=7mm] (model) {model answers\\[-1pt]\scriptsize untrusted facts labelled with origin};
+  \node[gbox, right=22mm of disc, yshift=-7mm] (notice) {system notice\\[-1pt]\scriptsize ``a message from \textlangle origin\textrangle\ said \dots''};
   \draw[->] (q) -- (recall);
   \draw[->] (recall) -- (disc);
   \draw[->] (disc.east) -- ++(2mm,0) |- (model.west);
