@@ -1,30 +1,30 @@
-\paragraph{qwen3-4B, test split.} Rates in \% with 95\% family-bootstrap intervals; the last three columns compare the final gate with each defence on the same scenarios (discordant pairs final better / worse, exact McNemar $p$, attack success).
+\paragraph{qwen3-4B, test split.} Rates in \% with 95\% family-bootstrap intervals; the last columns compare the final gate with each defence on the same attacks (discordant pairs final better / worse, exact McNemar $p$, and $p$ Holm-corrected over the rows of this table).
 
-\begin{center}\scriptsize\resizebox{\columnwidth}{!}{\begin{tabular}{@{}lccccc@{}}\toprule
-Defence & Fooled & Updates & Recall & better/worse & $p$ \\ \midrule
-allow-all & 38 [29, 47] & 95 [92, 98] & 98 [96, 100] & 50/4 & $<$0.001 \\
-user-only & 14 [8, 20] & 30 [20, 41] & 25 [15, 37] & 20/12 & 0.215 \\
-conflict-quarantine & 32 [23, 40] & 81 [71, 90] & 98 [96, 100] & 40/4 & $<$0.001 \\
-last-write-wins & 44 [35, 53] & 95 [91, 98] & 98 [96, 100] & 60/4 & $<$0.001 \\
-bounded-occupancy & 22 [15, 29] & 56 [45, 66] & 97 [95, 99] & 29/9 & 0.002 \\
-label-only & 17 [12, 23] & 94 [91, 98] & 98 [96, 100] & 17/4 & 0.007 \\
-thymus v1 & 17 [11, 24] & 94 [90, 97] & 96 [92, 99] & 14/1 & $<$0.001 \\
-thymus, no verification & 8 [3, 13] & 69 [58, 79] & 96 [92, 99] & 0/2 & 0.500 \\
-thymus (final) & 9 [4, 14] & 76 [67, 85] & 96 [92, 99] & -- & -- \\
+\begin{center}\scriptsize\resizebox{\columnwidth}{!}{\begin{tabular}{@{}lcccccc@{}}\toprule
+Defence & Fooled & Updates & Recall & better/worse & $p$ & Holm $p$ \\ \midrule
+allow-all & 38 [29, 47] & 95 [92, 98] & 98 [96, 100] & 50/4 & $<$0.001 & $<$0.001 \\
+user-only & 14 [8, 20] & 30 [20, 41] & 25 [15, 37] & 20/12 & 0.215 & 0.431 \\
+conflict-quarantine & 32 [23, 40] & 81 [71, 90] & 98 [96, 100] & 40/4 & $<$0.001 & $<$0.001 \\
+last-write-wins & 44 [35, 53] & 95 [91, 98] & 98 [96, 100] & 60/4 & $<$0.001 & $<$0.001 \\
+bounded-occupancy & 22 [15, 29] & 56 [45, 66] & 97 [95, 99] & 29/9 & 0.002 & 0.007 \\
+label-only & 17 [12, 23] & 94 [91, 98] & 98 [96, 100] & 17/4 & 0.007 & 0.022 \\
+thymus v1 & 17 [11, 24] & 94 [90, 97] & 96 [92, 99] & 14/1 & $<$0.001 & 0.005 \\
+thymus, no verification & 8 [3, 13] & 69 [58, 79] & 96 [92, 99] & 0/2 & 0.500 & 0.500 \\
+thymus (final) & 9 [4, 14] & 76 [67, 85] & 96 [92, 99] & -- & -- & -- \\
 \bottomrule\end{tabular}}\end{center}
 
-\paragraph{Llama 3.1 8B, test split.} Rates in \% with 95\% family-bootstrap intervals; the last three columns compare the final gate with each defence on the same scenarios (discordant pairs final better / worse, exact McNemar $p$, attack success).
+\paragraph{Llama 3.1 8B, test split.} Rates in \% with 95\% family-bootstrap intervals; the last columns compare the final gate with each defence on the same attacks (discordant pairs final better / worse, exact McNemar $p$, and $p$ Holm-corrected over the rows of this table).
 
-\begin{center}\scriptsize\resizebox{\columnwidth}{!}{\begin{tabular}{@{}lccccc@{}}\toprule
-Defence & Fooled & Updates & Recall & better/worse & $p$ \\ \midrule
-allow-all & 42 [32, 53] & 91 [86, 95] & 94 [90, 98] & 36/9 & $<$0.001 \\
-user-only & 17 [10, 25] & 33 [21, 45] & 28 [17, 40] & 16/28 & 0.096 \\
-conflict-quarantine & 30 [22, 41] & 78 [68, 87] & 94 [90, 98] & 24/15 & 0.200 \\
-last-write-wins & 78 [70, 85] & 94 [90, 97] & 94 [90, 98] & 85/1 & $<$0.001 \\
-bounded-occupancy & 31 [22, 40] & 54 [43, 65] & 84 [76, 91] & 28/18 & 0.184 \\
-label-only & 41 [31, 51] & 91 [86, 96] & 95 [91, 99] & 29/4 & $<$0.001 \\
-thymus v1 & 47 [37, 57] & 92 [88, 96] & 94 [90, 98] & 43/8 & $<$0.001 \\
-thymus, no verification & 20 [13, 26] & 78 [70, 86] & 94 [90, 98] & 21/29 & 0.322 \\
-thymus (final) & 25 [18, 32] & 72 [63, 81] & 94 [90, 98] & -- & -- \\
+\begin{center}\scriptsize\resizebox{\columnwidth}{!}{\begin{tabular}{@{}lcccccc@{}}\toprule
+Defence & Fooled & Updates & Recall & better/worse & $p$ & Holm $p$ \\ \midrule
+allow-all & 42 [32, 53] & 91 [86, 95] & 94 [90, 98] & 36/9 & $<$0.001 & $<$0.001 \\
+user-only & 17 [10, 25] & 33 [21, 45] & 28 [17, 40] & 16/28 & 0.096 & 0.385 \\
+conflict-quarantine & 30 [22, 41] & 78 [68, 87] & 94 [90, 98] & 24/15 & 0.200 & 0.552 \\
+last-write-wins & 78 [70, 85] & 94 [90, 97] & 94 [90, 98] & 85/1 & $<$0.001 & $<$0.001 \\
+bounded-occupancy & 31 [22, 40] & 54 [43, 65] & 84 [76, 91] & 28/18 & 0.184 & 0.552 \\
+label-only & 41 [31, 51] & 91 [86, 96] & 95 [91, 99] & 29/4 & $<$0.001 & $<$0.001 \\
+thymus v1 & 47 [37, 57] & 92 [88, 96] & 94 [90, 98] & 43/8 & $<$0.001 & $<$0.001 \\
+thymus, no verification & 20 [13, 26] & 78 [70, 86] & 94 [90, 98] & 21/29 & 0.322 & 0.552 \\
+thymus (final) & 25 [18, 32] & 72 [63, 81] & 94 [90, 98] & -- & -- & -- \\
 \bottomrule\end{tabular}}\end{center}
 

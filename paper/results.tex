@@ -253,7 +253,8 @@ gate missed the link between, for example, two customer-care numbers for the sam
 left 37\% of Hindi and Hinglish attacks uncontested (English 28\%). Because only these judgments
 are learned, the gate model can be chosen apart from the agent. With Llama as the agent and
 qwen3-4B as the gate model (gate before verification), Hinglish attacks fall from 27\% to 3\%
-(7 vs 0 discordant pairs, exact McNemar $p=0.016$) without costing updates (87\% $\to$ 83\%), and
+(7 vs 0 discordant pairs, exact McNemar $p=0.016$, uncorrected; across the six
+language-by-model comparisons, Holm gives $p\approx0.10$) without costing updates (87\% $\to$ 83\%), and
 Hindi from 23\% to 13\% ($p$ n.s., $n=30$); English is unchanged (17\% $\to$ 22\%, $p=0.41$). A
 model trained for multilingual use is not automatically better: with Aya Expanse~8B~\cite{aya}
 as gate model no language changes significantly. The language gap lives in the gate's model,

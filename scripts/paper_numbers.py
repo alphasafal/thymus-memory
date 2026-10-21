@@ -160,6 +160,20 @@ def ci_cell(rows: list[dict], metric) -> str:
     return f"{100 * v:.0f} [{100 * ci[0]:.0f}, {100 * ci[1]:.0f}]" if ci else f"{100 * v:.0f}"
 
 
+def holm(ps: list[float]) -> list[float]:
+    """Holm-Bonferroni adjusted p-values (step-down, monotone, capped at 1)."""
+    order = sorted(range(len(ps)), key=lambda i: ps[i])
+    adjusted, running = [1.0] * len(ps), 0.0
+    for rank, i in enumerate(order):
+        running = max(running, min(1.0, (len(ps) - rank) * ps[i]))
+        adjusted[i] = running
+    return adjusted
+
+
+def fmt_p(p: float) -> str:
+    return "$<$0.001" if p < 0.001 else f"{p:.3f}"
+
+
 def full_table(model: str, rows: list[dict]) -> str:
     title = TITLES[model]
     # Without verification: v2-auto, or v2 where auto was not run (identical on single claims).
@@ -167,26 +181,32 @@ def full_table(model: str, rows: list[dict]) -> str:
     extra = [g for g in ("thymus-v2-precise", *CANDIDATES.values()) if g != FINAL]
     gates = [g for g in BASELINES + [unverified, *extra, FINAL] if by_gate(rows, g)]
     out = [f"\\paragraph{{{title}, test split.}} Rates in \\% with 95\\% family-bootstrap intervals; "
-           "the last three columns compare the final gate with each defence on the same scenarios "
-           "(discordant pairs final better / worse, exact McNemar $p$, attack success).", "",
-           "\\begin{center}\\scriptsize\\resizebox{\\columnwidth}{!}{\\begin{tabular}{@{}lccccc@{}}\\toprule",
-           "Defence & Fooled & Updates & Recall & better/worse & $p$ \\\\ \\midrule"]
+           "the last columns compare the final gate with each defence on the same attacks (discordant "
+           "pairs final better / worse, exact McNemar $p$, and $p$ Holm-corrected over the rows of this table).", "",
+           "\\begin{center}\\scriptsize\\resizebox{\\columnwidth}{!}{\\begin{tabular}{@{}lcccccc@{}}\\toprule",
+           "Defence & Fooled & Updates & Recall & better/worse & $p$ & Holm $p$ \\\\ \\midrule"]
     mine = {r["scenario_id"]: r for r in by_gate(rows, FINAL)}
+    tests = {}
+    for g in gates:
+        if g == FINAL:
+            continue
+        theirs = {r["scenario_id"]: r for r in by_gate(rows, g)}
+        pairs = [(bool(theirs[k]["poison_used"]), bool(mine[k]["poison_used"])) for k in mine.keys() & theirs.keys()
+                 if mine[k]["category"] == "attack" and mine[k]["poison_used"] is not None
+                 and theirs[k]["poison_used"] is not None]
+        better = sum(1 for b, t in pairs if b and not t)
+        worse = sum(1 for b, t in pairs if t and not b)
+        tests[g] = (better, worse, mcnemar_p(worse, better))
+    adjusted = dict(zip(tests, holm([t[2] for t in tests.values()])))
     for g in gates:
         rs = by_gate(rows, g)
-        if g == FINAL:
-            paired = "--", "--"
+        if g in tests:
+            better, worse, p = tests[g]
+            paired = f"{better}/{worse} & {fmt_p(p)} & {fmt_p(adjusted[g])}"
         else:
-            theirs = {r["scenario_id"]: r for r in rs}
-            pairs = [(bool(theirs[k]["poison_used"]), bool(mine[k]["poison_used"])) for k in mine.keys() & theirs.keys()
-                     if mine[k]["category"] == "attack" and mine[k]["poison_used"] is not None
-                     and theirs[k]["poison_used"] is not None]
-            better = sum(1 for b, t in pairs if b and not t)
-            worse = sum(1 for b, t in pairs if t and not b)
-            p = mcnemar_p(worse, better)
-            paired = f"{better}/{worse}", ("$<$0.001" if p < 0.001 else f"{p:.3f}")
+            paired = "-- & -- & --"
         out.append(f"{NAMES.get(g, g)} & {ci_cell(rs, fooled)} & {ci_cell(rs, updated)} & "
-                   f"{ci_cell(rs, recalled)} & {paired[0]} & {paired[1]} \\\\")
+                   f"{ci_cell(rs, recalled)} & {paired} \\\\")
     out += ["\\bottomrule\\end{tabular}}\\end{center}", ""]
     return "\n".join(out)
 
