@@ -91,7 +91,7 @@ def bench() -> list[str]:
         put(f"upd{model}ThyReach", rate(final, update_reaches))
         put(f"rec{model}Thy", rate(final, recalled))
         put(f"rec{model}ThyReach", rate(final, recall_reaches))
-        cross = [r for r in final if r["category"] == "update" and r["kind"] == "cross-origin"]
+        cross = [r for r in final if r["category"] == "update" and r["kind"] == "cross-origin-update"]
         put(f"cross{model}Answered", rate(cross, updated))
         put(f"cross{model}Reach", rate(cross, update_reaches))
         other = [r for r in final if r["category"] == "attack" and r["kind"] == "other-user"]

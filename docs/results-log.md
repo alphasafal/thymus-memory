@@ -341,3 +341,29 @@ Calibration round 2 (clean labels, hard negatives from unrelated background mess
 third wording that says a brand named in only one fact is not a different thing, split by
 family: choose on half A, report on half B) is running; then every suite is rerun with the
 chosen wording.
+
+## 21 Oct 2026: frozen gate (thymus-v2-verified, named-subject verifier), test split
+
+Verifier wording chosen on half A of 582 labelled pairs (paper Table `tab:verifier`), frozen
+(tag `gate-frozen`), then every benchmark and real-data suite rerun on Kaggle.
+
+| Suite | allow-all | v2-auto (no verification) | **final** | first wording (12 Oct) |
+|---|---|---|---|---|
+| qwen3-4B fooled / updates / recall | 38 / 95 / 98 | 8 / 69 / 96 | **9 / 76 (94 reach) / 96** | 11 / 87 / 96 |
+| Llama 3.1 8B fooled / updates / recall | 42 / 91 / 94 | 20 / 78 / 94 | **25 / 72 (89 reach) / 94** | 10 / 63 / 94 |
+| Enron replays fooled / real updates, qwen3 | | 18 / 74 | **24 / 77** | 31 / 77 |
+| Enron replays fooled / real updates, Llama | | 3 / 87 | **18 / 77** | 13 / 81 |
+
+**Negative result on Llama.** The final gate is no longer the safest defence there: user-only
+17% (but 33% updates, 28% recall), v2-auto 20%, final 25% (McNemar vs v2-auto 21/29, p = 0.32).
+Against the first wording, 29 attacks now get through and 3 no longer do. Cause: the
+named-subject verifier keeps 76% of Llama's real conflicts (first wording: 97%); a conflict the
+verifier refuses is not contested, so the fake update reaches Llama with only an inline label,
+which Llama ignores (§ v1 → v2). 45 of 45 successful attacks were stored; 6 carried a notice.
+
+Lesson for the design: the verifier is a security component with asymmetric errors. A false
+contest costs a notice; a missed conflict costs an attack. Choosing the wording by counting
+both errors equally on half A was the wrong criterion for Llama.
+
+Also fixed: paper_numbers.py looked for update kind "cross-origin" (the kind is
+"cross-origin-update"), so the cross-origin macros were empty.
