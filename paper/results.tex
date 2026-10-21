@@ -42,9 +42,11 @@ the right on both models.}
 
 Provenance quarantine is the safest store-or-block policy and keeps a third of updates and a
 quarter of plain recall: most of what an assistant needs to remember arrives through tools.
-Conflict quarantine and bounded occupancy sit between it and no defence. The \gate{} gate has
-the lowest attack success on both models (paired against every baseline, \cref{sec:full}) while
-keeping recall. Its cost is cross-origin updates (an airline's SMS changing what the airline's
+Conflict quarantine and bounded occupancy sit between it and no defence. Of the baselines that
+keep plain recall, the \gate{} gate has the lowest attack success on both models (paired against
+every baseline, \cref{sec:full}). On Llama, provenance quarantine is fooled less often
+(\absLlamaUser{} against \absLlamaThy{}), but answers \recLlamaUser{} of plain recall and
+\updLlamaUser{} of updates. Its cost is cross-origin updates (an airline's SMS changing what the airline's
 email said): one source cannot overwrite another, so these reach the user as an unconfirmed
 notice rather than as the answer. \crossOriginSentence{}
 

@@ -130,8 +130,19 @@ def bench() -> list[str]:
         if counts:
             for key, value in zip(("All", "Distrust", "Notice"), counts):
                 macros[f"ask{model}{key}"] = f"{value:.0f}"
+        check_claim(model, rows)
         lines.append(full_table(model, rows))
     return lines
+
+
+def check_claim(model: str, rows: list[dict]) -> None:
+    """The paper says: lowest attack success of any baseline that keeps plain recall (>= 90%).
+    Earlier versions of the gate are compared in the development history, not here."""
+    mine = rate(by_gate(rows, FINAL), fooled)
+    for gate in sorted(g for g in {r["gate"] for r in rows} if not g.startswith("thymus")):
+        rs = by_gate(rows, gate)
+        if (rate(rs, recalled) or 0) >= 0.9 and mine is not None and (rate(rs, fooled) or 1) < mine:
+            print(f"WARNING {model}: {gate} keeps recall and is fooled less often than {FINAL}; fix the claim")
 
 
 def ci_cell(rows: list[dict], metric) -> str:
