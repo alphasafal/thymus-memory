@@ -374,3 +374,8 @@ Also fixed: paper_numbers.py looked for update kind "cross-origin" (the kind is
 recall 100%, updates answered 8/12; the 4 not answered are all cross-origin updates, and all 4
 reach the user in the notice (12/12 reach). Opus 5.5 rerun blocked by the Claude plan's weekly
 limit (resets 24 Oct 02:30 IST); its v3 rows are errors until rerun.
+
+Opus 5.5 rerun on a second Claude account (21 Oct): v3 and v2-verified identical, fooled 0/12
+(allow-all 58%, label-only 8%, thymus v1 8%), recall 12/12, updates answered 8/12 with the 4
+cross-origin ones all reaching the user in the notice (12/12 reach). Pre-registered prediction
+"v3 ≤ v2-verified on attacks" holds on both frontier models (tie at 0%).
