@@ -1,0 +1,34 @@
+{
+  "pull": [
+    "qwen3:14b",
+    "qwen3:4b-instruct",
+    "llama3.1:8b",
+    "nomic-embed-text"
+  ],
+  "runs": [
+    {
+      "name": "gate14b-llama3.1-8b",
+      "llm": "ollama:llama3.1:8b",
+      "judge": "ollama:qwen3:4b-instruct",
+      "gates": [
+        "thymus-v3"
+      ],
+      "args": [
+        "--gate-llm",
+        "ollama:qwen3:14b"
+      ]
+    },
+    {
+      "name": "gate14b-qwen3-4b",
+      "llm": "ollama:qwen3:4b-instruct",
+      "judge": "ollama:qwen3:4b-instruct",
+      "gates": [
+        "thymus-v3"
+      ],
+      "args": [
+        "--gate-llm",
+        "ollama:qwen3:14b"
+      ]
+    }
+  ]
+}
