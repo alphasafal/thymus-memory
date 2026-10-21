@@ -256,15 +256,23 @@ def confirmation_burden(rows: list[dict], labels: list[str]) -> str:
            "| Gate | Confirm every outside memory | Confirm what the gate distrusts | Disclose at answer time |",
            "|---|---|---|---|"]
     for row_label in labels:
-        rs = [r for r in rows if label(r) == row_label and not r.get("error")]
-        if not rs:
-            continue
-        n = len(rs) / 100
-        outside = sum(1 for r in rs for w in r.get("writes", []) if w.get("source") == "tool")
-        distrusted = sum(1 for r in rs for w in r.get("writes", []) if held_for_confirmation(w))
-        notices = sum(1 for r in rs if r.get("notice"))
-        out.append(f"| {row_label} | {outside / n:.0f} | {distrusted / n:.0f} | {notices / n:.0f} |")
+        counts = burden_counts([r for r in rows if label(r) == row_label])
+        if counts:
+            out.append(f"| {row_label} | {counts[0]:.0f} | {counts[1]:.0f} | {counts[2]:.0f} |")
     return "\n".join(out)
+
+
+def burden_counts(rows: list[dict]) -> tuple[float, float, float] | None:
+    """User questions per 100 scenarios: confirm every outside memory, confirm what the gate
+    distrusts, disclose at answer time."""
+    rs = [r for r in rows if not r.get("error")]
+    if not rs:
+        return None
+    n = len(rs) / 100
+    outside = sum(1 for r in rs for w in r.get("writes", []) if w.get("source") == "tool")
+    distrusted = sum(1 for r in rs for w in r.get("writes", []) if held_for_confirmation(w))
+    notices = sum(1 for r in rs if r.get("notice"))
+    return outside / n, distrusted / n, notices / n
 
 
 def cost_table(rows: list[dict], labels: list[str]) -> str:

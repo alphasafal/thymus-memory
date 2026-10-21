@@ -14,7 +14,7 @@ from pathlib import Path
 from statistics import mean
 
 from thymus.harness import contains_any
-from thymus.report import bootstrap_ci, dev_entries, in_dev, load, mcnemar_p
+from thymus.report import bootstrap_ci, burden_counts, dev_entries, in_dev, load, mcnemar_p
 from thymus.scenarios import load_scenarios
 
 K = Path("results/kaggle")
@@ -104,6 +104,10 @@ def bench() -> list[str]:
                   for c in ("benign", "update", "attack")}
         for c, v in burden.items():
             put(f"notice{model}{c.capitalize()}", v)
+        counts = burden_counts(final)
+        if counts:
+            for key, value in zip(("All", "Distrust", "Notice"), counts):
+                macros[f"ask{model}{key}"] = f"{value:.0f}"
         lines.append(full_table(model, rows))
     return lines
 
