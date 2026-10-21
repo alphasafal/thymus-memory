@@ -1,0 +1,99 @@
+{
+  "pull": [
+    "qwen3:4b-instruct",
+    "llama3.1:8b",
+    "nomic-embed-text"
+  ],
+  "runs": [
+    {
+      "name": "gate-aware-qwen3-4b",
+      "llm": "ollama:qwen3:4b-instruct",
+      "judge": "ollama:qwen3:4b-instruct",
+      "scenarios": "scenarios/gate-aware.json",
+      "gates": [
+        "thymus-v3"
+      ]
+    },
+    {
+      "name": "gate-aware-qwen3-4b",
+      "llm": "ollama:qwen3:4b-instruct",
+      "judge": "ollama:qwen3:4b-instruct",
+      "scenarios": "scenarios/gate-aware.json",
+      "gates": [
+        "allow-all"
+      ]
+    },
+    {
+      "name": "gate-aware-qwen3-4b",
+      "llm": "ollama:qwen3:4b-instruct",
+      "judge": "ollama:qwen3:4b-instruct",
+      "scenarios": "scenarios/gate-aware.json",
+      "gates": [
+        "thymus-v2-verified"
+      ]
+    },
+    {
+      "name": "gate-aware-qwen3-4b",
+      "llm": "ollama:qwen3:4b-instruct",
+      "judge": "ollama:qwen3:4b-instruct",
+      "scenarios": "scenarios/gate-aware.json",
+      "gates": [
+        "label-only"
+      ]
+    },
+    {
+      "name": "gate-aware-qwen3-4b",
+      "llm": "ollama:qwen3:4b-instruct",
+      "judge": "ollama:qwen3:4b-instruct",
+      "scenarios": "scenarios/gate-aware.json",
+      "gates": [
+        "user-only"
+      ]
+    },
+    {
+      "name": "gate-aware-llama3.1-8b",
+      "llm": "ollama:llama3.1:8b",
+      "judge": "ollama:qwen3:4b-instruct",
+      "scenarios": "scenarios/gate-aware.json",
+      "gates": [
+        "thymus-v3"
+      ]
+    },
+    {
+      "name": "gate-aware-llama3.1-8b",
+      "llm": "ollama:llama3.1:8b",
+      "judge": "ollama:qwen3:4b-instruct",
+      "scenarios": "scenarios/gate-aware.json",
+      "gates": [
+        "allow-all"
+      ]
+    },
+    {
+      "name": "gate-aware-llama3.1-8b",
+      "llm": "ollama:llama3.1:8b",
+      "judge": "ollama:qwen3:4b-instruct",
+      "scenarios": "scenarios/gate-aware.json",
+      "gates": [
+        "thymus-v2-verified"
+      ]
+    },
+    {
+      "name": "gate-aware-llama3.1-8b",
+      "llm": "ollama:llama3.1:8b",
+      "judge": "ollama:qwen3:4b-instruct",
+      "scenarios": "scenarios/gate-aware.json",
+      "gates": [
+        "label-only"
+      ]
+    },
+    {
+      "name": "gate-aware-llama3.1-8b",
+      "llm": "ollama:llama3.1:8b",
+      "judge": "ollama:qwen3:4b-instruct",
+      "scenarios": "scenarios/gate-aware.json",
+      "gates": [
+        "user-only"
+      ]
+    }
+  ]
+}
