@@ -1,0 +1,30 @@
+{
+  "pull": [
+    "qwen3:4b-instruct",
+    "llama3.1:8b",
+    "nomic-embed-text"
+  ],
+  "inputs": [
+    "results/kaggle/final-adaptive/results/scenarios-adaptive"
+  ],
+  "runs": [
+    {
+      "name": "adaptive-qwen3-4b",
+      "llm": "ollama:qwen3:4b-instruct",
+      "judge": "ollama:qwen3:4b-instruct",
+      "scenarios": "results/kaggle/final-adaptive/results/scenarios-adaptive",
+      "gates": [
+        "thymus-v3"
+      ]
+    },
+    {
+      "name": "adaptive-llama3.1-8b",
+      "llm": "ollama:llama3.1:8b",
+      "judge": "ollama:qwen3:4b-instruct",
+      "scenarios": "results/kaggle/final-adaptive/results/scenarios-adaptive",
+      "gates": [
+        "thymus-v3"
+      ]
+    }
+  ]
+}
