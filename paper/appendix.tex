@@ -23,6 +23,18 @@ whole chat rounds (LongMemEval: 13\% of claimed conflicts confirmed; flags fell 
 8\%). The current wording names each fact's subject before comparing, and only single claims
 are compared. It was checked on labelled pairs (\cref{sec:verifier}) before every suite was
 re-run. Results with the first wording are in \cref{tab:verifier-first}.
+\item \textbf{Freeze, and a negative result.} The wording was chosen on half A of the labelled
+pairs, frozen, and every suite re-run. On Llama~3.1~8B the frozen gate was fooled
+\absLlamaThy{} of the time, more than without verification (\absLlamaAuto{}). The verifier
+keeps 76\% of Llama's real conflicts, and a refused conflict was not contested, so the fake
+update reached a model that ignores inline labels. The verifier's errors are asymmetric: a
+false contest costs a notice, a missed one costs an attack, and choosing the wording by
+counting both equally was the wrong criterion.
+\item \textbf{v3: verification gates replacement, never contest.} Written down, with predictions
+and the rule for choosing the final gate, before any v3 run
+(\texttt{docs/preregistration-v3.md}, tag \texttt{v3-preregistered}). Because v3 was designed
+after seeing the qwen3 and Llama test splits, its evidence is data it was never run on: Gemma~3
+12B, Qwen3~14B, the frontier models, LongMemEval and the automated adaptive attacks.
 \end{enumerate}
 
 \section{Verifier calibration}\label{sec:verifier}

@@ -85,6 +85,7 @@ def bench() -> list[str]:
         if not rows:
             continue
         put(f"abs{model}All", rate(by_gate(rows, "allow-all"), fooled))
+        put(f"abs{model}Auto", rate(by_gate(rows, "thymus-v2-auto"), fooled))
         final = by_gate(rows, FINAL)
         put(f"abs{model}Thy", rate(final, fooled))
         put(f"upd{model}Thy", rate(final, updated))
