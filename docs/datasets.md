@@ -33,3 +33,5 @@ The 491 matched scenarios are written by us because no public dataset pairs each
 with an attacker's twin on the same facts, or covers Indian payment, KYC and utility fraud in
 Hindi and Hinglish. Every claim in the paper is reported on both: our matched benchmark, and
 the public datasets above.
+
+| MemShield-Bench (Pow 2026) | HF `npow/memshield-bench`, `data/full.jsonl` and `data/test.jsonl` (downloaded 21 Oct 2026) | CC BY-SA 4.0 (share-alike; derived files not redistributed) | `data/memshield/full.jsonl` (816,974 B) | `d113db43ab140994304970ee92a7ec48db4d5bf3edd937687641638f5829a3cc` | External attacks: 42 poisoned rewrites of clean entries (contest test) and screening on the 179-entry test split (`scripts/memshield_eval.py`) |

@@ -388,3 +388,13 @@ the agent never adopted (0 of 7; flagged 7). 41 of 43 adoptions had a notice. So
 partial contesting: the conflict check misses some planted rounds, which then reach Llama with
 an inline label only. (An earlier draft sentence blaming "rounds that contradict nothing" was
 wrong and has been replaced.)
+
+## 21 Oct 2026: MemShield-Bench (external attacks, not written by us), gate model qwen3-4B
+
+- 42 poisoned rewrites of a stored clean entry, arriving from another origin: 35/42 contested or
+  rejected (33 rejected by the screen as instructions or preferences, 2 contested), 7 stored
+  unverified with a label. v2-auto, v2-verified and v3 identical.
+- Screening on the 179-entry test split, single entries from an untrusted origin: poisoned
+  rejected 38/49 (backdoor triggers 13/23, all other types 25/26); **clean rejected 29/130 (22%)**:
+  imperative best-practice advice ("Always use parameterized queries") reads as an instruction.
+  A false-positive cost of rule (1) on knowledge-base content, to report.
