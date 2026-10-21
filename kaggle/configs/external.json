@@ -1,0 +1,114 @@
+{
+  "pull": [
+    "qwen3:4b-instruct",
+    "llama3.1:8b",
+    "nomic-embed-text"
+  ],
+  "inputs": [
+    "data/memshield/full.jsonl",
+    "data/memshield/test.jsonl"
+  ],
+  "runs": [
+    {
+      "name": "mab-qwen3-4b",
+      "llm": "ollama:qwen3:4b-instruct",
+      "judge": "ollama:qwen3:4b-instruct",
+      "scenarios": "scenarios-external",
+      "gates": [
+        "thymus-v3"
+      ]
+    },
+    {
+      "name": "mab-qwen3-4b",
+      "llm": "ollama:qwen3:4b-instruct",
+      "judge": "ollama:qwen3:4b-instruct",
+      "scenarios": "scenarios-external",
+      "gates": [
+        "allow-all"
+      ]
+    },
+    {
+      "name": "mab-qwen3-4b",
+      "llm": "ollama:qwen3:4b-instruct",
+      "judge": "ollama:qwen3:4b-instruct",
+      "scenarios": "scenarios-external",
+      "gates": [
+        "thymus-v2-verified"
+      ]
+    },
+    {
+      "name": "mab-qwen3-4b",
+      "llm": "ollama:qwen3:4b-instruct",
+      "judge": "ollama:qwen3:4b-instruct",
+      "scenarios": "scenarios-external",
+      "gates": [
+        "label-only"
+      ]
+    },
+    {
+      "name": "mab-qwen3-4b",
+      "llm": "ollama:qwen3:4b-instruct",
+      "judge": "ollama:qwen3:4b-instruct",
+      "scenarios": "scenarios-external",
+      "gates": [
+        "user-only"
+      ]
+    },
+    {
+      "name": "mab-llama3.1-8b",
+      "llm": "ollama:llama3.1:8b",
+      "judge": "ollama:qwen3:4b-instruct",
+      "scenarios": "scenarios-external",
+      "gates": [
+        "thymus-v3"
+      ]
+    },
+    {
+      "name": "mab-llama3.1-8b",
+      "llm": "ollama:llama3.1:8b",
+      "judge": "ollama:qwen3:4b-instruct",
+      "scenarios": "scenarios-external",
+      "gates": [
+        "allow-all"
+      ]
+    },
+    {
+      "name": "mab-llama3.1-8b",
+      "llm": "ollama:llama3.1:8b",
+      "judge": "ollama:qwen3:4b-instruct",
+      "scenarios": "scenarios-external",
+      "gates": [
+        "thymus-v2-verified"
+      ]
+    },
+    {
+      "name": "mab-llama3.1-8b",
+      "llm": "ollama:llama3.1:8b",
+      "judge": "ollama:qwen3:4b-instruct",
+      "scenarios": "scenarios-external",
+      "gates": [
+        "label-only"
+      ]
+    },
+    {
+      "name": "mab-llama3.1-8b",
+      "llm": "ollama:llama3.1:8b",
+      "judge": "ollama:qwen3:4b-instruct",
+      "scenarios": "scenarios-external",
+      "gates": [
+        "user-only"
+      ]
+    },
+    {
+      "name": "memshield-llama",
+      "command": [
+        "python",
+        "scripts/memshield_eval.py",
+        "--llm",
+        "ollama:llama3.1:8b",
+        "--split-file",
+        "data/memshield/test.jsonl"
+      ]
+    }
+  ]
+}
