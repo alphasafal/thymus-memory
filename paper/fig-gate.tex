@@ -4,27 +4,27 @@
   gbox/.style={draw, rounded corners=2pt, align=center, minimum height=7mm, inner sep=3pt, fill=white},
   grule/.style={gbox, fill=black!6},
   gout/.style={gbox, draw=black!60, dashed},
-  glab/.style={font=\scriptsize\itshape, inner sep=1pt}]
+  glab/.style={font=\scriptsize\itshape, inner sep=1pt, align=center}]
   % write path
   \node[gbox] (in) {candidate memory\\[-1pt]\scriptsize source, origin, speaker};
   \node[grule, right=of in] (screen) {\textbf{1 Screen}\\[-1pt]\scriptsize fact / preference / instruction};
   \node[gout, below=6mm of screen] (rej) {reject\\[-1pt]\scriptsize tool cannot speak for user};
   \node[grule, right=of screen] (detect) {\textbf{2 Conflicts}\\[-1pt]\scriptsize detect, then verify each pair};
-  \node[gbox, right=of detect, yshift=6mm] (super) {replace\\[-1pt]\scriptsize retire claim / mark round older};
-  \node[gbox, right=of detect, yshift=-6mm] (contest) {keep, \emph{contested}\\[-1pt]\scriptsize linked to what it contradicts};
+  \node[gbox, right=19mm of detect, yshift=7mm] (super) {replace\\[-1pt]\scriptsize retire claim / mark round older};
+  \node[gbox, right=19mm of detect, yshift=-7mm] (contest) {keep, \emph{contested}\\[-1pt]\scriptsize linked to what it contradicts};
   \draw[->] (in) -- (screen);
   \draw[->] (screen) -- node[glab, right] {not a fact} (rej);
   \draw[->] (screen) -- node[glab, above] {fact} (detect);
-  \draw[->] (detect.east) -- ++(2mm,0) |- node[glab, above, pos=.75] {user, or same authenticated origin} (super.west);
-  \draw[->] (detect.east) -- ++(2mm,0) |- node[glab, below, pos=.75] {other origin, or forged} (contest.west);
+  \draw[->] (detect.east) -- ++(2mm,0) |- node[glab, above, pos=.78] {user, or same\\authenticated origin} (super.west);
+  \draw[->] (detect.east) -- ++(2mm,0) |- node[glab, below, pos=.78] {other origin,\\or forged} (contest.west);
   % recall path
   \node[gbox, below=16mm of in] (q) {user question};
   \node[gbox, right=of q] (recall) {recall top-$k$};
   \node[grule, right=of recall] (disc) {\textbf{3 Disclose}};
-  \node[gbox, right=of disc, yshift=6mm] (model) {model answers\\[-1pt]\scriptsize untrusted facts labelled with origin};
-  \node[gbox, right=of disc, yshift=-6mm] (notice) {system notice\\[-1pt]\scriptsize ``a message from \textlangle origin\textrangle\ said \dots''};
+  \node[gbox, right=17mm of disc, yshift=7mm] (model) {model answers\\[-1pt]\scriptsize untrusted facts labelled with origin};
+  \node[gbox, right=17mm of disc, yshift=-7mm] (notice) {system notice\\[-1pt]\scriptsize ``a message from \textlangle origin\textrangle\ said \dots''};
   \draw[->] (q) -- (recall);
   \draw[->] (recall) -- (disc);
   \draw[->] (disc.east) -- ++(2mm,0) |- (model.west);
-  \draw[->] (disc.east) -- ++(2mm,0) |- node[glab, below, pos=.75] {contested: withheld} (notice.west);
+  \draw[->] (disc.east) -- ++(2mm,0) |- node[glab, below, pos=.78] {contested:\\withheld} (notice.west);
 \end{tikzpicture}
