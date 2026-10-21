@@ -56,7 +56,8 @@ Inline labels work only if the model follows them. qwen3-4B, Opus~5.5 and GPT-6-
 label-only and v1 cut attacks by half or more. Llama~3.1~8B does not: label-only (41\%) and v1
 (47\%) are no better than no defence. The final gate takes the decision away from the model:
 contested claims are withheld and disclosed by the system, which cuts Llama's attack success
-from 42\% to \absLlamaThy{}. Simply dropping contested claims (\emph{hide}) blocks attacks too
+from 42\% to \absLlamaThy{}. The ablations below were run on v2, before verification (6~October),
+and not repeated on the final gate. Simply dropping contested claims (\emph{hide}) blocks attacks too
 (qwen3-4B 10\%, Llama 28\%), but the real cross-origin updates it drops leave 30\% of update
 questions answered with the stale value. Removing the labels (\emph{no-labels}) returns attack
 success to the undefended level (qwen3-4B 38\%): disclosure, not storage policy, is the active
@@ -81,16 +82,19 @@ allow-all & 58\% & 100\% & 50\% & 100\% \\
 user-only & 17\% & 33\% & -- & -- \\
 label-only & 8\% & 100\% & 4\% & 100\% \\
 \gate{} v1 & 8\% & 100\% & 4\% & 100\% \\
-\gate{} (notice) & 0\% & 67\% & 0\% & 67\% \\
-\gate{} (inline) & 0\% & 100\% & 0\% & 100\% \\
+\gate{} v2 (notice) & 0\% & 67\% & 0\% & 67\% \\
+\gate{} v2 (inline) & 0\% & 100\% & 0\% & 100\% \\
+\gate{} v2-verified & 0\% & 67\% & 0\% & 67\% \\
+\gate{} v3 & 0\% & 67\% & 0\% & 67\% \\
 \bottomrule
 \end{tabular}
 \end{table}
 
 With a model that follows labels, disclosing contested claims inline gets both 0\% attacks and
-100\% updates; the system notice is the safe default for models that do not. These runs used
-the gate before pairwise verification, which only removes conflicts, so it can only lower the
-33\% of updates delivered as notices; within the subscriptions' limits we did not re-run them.
+100\% updates; the system notice is the safe default for models that do not. With the notice,
+the 4 updates of 12 not answered are the cross-origin ones, and all 4 reach the user in the
+notice. The subset is small: 0 of 12 attacks has a 95\% Clopper--Pearson upper bound of 26\%,
+so these runs show the gate does not break frontier models, not that it stops every attack.
 
 \subsection{Real attacks and real updates}\label{sec:real}
 
@@ -187,8 +191,14 @@ when the real answers arrive through untrusted channels (11\%; UUA report 4\%). 
 replaced memory failed here at first (clean accuracy 63\% $\to$ 26\%): a LongMemEval memory is a
 whole chat round, so retiring it because one fact changed deletes the rest. Keeping replaced
 multi-fact memories as labelled older versions restores clean accuracy and \lmeGainSentence{}
-When the real answer itself is untrusted, no provenance-based defence recovers it; the gate at
-least discloses it instead of silently dropping it.
+Under poisoning, provenance quarantine does better than the gate here (63\% against
+\lmePoisoned{}; the gate's agent still adopts the planted answer \lmePoisonedAdopt{} of the time).
+A LongMemEval memory is a whole chat round, and a poisoned round contradicts no single stored
+fact, so it is often stored unverified rather than contested and reaches Llama with only an
+inline label, which Llama ignores (\cref{sec:disclosure}). The gate's protection depends on
+seeing a contradiction; claims that contradict nothing are labelled, not withheld. When the real
+answer itself is untrusted, provenance quarantine collapses (11\%) and the gate keeps
+\lmeUntrusted{}, disclosing what it cannot verify instead of dropping it.
 
 \subsection{Large memory stores}\label{sec:haystack}
 
@@ -218,7 +228,7 @@ as an ``unconfirmed'' notice. Checking each claimed conflict on its own \hayRead
 
 \subsection{Languages and the gate model}\label{sec:languages}
 
-Each of the 10 India families runs in English, Hindi and Hinglish (30 attacks per language).
+Each of the 30 India families runs in English, Hindi and Hinglish (30 attacks per language).
 Attack success with no defence $\to$ \gate{}:
 
 \begin{center}\small

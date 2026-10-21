@@ -27,7 +27,7 @@
 \newcommand{\para}[1]{\smallskip\noindent\textbf{#1}\ }
 \input{numbers}
 
-\title{\Large\bf Disclose, Don't Decide: Separating Real Updates from Poisoned Ones\\in LLM Agent Memory}
+\title{\Large\bf Disclose, Don't Decide: Contested Updates in LLM Agent Memory}
 \ifdefined\submission\author{Anonymous submission}\else\author{Safal Gupta}\fi
 \date{}
 
@@ -48,10 +48,13 @@ defence. We propose the \gate{} gate, which adds a third outcome to store-or-blo
 from an unvetted or contradicting source is kept, and disclosed to the user with its source by
 the system instead of being stated as fact by the model. Tool content may add facts but never
 speak for the user, and a fact may be replaced only by the user or by the authenticated source
-that stated it. Against five defences from prior work in one harness, it has the lowest attack
-success of any baseline that keeps plain recall, on all four agents we test (qwen3-4B \absQwenAll{} $\to$ \absQwenThy{}, Llama~3.1~8B
-\absLlamaAll{} $\to$ \absLlamaThy{}, Claude Opus~5.5 58\% $\to$ 0\%, GPT-6-Astra 50\% $\to$
-0\%) while keeping plain recall, which provenance quarantine cuts to a quarter. On real Enron
+that stated it. Against five baselines modelled on prior work, in one harness, it has the
+lowest attack success of any that keeps plain recall, on all four agents we test (qwen3-4B
+\absQwenAll{} $\to$ \absQwenThy{}, Llama~3.1~8B \absLlamaAll{} $\to$ \absLlamaThy{}, Claude Opus~5.5
+58\% $\to$ 0\%, GPT-6-Astra 50\% $\to$ 0\% on small subsets); provenance quarantine cuts plain
+recall to a quarter. The cost is updates from a different source than the original: fewer
+updates are answered directly (qwen3-4B 95\% $\to$ \updQwenThy{}, Llama 91\% $\to$ \updLlamaThy{}),
+though most of the rest reach the user in the notice (\updQwenThyReach{} and \updLlamaThyReach{} in all). On real Enron
 update emails replayed from forged and lookalike senders it is fooled \enronLlamaThy{} of the
 time (no defence: 84\%) while keeping \enronLlamaUpdThy{} of real updates (provenance
 quarantine: 0\%). In our own ChatGPT account, 3 of 6 fake updates came back from memory as fact
@@ -67,8 +70,8 @@ web. The convenience is real: the user does not repeat that their standup moved 
 that their flight was retimed. So is the risk. Anyone who can place text in front of the agent
 (an email, a web page, a message in a shared assistant) can try to plant a memory that later
 corrupts its answers~\cite{greshake,minja,agentpoison}. OWASP lists memory and context
-poisoning as a top risk for agentic applications (ASI06)~\cite{owasp}, and more than fifteen
-papers in 2026 alone attack or defend agent memory (\cref{sec:related}).
+poisoning as a top risk for agentic applications (ASI06)~\cite{owasp}, and a fast-growing
+literature attacks and defends agent memory (\cref{sec:related}).
 
 Most defences share one framing: when a candidate memory arrives, \emph{decide} whether to
 store it. Provenance quarantine blocks everything that came from tools; conflict quarantine
@@ -130,7 +133,7 @@ protocol on LongMemEval~\cite{uua,longmemeval}.
 \item \textbf{The \gate{} gate}, whose rules are fixed and whose models only judge ``is this a
 fact?'' and ``does this contradict that?'', so that its guarantees hold whatever those models
 output (\cref{sec:guarantees}).
-\item \textbf{A head-to-head comparison} with five defences from prior work in one harness, on
+\item \textbf{A head-to-head comparison} with five baselines modelled on prior work, in one harness, on
 four model families including Claude Opus~5.5 and GPT-6-Astra, with ablations, family-level
 bootstrap intervals and exact paired tests.
 \item \textbf{Evidence from production assistants}: in the authors' own ChatGPT account, fake
