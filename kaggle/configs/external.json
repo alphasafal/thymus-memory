@@ -107,7 +107,9 @@
         "--llm",
         "ollama:llama3.1:8b",
         "--split-file",
-        "data/memshield/test.jsonl"
+        "data/memshield/test.jsonl",
+        "--out",
+        "results/memshield"
       ]
     }
   ]

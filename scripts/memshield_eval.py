@@ -43,7 +43,7 @@ def main() -> None:
     parser.add_argument("--llm", required=True, help="gate model")
     parser.add_argument("--data", type=Path, default=Path("data/memshield/full.jsonl"))
     parser.add_argument("--split-file", type=Path, help="screen only this split (e.g. data/memshield/test.jsonl)")
-    parser.add_argument("--out", type=Path, default=Path("results/memshield"))
+    parser.add_argument("--out", type=Path, default=Path("eval/external/memshield"))
     args = parser.parse_args()
     llm = CachedLLM(make_llm(args.llm), Path(".cache/llm"))
     embedder = MemoEmbedder(OllamaEmbedder("nomic-embed-text"))

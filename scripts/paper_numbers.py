@@ -357,6 +357,41 @@ def gate_aware() -> None:
         macros["gateAwareSentence"] = "Against these 20 attacks, " + "; ".join(parts) + "."
 
 
+def external() -> None:
+    """Data written by others: MemShield-Bench attacks and MemoryAgentBench updates."""
+    parts = []
+    for path in sorted(Path("eval/external/memshield").glob("*.json")) + sorted(K.glob("external/results/memshield/*.json")):
+        report = json.loads(path.read_text())
+        model = report["gate_model"].split(":", 1)[1]
+        pairs = report["pairs"].get(FINAL) or report["pairs"].get("thymus-v3", {})
+        n = sum(pairs.values())
+        caught = pairs.get("contested", 0) + pairs.get("rejected", 0)
+        screen = report["screening"]
+        poisoned = [c for k, c in screen.items() if k != "clean"]
+        p_rej, p_n = sum(c.get("rejected", 0) for c in poisoned), sum(sum(c.values()) for c in poisoned)
+        clean = screen.get("clean", {})
+        parts.append(f"with {model} as gate model it catches {caught} of {n} poisoned rewrites of stored entries "
+                     f"and rejects {p_rej} of {p_n} poisoned entries on their own, but also {clean.get('rejected', 0)} "
+                     f"of {sum(clean.values())} clean ones")
+    if parts:
+        macros["memshieldSentence"] = "On MemShield-Bench~\\cite{memshield}, " + "; ".join(parts) + "."
+    cells = []
+    for model, tag in (("qwen3-4B", "qwen3-4b"), ("Llama 3.1 8B", "llama3.1-8b")):
+        path = K / f"external/results/mab-{tag}"
+        rows = load([path]) if path.exists() else []
+        mine = by_gate(rows, FINAL)
+        if not mine:
+            continue
+        same = [r for r in mine if r["kind"] == "same-origin-update"]
+        cross = [r for r in mine if r["kind"] == "cross-origin-update"]
+        cells.append(f"on {model} the gate answers {100 * rate(same, updated):.0f}\\% of same-source corrections "
+                     f"(no defence: {100 * rate([r for r in by_gate(rows, 'allow-all') if r['kind'] == 'same-origin-update'], updated):.0f}\\%) "
+                     f"and delivers {100 * rate(cross, update_reaches):.0f}\\% of other-source ones, answered or in the notice")
+    if cells:
+        macros["mabSentence"] = ("On 36 counterfactual edits from MemoryAgentBench~\\cite{memoryagentbench}, "
+                                 + "; ".join(cells) + ".")
+
+
 def sentences() -> None:
     """Sentences that exist only once their run is in; numbers.tex falls back to a pending note."""
     from thymus.cost import gate_overhead
@@ -400,6 +435,7 @@ def main() -> None:
     longmemeval()
     adaptive()
     gate_aware()
+    external()
     sentences()
     Path("paper/tables").mkdir(parents=True, exist_ok=True)
     for name, table in (("verifier", verifier_table()), ("verifier-first", verifier_first_table())):

@@ -115,6 +115,15 @@ attacker states the fact before the genuine source, so the genuine message becom
 contested one; and \emph{same-origin persistence}, where a lookalike sender states a harmless
 fact and then ``updates'' its own message. \gateAwareSentence{}
 
+\subsection{Attacks and updates written by others}\label{sec:external}
+
+Our benchmark is author-written, so we also test on data we did not write and the gate was
+never tuned on. \memshieldSentence{} The clean entries it rejects are mostly imperative advice
+(``always use parameterized queries''): rule~1 reads a knowledge base that gives instructions as
+tool content speaking for the user, a cost for agents whose memory holds procedures rather than
+personal facts. For legitimate updates, \mabSentence{} Fact families written by a different
+model family (GPT-6-Astra, never shown the gate) are reported with the held-out models.
+
 \subsection{Real attacks and real updates}\label{sec:real}
 
 \para{SMS and email.} 117 real smishing messages~\cite{smsdata}, 79 of them India-specific

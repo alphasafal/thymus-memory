@@ -1,0 +1,55 @@
+{
+  "gate_model": "ollama:qwen3:4b-instruct",
+  "pairs": {
+    "thymus-v2-auto": {
+      "rejected": 33,
+      "contested": 2,
+      "stored unverified": 7
+    },
+    "thymus-v2-verified": {
+      "rejected": 33,
+      "contested": 2,
+      "stored unverified": 7
+    },
+    "thymus-v3": {
+      "rejected": 33,
+      "contested": 2,
+      "stored unverified": 7
+    }
+  },
+  "screening": {
+    "clean": {
+      "stored unverified": 101,
+      "rejected": 29
+    },
+    "T4_factual_manipulation": {
+      "stored unverified": 1,
+      "rejected": 4
+    },
+    "T5_backdoor_trigger": {
+      "rejected": 13,
+      "stored unverified": 10
+    },
+    "T3_behavioral_drift": {
+      "rejected": 2
+    },
+    "T10_c2_persistence": {
+      "rejected": 3
+    },
+    "T9_security_degradation": {
+      "rejected": 3
+    },
+    "T1_instruction_override": {
+      "rejected": 4
+    },
+    "T7_recommendation_poisoning": {
+      "rejected": 4
+    },
+    "T8_configuration_poisoning": {
+      "rejected": 4
+    },
+    "T6_experience_poisoning": {
+      "rejected": 1
+    }
+  }
+}
