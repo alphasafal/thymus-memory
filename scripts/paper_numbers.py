@@ -274,24 +274,25 @@ def verifier_table() -> str | None:
     files = sorted(VERIFIER.glob("*.jsonl")) if VERIFIER.exists() else []
     if not files:
         return None
+    heads = " & ".join(f"\\multicolumn{{2}}{{c}}{{{name}}}" for name in WORDING_NAMES.values())
+    rules = "".join(f"\\cmidrule(lr){{{3 + 2 * i}-{4 + 2 * i}}}" for i in range(len(WORDING_NAMES)))
     out = ["\\begin{table*}[t]\\centering\\scriptsize",
            "\\caption{Verifier wordings on labelled pairs: real conflicts kept (higher is better) and "
-           "non-conflicts kept, i.e.\\ false contests (lower is better). The wording was chosen on half A "
-           "and is reported on half B; families never span halves.}\\label{tab:verifier}",
-           "\\begin{tabular}{@{}llccc@{}}\\toprule",
-           "Verifier & Pairs & " + " & ".join(WORDING_NAMES.values()) + " \\\\ \\midrule"]
+           "non-conflicts kept, i.e.\\ false contests (lower is better), as kept / pairs. The wording was "
+           "chosen on half A and is reported on half B; families never span halves.}\\label{tab:verifier}",
+           "\\begin{tabular}{@{}ll" + "cc" * len(WORDING_NAMES) + "@{}}\\toprule",
+           f"& & {heads} \\\\ {rules}",
+           "Verifier & Pairs & " + " & ".join(["A", "B"] * len(WORDING_NAMES)) + " \\\\ \\midrule"]
     for f in files:
         rows = [json.loads(line) for line in f.read_text().splitlines() if line.strip()]
         model = {"ollama_qwen3_4b-instruct": "qwen3-4B", "ollama_llama3.1_8b": "Llama 3.1 8B"}.get(f.stem, f.stem)
         for conflict, label in ((True, "real conflicts kept"), (False, "false contests")):
             cells = []
             for w in WORDING_NAMES:
-                halves = []
                 for half in ("A", "B"):
                     rs = [r for r in rows if r["split"] == half and r["conflict"] == conflict]
-                    halves.append(f"{sum(r[w]['confirmed'] for r in rs)}/{len(rs)}")
-                cells.append(" / ".join(halves))
-            out.append(f"{model} & {label} (A / B) & " + " & ".join(cells) + " \\\\")
+                    cells.append(f"{sum(r[w]['confirmed'] for r in rs)}/{len(rs)}")
+            out.append(f"{model} & {label} & " + " & ".join(cells) + " \\\\")
     out += ["\\bottomrule\\end{tabular}\\end{table*}", ""]
     return "\n".join(out)
 

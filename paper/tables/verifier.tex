@@ -1,9 +1,10 @@
 \begin{table*}[t]\centering\scriptsize
-\caption{Verifier wordings on labelled pairs: real conflicts kept (higher is better) and non-conflicts kept, i.e.\ false contests (lower is better). The wording was chosen on half A and is reported on half B; families never span halves.}\label{tab:verifier}
-\begin{tabular}{@{}llccc@{}}\toprule
-Verifier & Pairs & first & named subject (final) & named subject + brand \\ \midrule
-Llama 3.1 8B & real conflicts kept (A / B) & 132/137 / 144/149 & 90/137 / 113/149 & 92/137 / 105/149 \\
-Llama 3.1 8B & false contests (A / B) & 70/156 / 67/140 & 7/156 / 6/140 & 7/156 / 7/140 \\
-qwen3-4B & real conflicts kept (A / B) & 53/137 / 59/149 & 105/137 / 121/149 & 104/137 / 118/149 \\
-qwen3-4B & false contests (A / B) & 2/156 / 1/140 & 5/156 / 1/140 & 7/156 / 2/140 \\
+\caption{Verifier wordings on labelled pairs: real conflicts kept (higher is better) and non-conflicts kept, i.e.\ false contests (lower is better), as kept / pairs. The wording was chosen on half A and is reported on half B; families never span halves.}\label{tab:verifier}
+\begin{tabular}{@{}llcccccc@{}}\toprule
+& & \multicolumn{2}{c}{first} & \multicolumn{2}{c}{named subject (final)} & \multicolumn{2}{c}{named subject + brand} \\ \cmidrule(lr){3-4}\cmidrule(lr){5-6}\cmidrule(lr){7-8}
+Verifier & Pairs & A & B & A & B & A & B \\ \midrule
+Llama 3.1 8B & real conflicts kept & 132/137 & 144/149 & 90/137 & 113/149 & 92/137 & 105/149 \\
+Llama 3.1 8B & false contests & 70/156 & 67/140 & 7/156 & 6/140 & 7/156 & 7/140 \\
+qwen3-4B & real conflicts kept & 53/137 & 59/149 & 105/137 & 121/149 & 104/137 & 118/149 \\
+qwen3-4B & false contests & 2/156 & 1/140 & 5/156 & 1/140 & 7/156 & 2/140 \\
 \bottomrule\end{tabular}\end{table*}
