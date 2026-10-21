@@ -1,4 +1,4 @@
-% Figure: attack success vs real updates reaching the user (test split). Store-or-block
+% Figure: attack success vs real updates answered (hollow) and reaching the user (filled), test split. Store-or-block
 % baselines in grey; the thymus gate's coordinates come from numbers.tex.
 \begin{tikzpicture}
 \pgfplotsset{
@@ -16,6 +16,8 @@
   \node[lbl, anchor=north] at (axis cs:56,22) {bounded};
   \node[lbl, anchor=east] at (axis cs:81,32) {conflict-q};
   \node[lbl, anchor=south east] at (axis cs:94,17) {labels};
+  \addplot[black, thin, densely dashed] coordinates {(\updQwenThyNum,\absQwenThyNum) (\updQwenThyReachNum,\absQwenThyNum)};
+  \addplot[only marks, mark=o, mark size=2.2pt, black] coordinates {(\updQwenThyNum,\absQwenThyNum)};
   \addplot[thy] coordinates {(\updQwenThyReachNum,\absQwenThyNum)};
   \node[font=\tiny\bfseries, anchor=north east] at (axis cs:\updQwenThyReachNum,\absQwenThyNum) {thymus};
 \end{axis}
@@ -25,6 +27,8 @@
   \node[lbl, anchor=north east] at (axis cs:94,78) {LWW};
   \node[lbl, anchor=north] at (axis cs:54,31) {bounded};
   \node[lbl, anchor=south east] at (axis cs:91,42) {none, labels};
+  \addplot[black, thin, densely dashed] coordinates {(\updLlamaThyNum,\absLlamaThyNum) (\updLlamaThyReachNum,\absLlamaThyNum)};
+  \addplot[only marks, mark=o, mark size=2.2pt, black] coordinates {(\updLlamaThyNum,\absLlamaThyNum)};
   \addplot[thy] coordinates {(\updLlamaThyReachNum,\absLlamaThyNum)};
   \node[font=\tiny\bfseries, anchor=north east] at (axis cs:\updLlamaThyReachNum,\absLlamaThyNum) {thymus};
 \end{axis}

@@ -34,9 +34,9 @@ label-only (TMA-NM labels on answers) & 17\% & 94\% & 98\% & 41\% & 91\% & 95\% 
 \begin{figure}[t]
 \centering
 \input{fig-tradeoff}
-\caption{Attack success against real updates that reach the user, test split. Store-or-block
-defences (grey) trade one for the other; the \gate{} gate (black) is the only point low and to
-the right on both models.}
+\caption{Attack success against real updates, test split. Store-or-block defences (grey):
+updates answered. \gate{}: answered (hollow) and reaching the user in the answer or the notice
+(filled); the gap is cross-origin updates delivered as notices.}
 \label{fig:tradeoff}
 \end{figure}
 
@@ -165,12 +165,12 @@ authentication. Only provenance differs, so no content-based screen can help
 Model & Defence & Fooled by replay $\downarrow$ & Real updates $\uparrow$ \\
 \midrule
 Llama 8B & allow-all & 84\% & 71\% \\
- & user-only & 0\% & \textbf{0\%} \\
+ & user-only & 0\% & 0\% \\
  & label-only & 87\% & 77\% \\
  & \gate{} & \textbf{\enronLlamaThy} & \textbf{\enronLlamaUpdThy} \\
 \midrule
 qwen3-4B & allow-all & 76\% & 74\% \\
- & user-only & 0\% & \textbf{0\%} \\
+ & user-only & 0\% & 0\% \\
  & label-only & 50\% & 74\% \\
  & \gate{} & \textbf{\enronQwenThy} & \textbf{\enronQwenUpdThy} \\
 \midrule
