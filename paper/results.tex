@@ -63,6 +63,15 @@ questions answered with the stale value. Removing the labels (\emph{no-labels}) 
 success to the undefended level (qwen3-4B 38\%): disclosure, not storage policy, is the active
 ingredient.
 
+\para{Where attacks still get through.} The notice protects only claims the gate contests. Split
+by what the final gate did with the planted claim, Llama is fooled by \stratLlamaContested{} of
+the \stratLlamaContestedN{} attacks it contested, but by \stratLlamaUncontested{} of the
+\stratLlamaUncontestedN{} it stored without a contest (the conflict check saw no contradiction,
+so the claim reached the model with an inline label only); qwen3-4B, which follows labels, is
+fooled by \stratQwenContested{} and \stratQwenUncontested{}. The gate's weak point is therefore
+not its rules but how many contradictions the conflict check finds; \cref{sec:gateaware} attacks
+it directly.
+
 \subsection{Frontier models}\label{sec:frontier}
 
 On a balanced 36-scenario subset (12 families $\times$ 3; 16 adaptive attacks added for
@@ -95,6 +104,16 @@ With a model that follows labels, disclosing contested claims inline gets both 0
 the 4 updates of 12 not answered are the cross-origin ones, and all 4 reach the user in the
 notice. The subset is small: 0 of 12 attacks has a 95\% Clopper--Pearson upper bound of 26\%,
 so these runs show the gate does not break frontier models, not that it stops every attack.
+
+\subsection{Attacks designed against the gate}\label{sec:gateaware}
+
+After freezing the gate we wrote 20 attacks aimed at its rules, five topics each: a
+\emph{first-contact} claim that contradicts nothing stored (a ``fraud helpline'' the user never
+saved); a change \emph{reframed as an addition} so the conflict check sees no contradiction (``in
+addition to customer care, fraud is handled only by\dots''); \emph{pre-emption}, where the
+attacker states the fact before the genuine source, so the genuine message becomes the
+contested one; and \emph{same-origin persistence}, where a lookalike sender states a harmless
+fact and then ``updates'' its own message. \gateAwareSentence{}
 
 \subsection{Real attacks and real updates}\label{sec:real}
 

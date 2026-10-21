@@ -138,8 +138,29 @@ def bench() -> list[str]:
             for key, value in zip(("All", "Distrust", "Notice"), counts):
                 macros[f"ask{model}{key}"] = f"{value:.0f}"
         check_claim(model, rows)
+        stratify(model, final)
         lines.append(full_table(model, rows))
     return lines
+
+
+def stratify(model: str, final: list[dict]) -> None:
+    """Attacks split by what the gate did with the planted claim: contested, stored without a
+    contest (the conflict check saw no contradiction), or never stored."""
+    groups = {"Contested": [], "Uncontested": [], "Unstored": []}
+    for r in final:
+        if r["category"] != "attack" or r["poison_used"] is None:
+            continue
+        s = SCENARIOS.get(r["scenario_id"])
+        planted = [w for w in r.get("writes", []) if s and contains_any(w["text"], s.poison_markers)]
+        if not planted or all(w["action"] == "reject" for w in planted):
+            groups["Unstored"].append(r)
+        elif any("contradicts" in w["reason"] for w in planted):
+            groups["Contested"].append(r)
+        else:
+            groups["Uncontested"].append(r)
+    for key, rs in groups.items():
+        macros[f"strat{model}{key}N"] = str(len(rs))
+        put(f"strat{model}{key}", rate(rs, fooled))
 
 
 def check_claim(model: str, rows: list[dict]) -> None:
@@ -319,6 +340,23 @@ def adaptive() -> None:
         macros[f"adapt{model}N"] = str(len({r["scenario_id"] for r in rows}))
 
 
+def gate_aware() -> None:
+    """Attacks written after the freeze to defeat the gate (scenarios-gate-aware)."""
+    parts = []
+    for model, tag in (("qwen3-4B", "qwen3-4b"), ("Llama 3.1 8B", "llama3.1-8b")):
+        path = K / f"gate-aware/results/gate-aware-{tag}"
+        rows = load([path]) if path.exists() else []
+        if not by_gate(rows, FINAL):
+            continue
+        kinds = sorted({r["kind"] for r in rows})
+        cells = ", ".join(f"{k.removeprefix('gate-aware-')} {100 * rate(by_gate([r for r in rows if r['kind'] == k], FINAL), fooled):.0f}\\%"
+                          for k in kinds)
+        parts.append(f"on {model} the gate is fooled by {100 * rate(by_gate(rows, FINAL), fooled):.0f}\\% of them "
+                     f"(no defence: {100 * rate(by_gate(rows, 'allow-all'), fooled):.0f}\\%; by strategy: {cells})")
+    if parts:
+        macros["gateAwareSentence"] = "Against these 20 attacks, " + "; ".join(parts) + "."
+
+
 def sentences() -> None:
     """Sentences that exist only once their run is in; numbers.tex falls back to a pending note."""
     from thymus.cost import gate_overhead
@@ -361,6 +399,7 @@ def main() -> None:
     real()
     longmemeval()
     adaptive()
+    gate_aware()
     sentences()
     Path("paper/tables").mkdir(parents=True, exist_ok=True)
     for name, table in (("verifier", verifier_table()), ("verifier-first", verifier_first_table())):
