@@ -10,6 +10,7 @@ hand except the prose around these macros.
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 from statistics import mean
 
@@ -18,17 +19,27 @@ from thymus.report import bootstrap_ci, burden_counts, dev_entries, in_dev, load
 from thymus.scenarios import load_scenarios
 
 K = Path("results/kaggle")
-FINAL = "thymus-v2-verified"
+# Chosen by the rule in docs/preregistration-v3.md once the held-out runs are in.
+FINAL = os.environ.get("THYMUS_FINAL", "thymus-v2-verified")
+CANDIDATES = {"Ver": "thymus-v2-verified", "Three": "thymus-v3"}
 DEV = dev_entries(Path("eval/dev_set.txt"))
 SCENARIOS = {s.id: s for d in (Path("scenarios"), Path("scenarios-real")) for s in load_scenarios(d)}
 BENCH = {
     "Qwen": [K / "qwen3-4b/results", K / "final-qwen3/results/qwen3-4b"],
     "Llama": [K / "llama3.1-8b/results", K / "llama-followup/results/llama3.1-8b", K / "llama-auto/results/llama3.1-8b",
               K / "final-llama/results/llama3.1-8b"],
+    # Never used while designing any version of the gate.
+    "Gemma": [K / "heldout-gemma3-12b/results/gemma3-12b"],
+    "QwenBig": [K / "heldout-qwen3-14b/results/qwen3-14b"],
 }
+BENCH["Qwen"].append(K / "v3-exposed/results/qwen3-4b")
+BENCH["Llama"].append(K / "v3-exposed/results/llama3.1-8b")
+TITLES = {"Qwen": "qwen3-4B", "Llama": "Llama 3.1 8B", "Gemma": "Gemma 3 12B (held out)",
+          "QwenBig": "Qwen3 14B (held out)"}
 BASELINES = ["allow-all", "user-only", "conflict-quarantine", "last-write-wins", "bounded-occupancy", "label-only", "thymus"]
 NAMES = {"thymus": "thymus v1", "thymus-v2-auto": "thymus, no verification", "thymus-v2": "thymus, no verification",
-         FINAL: "thymus (final)"}
+         "thymus-v2-precise": "thymus, same-subject check only", "thymus-v2-verified": "thymus, verify all",
+         "thymus-v3": "thymus v3, verify replacements", FINAL: "thymus (final)"}
 
 macros: dict[str, str] = {}
 
@@ -86,6 +97,16 @@ def bench() -> list[str]:
             continue
         put(f"abs{model}All", rate(by_gate(rows, "allow-all"), fooled))
         put(f"abs{model}Auto", rate(by_gate(rows, "thymus-v2-auto"), fooled))
+        put(f"abs{model}User", rate(by_gate(rows, "user-only"), fooled))
+        put(f"upd{model}User", rate(by_gate(rows, "user-only"), updated))
+        put(f"rec{model}User", rate(by_gate(rows, "user-only"), recalled))
+        put(f"abs{model}Labels", rate(by_gate(rows, "label-only"), fooled))
+        for key, gate in CANDIDATES.items():
+            rs = by_gate(rows, gate)
+            put(f"abs{model}{key}", rate(rs, fooled))
+            put(f"upd{model}{key}", rate(rs, updated))
+            put(f"upd{model}{key}Reach", rate(rs, update_reaches))
+            put(f"rec{model}{key}", rate(rs, recalled))
         final = by_gate(rows, FINAL)
         put(f"abs{model}Thy", rate(final, fooled))
         put(f"upd{model}Thy", rate(final, updated))
@@ -122,10 +143,11 @@ def ci_cell(rows: list[dict], metric) -> str:
 
 
 def full_table(model: str, rows: list[dict]) -> str:
-    title = {"Qwen": "qwen3-4B", "Llama": "Llama 3.1 8B"}[model]
+    title = TITLES[model]
     # Without verification: v2-auto, or v2 where auto was not run (identical on single claims).
     unverified = "thymus-v2-auto" if by_gate(rows, "thymus-v2-auto") else "thymus-v2"
-    gates = [g for g in BASELINES + [unverified, FINAL] if by_gate(rows, g)]
+    extra = [g for g in ("thymus-v2-precise", *CANDIDATES.values()) if g != FINAL]
+    gates = [g for g in BASELINES + [unverified, *extra, FINAL] if by_gate(rows, g)]
     out = [f"\\paragraph{{{title}, test split.}} Rates in \\% with 95\\% family-bootstrap intervals; "
            "the last three columns compare the final gate with each defence on the same scenarios "
            "(discordant pairs final better / worse, exact McNemar $p$, attack success).", "",
@@ -245,10 +267,63 @@ def verifier_first_table() -> str | None:
                       *lines, "\\bottomrule\\end{tabular}\\end{table}", ""])
 
 
+ADAPTIVE_GATES = {"All": "allow-all", "Labels": "label-only", "Auto": "thymus-v2-auto", **CANDIDATES}
+
+
+def adaptive() -> None:
+    """Attacks rewritten by qwen3-14B, which was told how the gate works (scripts/adaptive_attacker.py)."""
+    for model, tag in (("Qwen", "qwen3-4b"), ("Llama", "llama3.1-8b")):
+        paths = [p for p in (K / "final-adaptive/results" / f"adaptive-{tag}", K / "v3-adaptive/results" / f"adaptive-{tag}")
+                 if p.exists()]
+        rows = load(paths) if paths else []
+        for key, gate in ADAPTIVE_GATES.items():
+            put(f"adapt{model}{key}", rate(by_gate(rows, gate), fooled))
+        macros[f"adapt{model}N"] = str(len({r["scenario_id"] for r in rows}))
+
+
+def sentences() -> None:
+    """Sentences that exist only once their run is in; numbers.tex falls back to a pending note."""
+    from thymus.cost import gate_overhead
+
+    parts = []
+    for model, tag in (("qwen3-4B", "qwen3-4b"), ("Llama 3.1 8B", "llama3.1-8b")):
+        path = K / f"v3-deploy/results/mem0-{tag}"
+        on_mem0 = test_rows([path]) if path.exists() else []
+        builtin = test_rows(BENCH["Qwen" if tag == "qwen3-4b" else "Llama"])
+        for gate in ("thymus-v3",):
+            mine, theirs = by_gate(on_mem0, gate), {r["scenario_id"]: r for r in by_gate(builtin, gate)}
+            if not mine:
+                continue
+            same = sum(1 for r in mine if r["scenario_id"] in theirs and r["passed"] == theirs[r["scenario_id"]]["passed"])
+            parts.append(f"on {model} the gate on Mem0 is fooled {100 * rate(mine, fooled):.0f}\\% of the time with "
+                         f"{100 * rate(mine, updated):.0f}\\% of updates and {100 * rate(mine, recalled):.0f}\\% of recall "
+                         f"answered, and {same} of {len(mine)} scenarios get the same verdict as on the built-in store")
+    if parts:
+        macros["memZeroSentence"] = "Running the whole benchmark this way, " + "; ".join(parts) + "."
+    path = K / "v3-deploy/results/cost-qwen3-4b"
+    rows = load([path]) if path.exists() else []
+    cells = []
+    for gate in ("thymus-v3", "thymus-v2-verified"):
+        rs = [r for r in by_gate(rows, gate) if r.get("cost")]
+        writes = sum(len(r.get("writes", [])) for r in rs)
+        if not writes:
+            continue
+        over = [gate_overhead(r["cost"]) for r in rs]
+        agent = [sum(r["cost"].get(j, {}).get(k, 0) for j in ("extract", "answer")) for r in rs for k in ("seconds",)]
+        cells.append(f"{NAMES.get(gate, gate)} adds {sum(o['calls'] for o in over) / writes:.2f} model calls, "
+                     f"{sum(o['tokens'] for o in over) / writes:.0f} tokens and {sum(o['seconds'] for o in over) / writes:.2f}\\,s "
+                     f"per memory write on qwen3-4B (a T4 GPU; the agent's own extraction and answer take "
+                     f"{sum(agent) / len(rs):.1f}\\,s per scenario)")
+    if cells:
+        macros["costSentence"] = "Measured without the cache, " + "; ".join(cells) + "."
+
+
 def main() -> None:
     tables = bench()
     real()
     longmemeval()
+    adaptive()
+    sentences()
     Path("paper/tables").mkdir(parents=True, exist_ok=True)
     for name, table in (("verifier", verifier_table()), ("verifier-first", verifier_first_table())):
         if table:
