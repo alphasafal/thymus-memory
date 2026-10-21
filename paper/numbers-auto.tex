@@ -55,6 +55,7 @@
 \newcommand{\askQwenAll}{155}
 \newcommand{\askQwenDistrust}{131}
 \newcommand{\askQwenNotice}{15}
+\newcommand{\costSentence}{Measured without the cache, thymus v3, verify replacements adds 1.02 model calls, 241 tokens and 0.55\,s per memory write on qwen3-4B (a T4 GPU; the agent's own extraction and answer take 2.0\,s per scenario); thymus (final) adds 1.15 model calls, 283 tokens and 1.39\,s per memory write on qwen3-4B (a T4 GPU; the agent's own extraction and answer take 2.0\,s per scenario).}
 \newcommand{\crossLlamaAnswered}{28\%}
 \newcommand{\crossLlamaAnsweredNum}{28}
 \newcommand{\crossLlamaReach}{77\%}
@@ -161,6 +162,7 @@
 \newcommand{\mailLlamaThyNum}{30}
 \newcommand{\mailQwenThy}{10\%}
 \newcommand{\mailQwenThyNum}{10}
+\newcommand{\memZeroSentence}{Running the whole benchmark this way, on qwen3-4B the gate on Mem0 is fooled 9\% of the time with 73\% of updates and 96\% of recall answered, and 442 of 442 scenarios get the same verdict as on the built-in store; on Llama 3.1 8B the gate on Mem0 is fooled 6\% of the time with 63\% of updates and 94\% of recall answered, and 442 of 442 scenarios get the same verdict as on the built-in store.}
 \newcommand{\memshieldSentence}{On MemShield-Bench~\cite{memshield}, with qwen3:4b-instruct as gate model it catches 35 of 42 poisoned rewrites of stored entries and rejects 38 of 49 poisoned entries on their own, but also 29 of 130 clean ones.}
 \newcommand{\noticeLlamaAttack}{38\%}
 \newcommand{\noticeLlamaAttackNum}{38}

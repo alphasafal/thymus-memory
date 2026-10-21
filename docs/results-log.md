@@ -415,3 +415,16 @@ Pre-registered large-store prediction (v3 recall reaching the user ≥ 88%) hold
 Automated adaptive attacks (qwen3-14B told how the gate works; 188 per model; final-adaptive):
 fooled, qwen3 / Llama: allow-all 44 / 56, label-only 20 / 52, v2-auto 4 / 10, v2-verified 6 / 20;
 v3 queued (v3-adaptive).
+
+## 21 Oct 2026: deployment runs and v3 on LongMemEval
+
+- **Mem0** (full benchmark through Mem0 2.2 with the gate in front, Kaggle): same verdict as the
+  built-in store on 442 of 442 test scenarios, for qwen3-4B and Llama 3.1 8B alike (v3: qwen3
+  9% fooled / 73% updates / 96% recall; Llama 6% / 63% / 94%).
+- **Cost** (uncached, T4, qwen3-4B, 36-scenario subset): v3 adds 1.02 gate calls, ~241 tokens and
+  0.55 s per memory write; v2-verified 1.15 calls, ~283 tokens, 1.39 s. The agent's own
+  extraction and answer: 2.0 s per scenario.
+- **LongMemEval, v3** (Llama): clean 62%, poisoned 45% (adopts 36%, flags 57%), evidence-untrusted
+  14%: identical to v2-verified. Chat rounds hold several claims and skip pairwise verification
+  in both versions, so this suite does not separate them (pre-registered evidence item 2 is
+  uninformative).
