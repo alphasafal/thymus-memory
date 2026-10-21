@@ -379,3 +379,12 @@ Opus 5.5 rerun on a second Claude account (21 Oct): v3 and v2-verified identical
 (allow-all 58%, label-only 8%, thymus v1 8%), recall 12/12, updates answered 8/12 with the 4
 cross-origin ones all reaching the user in the notice (12/12 reach). Pre-registered prediction
 "v3 ≤ v2-verified on attacks" holds on both frontier models (tie at 0%).
+
+## 21 Oct 2026: why the gate trails provenance quarantine on poisoned LongMemEval
+
+Frozen gate, Llama 3.1 8B: poisoned accuracy 45% (user-only 63%), adopts 36%. Each question has
+3 poisoned rounds. Notices on adopted cases held 1 (21) or 2 (20) of the 3; with all 3 contested
+the agent never adopted (0 of 7; flagged 7). 41 of 43 adoptions had a notice. So the cause is
+partial contesting: the conflict check misses some planted rounds, which then reach Llama with
+an inline label only. (An earlier draft sentence blaming "rounds that contradict nothing" was
+wrong and has been replaced.)

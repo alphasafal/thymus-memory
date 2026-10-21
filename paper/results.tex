@@ -193,10 +193,12 @@ whole chat round, so retiring it because one fact changed deletes the rest. Keep
 multi-fact memories as labelled older versions restores clean accuracy and \lmeGainSentence{}
 Under poisoning, provenance quarantine does better than the gate here (63\% against
 \lmePoisoned{}; the gate's agent still adopts the planted answer \lmePoisonedAdopt{} of the time).
-A LongMemEval memory is a whole chat round, and a poisoned round contradicts no single stored
-fact, so it is often stored unverified rather than contested and reaches Llama with only an
-inline label, which Llama ignores (\cref{sec:disclosure}). The gate's protection depends on
-seeing a contradiction; claims that contradict nothing are labelled, not withheld. When the real
+The cause is partial contesting. Each poisoned question plants three rounds; when the
+gate contests all three, the agent never adopts the false answer (0 of 7), but usually it
+contests only one or two (the others are judged not to contradict a stored fact), and those
+reach Llama with only an inline label, which Llama ignores (\cref{sec:disclosure}): 41 of the
+43 adoptions came with a notice that held some of the planted rounds. The gate's protection
+depends on seeing a contradiction; a claim the conflict check misses is labelled, not withheld. When the real
 answer itself is untrusted, provenance quarantine collapses (11\%) and the gate keeps
 \lmeUntrusted{}, disclosing what it cannot verify instead of dropping it.
 
