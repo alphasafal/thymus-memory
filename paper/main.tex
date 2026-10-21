@@ -385,9 +385,32 @@ Authoritative~\cite{revoked} finds that no memory system enforces revocation by 
 label that survives summarisation, and requires independent corroboration or user
 authorisation for consequential actions (0 of 1,920 attacks over eight frontier models, also
 inside Mem0); it states that answer bias is ``mitigated, not eliminated''. PPMF~\cite{ppmf}
-authorises tool calls by the authority of the memories behind them. We share the idea of
+authorises tool calls by the authority of the memories behind them. Signed or lineage-tracked
+memory (MutMem~\cite{mutmem}, MemLineage~\cite{memlineage}) and source-backed permissions
+(EAL~\cite{eal}) authenticate \emph{who wrote} a memory; none limits \emph{who may replace} a
+fact to the user or the source that stated it. Typed provenance with assertion guardrails
+(Stored Is Not Supported~\cite{storednot}) is closest to our first rule. We share the idea of
 keeping and labelling untrusted content and apply it where these systems stop: to answers, and
 to facts that change.
+
+\para{Updates and conflicts.} The closest work separates knowledge evolution from manipulation
+in retrieval: EvoTrustRAG~\cite{evotrustrag} attributes each conflict to legitimate change,
+manipulation or uncertainty, but unresolved conflicts stay visible to the generator, the model
+rather than the user. Benchmarks of honest updates (MemoryAgentBench~\cite{memoryagentbench},
+LongMemEval~\cite{longmemeval}), of irreducible conflicts in personal memory
+(TANGLE~\cite{tangle}) and of when to remember, verify or ask (\cite{rva}) contain no attacker;
+there, models rarely ask the user even when they should, which supports moving disclosure out
+of the model. Bitemporal memory keeps the superseded value for audit (TOKI~\cite{toki}), and
+agents adopt conflicting memory at the first decision~\cite{compliancetrap}. Defence costs on
+benign traffic alone are large: a reranker quarantined up to a third of legitimate
+memories~\cite{priceofsafety}.
+
+\para{Telling the user.} Contradiction flags written by the model are scored as the ideal
+answer in~\cite{archmatters}; we make the system write them, because a model that ignores labels
+also ignores the instruction to flag. Whether people act on such disclosures is open: in a user
+study of agent attacks, 8.6\% of 303 participants noticed the attack, and effective warnings
+interrupt the task and are cheap to verify~\cite{aresure}; our notice is short, names the source,
+and removes links and numbers, but we do not test it with users (\cref{sec:discussion}).
 
 \para{Other defences.} Consensus across reasoning paths (A-MemGuard~\cite{amemguard}), saving
 policies and retrieval screens~\cite{ghostwriter}, Bayesian reliability (belief-based
@@ -400,8 +423,15 @@ mechanism of that kind, evaluated on updates.
 
 \para{Attacks and benchmarks.} MINJA~\cite{minja}, AgentPoison~\cite{agentpoison},
 MPBench~\cite{mpbench}, MemPoison~\cite{mempoison}, Bad Memory~\cite{badmemory} and the
-optimised attack of~\cite{pipepoison}, which stays effective under eight defences. None pairs
-attacks with legitimate updates of the same facts.
+optimised attack of~\cite{pipepoison}, which stays effective under eight defences; persistent
+memory poisoning of coding agents defeats a confirm-before-save prompt~\cite{pmpa}, and
+authenticated records can still be mis-selected through writable structure~\cite{selectionintegrity},
+a limit for any provenance gate. Benchmarks pair clean and poisoned \emph{conditions}
+(MemGauge~\cite{memgauge}, MemForm~\cite{memform}) or minimally edited clean and poisoned
+\emph{entries}, including false corrections (MemShield-Bench~\cite{memshield}); none pairs a
+legitimate update with an attacker's update of the same fact, on the same setup and question.
+For Indian languages, prompt-injection data is scarce and mostly translated~\cite{indicinjection};
+we found no memory or scam benchmark in Hindi or Hinglish.
 
 \section{Conclusion}
 
