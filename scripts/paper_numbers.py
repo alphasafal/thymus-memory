@@ -215,7 +215,7 @@ def verifier_table() -> str | None:
     files = sorted(VERIFIER.glob("*.jsonl")) if VERIFIER.exists() else []
     if not files:
         return None
-    out = ["\\begin{table}[t]\\centering\\scriptsize",
+    out = ["\\begin{table*}[t]\\centering\\scriptsize",
            "\\caption{Verifier wordings on labelled pairs: real conflicts kept (higher is better) and "
            "non-conflicts kept, i.e.\\ false contests (lower is better). The wording was chosen on half A "
            "and is reported on half B; families never span halves.}\\label{tab:verifier}",
@@ -233,7 +233,7 @@ def verifier_table() -> str | None:
                     halves.append(f"{sum(r[w]['confirmed'] for r in rs)}/{len(rs)}")
                 cells.append(" / ".join(halves))
             out.append(f"{model} & {label} (A / B) & " + " & ".join(cells) + " \\\\")
-    out += ["\\bottomrule\\end{tabular}\\end{table}", ""]
+    out += ["\\bottomrule\\end{tabular}\\end{table*}", ""]
     return "\n".join(out)
 
 
