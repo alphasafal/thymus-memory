@@ -126,8 +126,13 @@ class LLMConflictDetector:
             return found
         # Only single claims are compared pairwise: a memory holding a whole chat round is about
         # many things at once, so "is it the same thing?" has no answer and the first verdict stands.
-        return [m for m in found if holds_several_claims(m.text) or holds_several_claims(candidate.text)
-                or self._confirmed(candidate.text, m.text)]
+        return [m for m in found if self.confirm(candidate, m)]
+
+    def confirm(self, candidate: Candidate, memory: Memory) -> bool:
+        """The pairwise second check for one claimed conflict."""
+        if holds_several_claims(memory.text) or holds_several_claims(candidate.text):
+            return True
+        return self._confirmed(candidate.text, memory.text)
 
     def _confirmed(self, new: str, old: str) -> bool:
         raw = self.llm.complete(self.verify_system, f"<a>\n{old}\n</a>\n\n<b>\n{new}\n</b>", schema=self.verify_schema)

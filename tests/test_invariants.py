@@ -135,3 +135,35 @@ def test_version_2_guarantees(seed):
         if memory.contradicts and (memory.trust == "unverified" or memory.speaker != "victim"):
             assert gate.withhold(memory, "victim")
             assert memory.text in gate.notice([memory], "victim")
+
+
+class RandomConflictsAndVerdicts(RandomConflicts):
+    """Random conflicts, and a random pairwise verifier that refuses about half of them."""
+
+    def confirm(self, candidate, memory):
+        return self.rng.random() < 0.5
+
+
+@pytest.mark.parametrize("seed", range(300))
+def test_version_3_verification_never_removes_a_contest(seed):
+    """thymus-v3: whatever the verifier says, every reported conflict with another origin (or
+    another user) is contested, and anything replaced was confirmed by the verifier and came
+    from the same source or the user."""
+    rng = random.Random(seed)
+    detector, classifier = RandomConflictsAndVerdicts(rng), RandomClaims()
+    gate = ThymusGate(detector, classifier, TRUSTED, require_auth=True, contest_other_users=True, notice=True,
+                      confirm_replacements=True)
+    unverified = ThymusGate(detector, classifier, TRUSTED, require_auth=True, contest_other_users=True, notice=True)
+    store = MemoryStore(HashEmbedder(dim=16))
+    for turn in range(1, 26):
+        candidate = random_candidate(rng, turn)
+        classifier.kinds[candidate.text] = rng.choice(KINDS)
+        state = rng.getstate()
+        baseline = unverified.review(candidate, store)  # the same detector answers, without verification
+        rng.setstate(state)
+        decision = gate.review(candidate, store)
+        assert set(baseline.contradicts) <= set(decision.contradicts)  # verification removed no contest
+        assert set(decision.supersedes) <= set(baseline.supersedes)  # and only ever cancelled replacements
+        if decision.action == "accept":
+            store.add(candidate, trust=decision.trust, contradicts=decision.contradicts)
+            store.retire(decision.supersedes)

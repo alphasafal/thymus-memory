@@ -183,6 +183,7 @@ class ThymusGate(Gate):
         contest_other_users: bool = False,
         notice: bool = False,
         soft_supersede: bool | str = False,
+        confirm_replacements: bool = False,
         name: str = "thymus",
     ):
         self.detector = detector
@@ -200,7 +201,16 @@ class ThymusGate(Gate):
         self.contest_other_users = contest_other_users
         self.notice_mode = notice
         self.soft_supersede = soft_supersede
+        # Version 3: the pairwise verifier is asked only before a replacement. A conflict with
+        # another origin stays contested whatever the verifier says, so verification can make
+        # the gate more careful, never less (a missed contest lets a fake update through).
+        self.confirm_replacements = confirm_replacements
         self.name = name
+
+    def _replaceable(self, candidate: Candidate, memories: list[Memory]) -> list[Memory]:
+        if not self.confirm_replacements:
+            return memories
+        return [m for m in memories if self.detector.confirm(candidate, m)]
 
     def _trusted_origin(self, candidate: Candidate) -> bool:
         authentic = candidate.authenticated or not self.require_auth
@@ -228,15 +238,17 @@ class ThymusGate(Gate):
         if candidate.source == "user":
             # Users may correct facts from tools and their own earlier statements,
             # but not what a different user told a shared assistant.
-            own = [m for m in conflicts if m.source == "tool" or m.speaker == candidate.speaker]
-            contested = tuple(m.id for m in conflicts if m not in own) if self.contest_other_users else ()
+            mine = [m for m in conflicts if m.source == "tool" or m.speaker == candidate.speaker]
+            own = self._replaceable(candidate, mine)
+            contested = tuple(m.id for m in conflicts if m not in mine) if self.contest_other_users else ()
             return Decision("accept", f"user update replaces {_ids(own)}", tuple(m.id for m in own), trust, contested)
 
         can_replace = candidate.authenticated or not self.require_auth
-        same_origin = [
+        own_source = [
             m for m in conflicts if (m.origin == candidate.origin and can_replace) or not self.same_origin_only
         ]
-        others = [m for m in conflicts if m not in same_origin]
+        same_origin = self._replaceable(candidate, own_source)
+        others = [m for m in conflicts if m not in own_source]
         if others and self.hide_contested:
             return Decision("quarantine", f"contradicts {_ids(others)} from other sources, hidden")
         if others:
@@ -337,6 +349,9 @@ GATES: dict[str, Callable[[LLM], Gate]] = {
     "thymus-v2-verified": lambda llm: ThymusGate(
         LLMConflictDetector(llm, same_subject=True, verify=True), LLMClaimClassifier(llm), require_auth=True,
         contest_other_users=True, notice=True, soft_supersede="auto", name="thymus-v2-verified"),
+    "thymus-v3": lambda llm: ThymusGate(
+        LLMConflictDetector(llm, same_subject=True), LLMClaimClassifier(llm), require_auth=True,
+        contest_other_users=True, notice=True, soft_supersede="auto", confirm_replacements=True, name="thymus-v3"),
     "thymus-v2-inline": lambda llm: ThymusGate(
         LLMConflictDetector(llm), LLMClaimClassifier(llm), require_auth=True, contest_other_users=True,
         name="thymus-v2-inline"),
@@ -348,7 +363,8 @@ MAIN_GATES = (
 )
 ABLATIONS = ("thymus-no-screen", "thymus-any-origin", "thymus-no-labels", "thymus-hide")
 # Version 2 of the gate and its inline-label variant (see ThymusGate).
-VERSION_2 = ("thymus-v2", "thymus-v2-inline", "thymus-v2-soft", "thymus-v2-auto", "thymus-v2-precise", "thymus-v2-verified")
+VERSION_2 = ("thymus-v2", "thymus-v2-inline", "thymus-v2-soft", "thymus-v2-auto", "thymus-v2-precise", "thymus-v2-verified",
+             "thymus-v3")
 
 
 def make_gate(name: str, llm: LLM) -> Gate:
