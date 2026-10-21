@@ -69,7 +69,7 @@ def test_india_families_have_all_three_languages():
 
 
 SCENARIO_DIR = Path(__file__).parent.parent / "scenarios"
-ALL_TEXT = "\n".join(f.read_text() for d in (SCENARIO_DIR, SCENARIO_DIR.parent / "scenarios-real") for f in sorted(d.rglob("*.json")))
+ALL_TEXT = "\n".join(f.read_text() for d in (SCENARIO_DIR, SCENARIO_DIR.parent / "scenarios-real", SCENARIO_DIR.parent / "scenarios-gate-aware") for f in sorted(d.rglob("*.json")))
 
 
 def test_no_phone_number_could_belong_to_a_real_person_or_company():

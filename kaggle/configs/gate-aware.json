@@ -9,7 +9,7 @@
       "name": "gate-aware-qwen3-4b",
       "llm": "ollama:qwen3:4b-instruct",
       "judge": "ollama:qwen3:4b-instruct",
-      "scenarios": "scenarios/gate-aware.json",
+      "scenarios": "scenarios-gate-aware",
       "gates": [
         "thymus-v3"
       ]
@@ -18,7 +18,7 @@
       "name": "gate-aware-qwen3-4b",
       "llm": "ollama:qwen3:4b-instruct",
       "judge": "ollama:qwen3:4b-instruct",
-      "scenarios": "scenarios/gate-aware.json",
+      "scenarios": "scenarios-gate-aware",
       "gates": [
         "allow-all"
       ]
@@ -27,7 +27,7 @@
       "name": "gate-aware-qwen3-4b",
       "llm": "ollama:qwen3:4b-instruct",
       "judge": "ollama:qwen3:4b-instruct",
-      "scenarios": "scenarios/gate-aware.json",
+      "scenarios": "scenarios-gate-aware",
       "gates": [
         "thymus-v2-verified"
       ]
@@ -36,7 +36,7 @@
       "name": "gate-aware-qwen3-4b",
       "llm": "ollama:qwen3:4b-instruct",
       "judge": "ollama:qwen3:4b-instruct",
-      "scenarios": "scenarios/gate-aware.json",
+      "scenarios": "scenarios-gate-aware",
       "gates": [
         "label-only"
       ]
@@ -45,7 +45,7 @@
       "name": "gate-aware-qwen3-4b",
       "llm": "ollama:qwen3:4b-instruct",
       "judge": "ollama:qwen3:4b-instruct",
-      "scenarios": "scenarios/gate-aware.json",
+      "scenarios": "scenarios-gate-aware",
       "gates": [
         "user-only"
       ]
@@ -54,7 +54,7 @@
       "name": "gate-aware-llama3.1-8b",
       "llm": "ollama:llama3.1:8b",
       "judge": "ollama:qwen3:4b-instruct",
-      "scenarios": "scenarios/gate-aware.json",
+      "scenarios": "scenarios-gate-aware",
       "gates": [
         "thymus-v3"
       ]
@@ -63,7 +63,7 @@
       "name": "gate-aware-llama3.1-8b",
       "llm": "ollama:llama3.1:8b",
       "judge": "ollama:qwen3:4b-instruct",
-      "scenarios": "scenarios/gate-aware.json",
+      "scenarios": "scenarios-gate-aware",
       "gates": [
         "allow-all"
       ]
@@ -72,7 +72,7 @@
       "name": "gate-aware-llama3.1-8b",
       "llm": "ollama:llama3.1:8b",
       "judge": "ollama:qwen3:4b-instruct",
-      "scenarios": "scenarios/gate-aware.json",
+      "scenarios": "scenarios-gate-aware",
       "gates": [
         "thymus-v2-verified"
       ]
@@ -81,7 +81,7 @@
       "name": "gate-aware-llama3.1-8b",
       "llm": "ollama:llama3.1:8b",
       "judge": "ollama:qwen3:4b-instruct",
-      "scenarios": "scenarios/gate-aware.json",
+      "scenarios": "scenarios-gate-aware",
       "gates": [
         "label-only"
       ]
@@ -90,7 +90,7 @@
       "name": "gate-aware-llama3.1-8b",
       "llm": "ollama:llama3.1:8b",
       "judge": "ollama:qwen3:4b-instruct",
-      "scenarios": "scenarios/gate-aware.json",
+      "scenarios": "scenarios-gate-aware",
       "gates": [
         "user-only"
       ]
