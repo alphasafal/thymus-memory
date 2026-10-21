@@ -267,3 +267,21 @@ in five of six, the behaviour the \gate{} gate builds in, but answered the forge
 caveat, and rejected a genuine same-sender update as possibly spoofed. These are the two
 failures the gate's rules address: lost provenance (disclosure) and no rule for who may update
 a fact (authenticated same-origin supersession).
+
+\subsection{Deployment: Mem0, confirmation burden and cost}\label{sec:deployment}
+
+\para{Inside a real memory library.} The gate runs in front of Mem0~\cite{mem0} without changing
+it: Mem0 embeds, stores and retrieves; the gate decides what is written, what replaces what, and
+what reaches the model, with provenance kept in Mem0's own metadata (\texttt{thymus\_*} keys,
+so it survives restarts and shows in Mem0's tools). Retired facts stay in Mem0 as an audit
+trail. \memZeroSentence{}
+
+\para{How often the user is asked.} The safe alternative to a gate is to ask the user before
+storing anything from outside. On the benchmark that means \askQwenAll{} questions per 100
+scenarios on qwen3-4B (Llama: \askLlamaAll{}); asking only about what the gate stores as
+unverified still means \askQwenDistrust{} (\askLlamaDistrust{}). Disclosing a contested claim
+only when an answer depends on it asks \askQwenNotice{} times per 100 scenarios
+(\askLlamaNotice{}): an order of magnitude fewer interruptions, each at the moment the claim
+matters and with its source named.
+
+\para{Cost.} \costSentence{}
