@@ -1,12 +1,16 @@
-% Disclose, Don't Decide. Build: latexmk -pdf main.tex (or upload the paper/ folder to Overleaf).
-% For submission, replace the preamble's layout lines with the venue's style file
-% (USENIX: \usepackage{usenix-2020-09}) and remove the author block for double-blind review.
+% Disclose, Don't Decide. Build: latexmk -pdf main.tex (draft, with author)
+% or latexmk -pdf submission.tex (anonymous, USENIX Security style file).
 \documentclass[letterpaper,twocolumn,10pt]{article}
+\ifdefined\submission
+\usepackage{usenix-2020-09}  % loads fonts, microtype, hyperref and the USENIX page layout
+\else
 \usepackage[margin=0.75in,columnsep=0.33in]{geometry}
 \usepackage[T1]{fontenc}
 \usepackage{mathptmx}
 \usepackage[utf8]{inputenc}
 \usepackage{microtype}
+\usepackage[hidelinks]{hyperref}
+\fi
 \usepackage{booktabs}
 \usepackage{multirow}
 \usepackage{xcolor}
@@ -16,7 +20,6 @@
 \pgfplotsset{compat=1.17}
 \usepackage{amssymb}
 \usepackage{enumitem}
-\usepackage[hidelinks]{hyperref}
 \usepackage{cleveref}
 \setlist{nosep,leftmargin=*}
 \newcommand{\gate}{\textsc{thymus}}
@@ -24,7 +27,7 @@
 \input{numbers}
 
 \title{\Large\bf Disclose, Don't Decide: Separating Real Updates from Poisoned Ones\\in LLM Agent Memory}
-\author{Safal Gupta}
+\ifdefined\submission\author{Anonymous submission}\else\author{Safal Gupta}\fi
 \date{}
 
 \begin{document}
@@ -129,7 +132,7 @@ output (\cref{sec:guarantees}).
 \item \textbf{A head-to-head comparison} with five defences from prior work in one harness, on
 four model families including Claude Opus~5.5 and GPT-6-Astra, with ablations, family-level
 bootstrap intervals and exact paired tests.
-\item \textbf{Evidence from production assistants}: in the author's own ChatGPT account, fake
+\item \textbf{Evidence from production assistants}: in the authors' own ChatGPT account, fake
 updates came back from memory as fact in a new chat, one of them as something the user had said.
 \end{enumerate}
 
@@ -417,17 +420,28 @@ accuracy problem for the person it describes. We release the benchmark, the reda
 sets, the gate and every cached model response, so that both can be measured, and improved, on
 the same scenarios.
 
-\section*{Ethics and open science}
+\section*{Ethics considerations}
 
 The benchmark scenarios are synthetic. The real-data sets are public research corpora (SMS:
 \cite{smsdata}, CC BY 4.0; phishing email: \cite{nazario}, CC BY 4.0; Enron: \cite{enron};
 LongMemEval: MIT): every link, address and phone number is replaced by a reserved placeholder
 (\texttt{.example} domains, +91-555 numbers) and Enron names are pseudonymised, so no working
-scam contact appears; tests enforce this. The production-assistant study used only the author's
-own accounts and invented facts, asked the assistants not to search connected apps, and was
-reported to OpenAI and Anthropic before publication. The use of AI assistants in this research
-is disclosed as the venue requires. Code, data, prompts, cached responses and run metadata will
-be released under an open licence with instructions to reproduce every table.
+scam contact appears; tests enforce this. The production-assistant study used only the authors'
+own accounts and invented facts, and asked the assistants not to search connected apps; no other
+person's data or account was involved. \disclosureSentence{} The use of AI assistants in this
+research is disclosed as the venue requires.
+
+\section*{Open science}
+
+All artifacts are available for review at \artifactLink{}: the gate and harness (MIT), the
+matched-pair benchmark (CC BY 4.0) and the redacted real-data sets (their sources' licences),
+every prompt, every cached model response with its run metadata, and the Kaggle configurations
+that produced each table. \texttt{scripts/reproduce.sh} rebuilds the benchmark tables from the
+cached responses on a laptop without a GPU (only an embedding model is needed); a check on a
+subset made no new model calls and reproduced every reply. The Mem0 integration and the
+property tests of the gate's guarantees are included. Results that motivated a change to the
+gate are listed in \cref{sec:history}, and the pre-registration of the last change is in the
+repository.
 
 \bibliographystyle{plain}
 \bibliography{references}

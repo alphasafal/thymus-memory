@@ -13,11 +13,13 @@ subprocess.run("apt-get -qq update && DEBIAN_FRONTEND=noninteractive apt-get -qq
                "texlive-latex-recommended texlive-latex-extra texlive-pictures texlive-fonts-recommended "
                "texlive-science latexmk poppler-utils > /dev/null", shell=True, check=True)
 paper = work / "paper"
-result = subprocess.run(["latexmk", "-pdf", "-interaction=nonstopmode", "-f", "main.tex"],
-                        cwd=paper, capture_output=True, text=True)
-print(result.stdout[-6000:], result.stderr[-3000:])
-for name in ("main.pdf", "main.log"):
-    if (paper / name).exists():
-        shutil.copy(paper / name, f"/kaggle/working/{name}")
-if (paper / "main.pdf").exists():  # page previews for checking the layout
-    subprocess.run(["pdftoppm", "-r", "80", "-png", "main.pdf", "/kaggle/working/page"], cwd=paper, check=False)
+# main.tex: the draft with author; submission.tex: anonymous, USENIX style file.
+for doc in ("main", "submission"):
+    result = subprocess.run(["latexmk", "-pdf", "-interaction=nonstopmode", "-f", f"{doc}.tex"],
+                            cwd=paper, capture_output=True, text=True)
+    print(doc, result.stdout[-4000:], result.stderr[-2000:])
+    for name in (f"{doc}.pdf", f"{doc}.log"):
+        if (paper / name).exists():
+            shutil.copy(paper / name, f"/kaggle/working/{name}")
+if (paper / "submission.pdf").exists():  # page previews for checking the layout
+    subprocess.run(["pdftoppm", "-r", "80", "-png", "submission.pdf", "/kaggle/working/page"], cwd=paper, check=False)
