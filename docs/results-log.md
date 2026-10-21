@@ -367,3 +367,10 @@ both errors equally on half A was the wrong criterion for Llama.
 
 Also fixed: paper_numbers.py looked for update kind "cross-origin" (the kind is
 "cross-origin-update"), so the cross-origin macros were empty.
+
+## 21 Oct 2026: frontier subset with v3 (held-out for v3), GPT-6-Astra
+
+36 scenarios (12 families). v3 and v2-verified identical: fooled 0% (allow-all 50% earlier),
+recall 100%, updates answered 8/12; the 4 not answered are all cross-origin updates, and all 4
+reach the user in the notice (12/12 reach). Opus 5.5 rerun blocked by the Claude plan's weekly
+limit (resets 24 Oct 02:30 IST); its v3 rows are errors until rerun.
