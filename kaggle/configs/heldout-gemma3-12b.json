@@ -1,0 +1,138 @@
+{
+  "pull": [
+    "gemma3:12b",
+    "qwen3:4b-instruct",
+    "nomic-embed-text"
+  ],
+  "runs": [
+    {
+      "name": "gemma3-12b",
+      "llm": "ollama:gemma3:12b",
+      "judge": "ollama:qwen3:4b-instruct",
+      "gates": [
+        "thymus-v3"
+      ]
+    },
+    {
+      "name": "gemma3-12b",
+      "llm": "ollama:gemma3:12b",
+      "judge": "ollama:qwen3:4b-instruct",
+      "gates": [
+        "allow-all"
+      ]
+    },
+    {
+      "name": "gemma3-12b",
+      "llm": "ollama:gemma3:12b",
+      "judge": "ollama:qwen3:4b-instruct",
+      "gates": [
+        "thymus-v2-verified"
+      ]
+    },
+    {
+      "name": "gemma3-12b",
+      "llm": "ollama:gemma3:12b",
+      "judge": "ollama:qwen3:4b-instruct",
+      "gates": [
+        "label-only"
+      ]
+    },
+    {
+      "name": "gemma3-12b",
+      "llm": "ollama:gemma3:12b",
+      "judge": "ollama:qwen3:4b-instruct",
+      "gates": [
+        "user-only"
+      ]
+    },
+    {
+      "name": "gemma3-12b",
+      "llm": "ollama:gemma3:12b",
+      "judge": "ollama:qwen3:4b-instruct",
+      "gates": [
+        "thymus-v2-precise"
+      ]
+    },
+    {
+      "name": "realemail-enron-gemma3-12b",
+      "llm": "ollama:gemma3:12b",
+      "judge": "ollama:qwen3:4b-instruct",
+      "gates": [
+        "thymus-v3"
+      ],
+      "scenarios": "scenarios-real/enron-updates.json"
+    },
+    {
+      "name": "realemail-enron-gemma3-12b",
+      "llm": "ollama:gemma3:12b",
+      "judge": "ollama:qwen3:4b-instruct",
+      "gates": [
+        "allow-all"
+      ],
+      "scenarios": "scenarios-real/enron-updates.json"
+    },
+    {
+      "name": "realemail-enron-gemma3-12b",
+      "llm": "ollama:gemma3:12b",
+      "judge": "ollama:qwen3:4b-instruct",
+      "gates": [
+        "thymus-v2-verified"
+      ],
+      "scenarios": "scenarios-real/enron-updates.json"
+    },
+    {
+      "name": "realsms-gemma3-12b",
+      "llm": "ollama:gemma3:12b",
+      "judge": "ollama:qwen3:4b-instruct",
+      "gates": [
+        "thymus-v3"
+      ],
+      "scenarios": "scenarios-real/sms.json"
+    },
+    {
+      "name": "realsms-gemma3-12b",
+      "llm": "ollama:gemma3:12b",
+      "judge": "ollama:qwen3:4b-instruct",
+      "gates": [
+        "allow-all"
+      ],
+      "scenarios": "scenarios-real/sms.json"
+    },
+    {
+      "name": "realsms-gemma3-12b",
+      "llm": "ollama:gemma3:12b",
+      "judge": "ollama:qwen3:4b-instruct",
+      "gates": [
+        "thymus-v2-verified"
+      ],
+      "scenarios": "scenarios-real/sms.json"
+    },
+    {
+      "name": "realemail-phishing-gemma3-12b",
+      "llm": "ollama:gemma3:12b",
+      "judge": "ollama:qwen3:4b-instruct",
+      "gates": [
+        "thymus-v3"
+      ],
+      "scenarios": "scenarios-real/email-phishing.json"
+    },
+    {
+      "name": "realemail-phishing-gemma3-12b",
+      "llm": "ollama:gemma3:12b",
+      "judge": "ollama:qwen3:4b-instruct",
+      "gates": [
+        "allow-all"
+      ],
+      "scenarios": "scenarios-real/email-phishing.json"
+    },
+    {
+      "name": "realemail-phishing-gemma3-12b",
+      "llm": "ollama:gemma3:12b",
+      "judge": "ollama:qwen3:4b-instruct",
+      "gates": [
+        "thymus-v2-verified"
+      ],
+      "scenarios": "scenarios-real/email-phishing.json"
+    }
+  ]
+}
