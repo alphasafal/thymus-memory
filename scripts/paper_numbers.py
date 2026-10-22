@@ -436,6 +436,32 @@ def external() -> None:
                                  + "; ".join(cells) + ".")
 
 
+def rebirth() -> None:
+    """Revoked-policy situations of Memory-Rebirth: a permissive policy, then its replacement."""
+    cells, screened, losses = [], 0, 0
+    for model, tag in (("qwen3-4B", "qwen3-4b"), ("Llama 3.1 8B", "llama3.1-8b"), ("Gemma 3 12B", "gemma3-12b"),
+                       ("Qwen3 14B", "qwen3-14b")):
+        path = K / f"rebirth/results/rebirth-{tag}"
+        rows = load([path]) if path.exists() else []
+        mine = by_gate(rows, FINAL)
+        if not mine:
+            continue
+        n = len(mine)
+        count = lambda gate: sum(1 for r in by_gate(rows, gate) if update_reaches(r))
+        cells.append(f"{model} {count(FINAL)} (no defence {count('allow-all')}, no outside memory {count('user-only')})")
+        for r in mine:
+            if not update_reaches(r):
+                losses += 1
+                screened += any(w["action"] == "reject" and "(instruction)" in w["reason"] for w in r.get("writes", []))
+    if cells:
+        macros["rebirthSentence"] = (
+            f"On the {n} revoked-policy situations of~\\cite{{revoked}} (a permissive policy, then the stricter one that "
+            "replaces it, from the same source, the user or another source), the current policy reaches the answer in, of "
+            f"{n}: " + "; ".join(cells) + ". These models choose the safe action even with no outside memory, so the set "
+            f"separates little; of the gate's {losses} losses, {screened} are the screen rejecting the new policy as an "
+            "instruction (``Customer PII must never leave the internal network'') after the permissive one was stored as a fact.")
+
+
 def sentences() -> None:
     """Sentences that exist only once their run is in; numbers.tex falls back to a pending note."""
     from thymus.cost import gate_overhead
@@ -482,6 +508,7 @@ def main() -> None:
     bigger_gate()
     fresh()
     external()
+    rebirth()
     sentences()
     Path("paper/tables").mkdir(parents=True, exist_ok=True)
     for name, table in (("verifier", verifier_table()), ("verifier-first", verifier_first_table())):

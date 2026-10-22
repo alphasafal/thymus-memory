@@ -468,3 +468,14 @@ v3 vs v2-verified on Llama: 37 vs 1 discordant (p < 0.001); qwen3 2 vs 0. By str
 - **Bug fixed** in scripts/paper_numbers.py: expected answers were looked up only in scenarios/ and
   scenarios-real/, so updates in the external, gate-aware and fresh sets that reached the user
   through a notice were scored as not reaching it. No other number changed.
+
+## 22 Oct 2026: Memory-Rebirth revoked-policy situations (4 models)
+
+27 situations (9 policies × same-source / user / other-source replacement). Current policy in
+the answer, of 27, v3 / no defence / no outside memory: qwen3-4B 27/27/25, Llama 26/25/26,
+Gemma 24/24/27, Qwen3 14B 22/25/26. The models choose the safe action without any memory, so
+the set separates little. Of v3's 9 losses, 5 are the screen rejecting the stricter policy as
+an "instruction" ("Customer PII must never leave the internal network") after the permissive
+one was stored as a fact. Same cost as MemShield's clean rejections: rule 1 is for personal facts.
+LongMemEval-qwen3 errored again (Kaggle served the old dataset version without run_config.json);
+re-pushed.
