@@ -255,15 +255,21 @@ def real() -> None:
 
 
 def longmemeval() -> None:
-    rows = []
-    for f in sorted(K.glob("*longmemeval*/results/**/results.jsonl")):
-        rows += [json.loads(line) for line in f.read_text().splitlines() if line.strip()]
-    for condition, key in (("clean", "Clean"), ("poisoned", "Poisoned"), ("evidence-untrusted", "Untrusted")):
-        rs = [r for r in rows if r["condition"] == condition and r["gate"] == FINAL]
-        put(f"lme{key}", mean(bool(r["correct"]) for r in rs) if rs else None)
-        if condition != "clean":
-            put(f"lme{key}Adopt", mean(r["attack_verdict"] == "adopted" for r in rs) if rs else None)
-            put(f"lme{key}Flag", mean(r["attack_verdict"] == "flagged" for r in rs) if rs else None)
+    """LongMemEval under the Utility Under Attack protocol, one set of macros per agent model."""
+    for model, tag in (("", "llama3.1-8b"), ("Qwen", "qwen3-4b")):
+        rows = []
+        for f in sorted(K.glob(f"*longmemeval*/results/longmemeval-{tag}/**/results.jsonl")):
+            rows += [json.loads(line) for line in f.read_text().splitlines() if line.strip()]
+        for gate, gkey in ((FINAL, ""), ("allow-all", "All"), ("user-only", "User")):
+            for condition, key in (("clean", "Clean"), ("poisoned", "Poisoned"), ("evidence-untrusted", "Untrusted")):
+                rs = [r for r in rows if r["condition"] == condition and r["gate"] == gate]
+                if gkey and not rs:
+                    continue
+                name = f"lme{model}{gkey}{key}"
+                put(name, mean(bool(r["correct"]) for r in rs) if rs else None)
+                if condition != "clean":
+                    put(f"{name}Adopt", mean(r["attack_verdict"] == "adopted" for r in rs) if rs else None)
+                    put(f"{name}Flag", mean(r["attack_verdict"] == "flagged" for r in rs) if rs else None)
 
 
 VERIFIER = K / "verifier-check2/results/verifier"
