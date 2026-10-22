@@ -89,6 +89,22 @@
 \newcommand{\askQwenBigNotice}{19}
 \newcommand{\askQwenDistrust}{139}
 \newcommand{\askQwenNotice}{19}
+\newcommand{\bigLlama}{21\%}
+\newcommand{\bigLlamaContestedN}{38}
+\newcommand{\bigLlamaNum}{21}
+\newcommand{\bigLlamaRec}{94\%}
+\newcommand{\bigLlamaRecNum}{94}
+\newcommand{\bigLlamaUncontestedN}{113}
+\newcommand{\bigLlamaUpd}{70\%}
+\newcommand{\bigLlamaUpdNum}{70}
+\newcommand{\bigQwen}{9\%}
+\newcommand{\bigQwenContestedN}{45}
+\newcommand{\bigQwenNum}{9}
+\newcommand{\bigQwenRec}{98\%}
+\newcommand{\bigQwenRecNum}{98}
+\newcommand{\bigQwenUncontestedN}{94}
+\newcommand{\bigQwenUpd}{70\%}
+\newcommand{\bigQwenUpdNum}{70}
 \newcommand{\costSentence}{Measured without the cache, thymus (final) adds 1.02 model calls, 241 tokens and 0.55\,s per memory write on qwen3-4B (a T4 GPU; the agent's own extraction and answer take 2.0\,s per scenario); thymus, verify all adds 1.15 model calls, 283 tokens and 1.39\,s per memory write on qwen3-4B (a T4 GPU; the agent's own extraction and answer take 2.0\,s per scenario).}
 \newcommand{\crossGemmaAnswered}{7\%}
 \newcommand{\crossGemmaAnsweredNum}{7}
@@ -323,12 +339,13 @@
 \newcommand{\lmeUserUntrustedFlag}{1\%}
 \newcommand{\lmeUserUntrustedFlagNum}{1}
 \newcommand{\lmeUserUntrustedNum}{11}
+\newcommand{\mabSentence}{On 36 counterfactual edits from MemoryAgentBench~\cite{memoryagentbench}, on qwen3-4B the gate answers 50\% of same-source corrections (no defence: 56\%) and delivers 67\% of other-source ones, answered or in the notice; on Llama 3.1 8B the gate answers 56\% of same-source corrections (no defence: 36\%) and delivers 89\% of other-source ones, answered or in the notice.}
 \newcommand{\mailLlamaThy}{30\%}
 \newcommand{\mailLlamaThyNum}{30}
 \newcommand{\mailQwenThy}{10\%}
 \newcommand{\mailQwenThyNum}{10}
 \newcommand{\memZeroSentence}{Running the whole benchmark this way, on qwen3-4B the gate on Mem0 is fooled 9\% of the time with 73\% of updates and 96\% of recall answered, and 442 of 442 scenarios get the same verdict as on the built-in store; on Llama 3.1 8B the gate on Mem0 is fooled 6\% of the time with 63\% of updates and 94\% of recall answered, and 442 of 442 scenarios get the same verdict as on the built-in store.}
-\newcommand{\memshieldSentence}{On MemShield-Bench~\cite{memshield}, with qwen3:4b-instruct as gate model it catches 35 of 42 poisoned rewrites of stored entries and rejects 38 of 49 poisoned entries on their own, but also 29 of 130 clean ones.}
+\newcommand{\memshieldSentence}{On MemShield-Bench~\cite{memshield}, with qwen3:4b-instruct as gate model it catches 35 of 42 poisoned rewrites of stored entries and rejects 38 of 49 poisoned entries on their own, but also 29 of 130 clean ones; with llama3.1:8b as gate model it catches 38 of 42 poisoned rewrites of stored entries and rejects 19 of 49 poisoned entries on their own, but also 14 of 130 clean ones.}
 \newcommand{\noticeGemmaAttack}{59\%}
 \newcommand{\noticeGemmaAttackNum}{59}
 \newcommand{\noticeGemmaBenign}{0\%}

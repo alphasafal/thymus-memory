@@ -454,3 +454,17 @@ verification was mostly the bug.
 allow-all 44 / 56, label-only 20 / 52, v2-auto 4 / 10, v2-verified 6 / 20, **v3 5 / 1**.
 v3 vs v2-verified on Llama: 37 vs 1 discordant (p < 0.001); qwen3 2 vs 0. By strategy on Llama
 (v3): addition 2%, same-source 0%, user-voice 0%. Held-out total: v3 56 paired wins, 2 losses.
+
+## 22 Oct 2026: external datasets and a bigger gate model
+
+- **Bigger gate model (negative):** Qwen3 14B as gate model for Llama 3.1 8B: fooled 21% vs 6%
+  with Llama as its own gate model; it contests 38 planted claims vs 48 (uncontested 113 vs 104).
+  For qwen3-4B unchanged (9% vs 9%). A larger model calls fewer contradictions.
+- **MemoryAgentBench** (36 counterfactual edits): same-source corrections answered, qwen3 50%
+  (no defence 56%), Llama 56% (36%); other-source updates reaching the user, qwen3 67%,
+  Llama 89% (no defence 36%: Llama answers from world knowledge).
+- **MemShield-Bench, Llama gate model**: 38/42 contradicting rewrites caught; screen rejects 19/49
+  poisoned and 14/130 clean (qwen3 gate: 35/42, 38/49, 29/130).
+- **Bug fixed** in scripts/paper_numbers.py: expected answers were looked up only in scenarios/ and
+  scenarios-real/, so updates in the external, gate-aware and fresh sets that reached the user
+  through a notice were scored as not reaching it. No other number changed.

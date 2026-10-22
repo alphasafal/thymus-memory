@@ -349,7 +349,13 @@ language-by-model comparisons, Holm gives $p\approx0.10$) without costing update
 Hindi from 23\% to 13\% ($p$ n.s., $n=30$); English is unchanged (17\% $\to$ 22\%, $p=0.41$). A
 model trained for multilingual use is not automatically better: with Aya Expanse~8B~\cite{aya}
 as gate model no language changes significantly. The language gap lives in the gate's model,
-not its rules, so the gate model is a deployment choice to test per language.
+not its rules, so the gate model is a deployment choice to test per language. A larger gate model is not
+automatically better: with Qwen3~14B judging for Llama~3.1~8B, the final gate is fooled
+\bigLlama{} of the time against \absLlamaThy{} when Llama judges for itself, because the larger model
+calls fewer contradictions (it contests \bigLlamaContestedN{} of the planted claims against
+\stratLlamaContestedN{}); for qwen3-4B the result is unchanged (\bigQwen{} against \absQwenThy{}).
+What matters is how readily the gate model reports a contradiction, which a deployment should
+measure rather than assume from model size.
 
 \subsection{Privacy: other users of a shared assistant}\label{sec:privacy}
 

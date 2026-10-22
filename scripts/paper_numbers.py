@@ -24,7 +24,8 @@ K = Path("results/kaggle")
 FINAL = os.environ.get("THYMUS_FINAL", "thymus-v3")
 CANDIDATES = {"Ver": "thymus-v2-verified", "Three": "thymus-v3"}
 DEV = dev_entries(Path("eval/dev_set.txt"))
-SCENARIOS = {s.id: s for d in (Path("scenarios"), Path("scenarios-real")) for s in load_scenarios(d)}
+SCENARIOS = {s.id: s for d in ("scenarios", "scenarios-real", "scenarios-external", "scenarios-gate-aware", "scenarios-fresh")
+             for s in load_scenarios(Path(d))}
 BENCH = {
     "Qwen": [K / "qwen3-4b/results", K / "final-qwen3/results/qwen3-4b"],
     "Llama": [K / "llama3.1-8b/results", K / "llama-followup/results/llama3.1-8b", K / "llama-auto/results/llama3.1-8b",
@@ -365,6 +366,28 @@ def gate_aware() -> None:
         macros["gateAwareSentence"] = "Against these 20 attacks, " + "; ".join(parts) + "."
 
 
+def bigger_gate() -> None:
+    """The final gate with Qwen3 14B, instead of the agent itself, as the gate model."""
+    for model, tag in (("Qwen", "qwen3-4b"), ("Llama", "llama3.1-8b")):
+        path = K / f"gate-14b/results/gate14b-{tag}"
+        rows = by_gate(test_rows([path]), FINAL) if path.exists() else []
+        put(f"big{model}", rate(rows, fooled))
+        put(f"big{model}Upd", rate(rows, updated))
+        put(f"big{model}Rec", rate(rows, recalled))
+        groups = {"Contested": 0, "Uncontested": 0}
+        for r in rows:
+            sc = SCENARIOS.get(r["scenario_id"])
+            if r["category"] != "attack" or not sc:
+                continue
+            planted = [w for w in r.get("writes", []) if contains_any(w["text"], sc.poison_markers)]
+            if planted and any("contradicts" in w["reason"] for w in planted):
+                groups["Contested"] += 1
+            elif planted and not all(w["action"] == "reject" for w in planted):
+                groups["Uncontested"] += 1
+        for key, n in groups.items():
+            macros[f"big{model}{key}N"] = str(n)
+
+
 def fresh() -> None:
     """Fact families written by GPT-6-Astra from a brief that never mentions the gate."""
     for model, tag in (("Qwen", "qwen3-4b"), ("Llama", "llama3.1-8b")):
@@ -456,6 +479,7 @@ def main() -> None:
     longmemeval()
     adaptive()
     gate_aware()
+    bigger_gate()
     fresh()
     external()
     sentences()
