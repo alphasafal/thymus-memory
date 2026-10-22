@@ -1,0 +1,191 @@
+{
+  "pull": [
+    "qwen3:4b-instruct",
+    "llama3.1:8b",
+    "gemma3:12b",
+    "qwen3:14b",
+    "nomic-embed-text"
+  ],
+  "runs": [
+    {
+      "name": "rebirth-qwen3-4b",
+      "llm": "ollama:qwen3:4b-instruct",
+      "judge": "ollama:qwen3:4b-instruct",
+      "scenarios": "scenarios-external/memory-rebirth.json",
+      "gates": [
+        "thymus-v3"
+      ]
+    },
+    {
+      "name": "rebirth-qwen3-4b",
+      "llm": "ollama:qwen3:4b-instruct",
+      "judge": "ollama:qwen3:4b-instruct",
+      "scenarios": "scenarios-external/memory-rebirth.json",
+      "gates": [
+        "allow-all"
+      ]
+    },
+    {
+      "name": "rebirth-qwen3-4b",
+      "llm": "ollama:qwen3:4b-instruct",
+      "judge": "ollama:qwen3:4b-instruct",
+      "scenarios": "scenarios-external/memory-rebirth.json",
+      "gates": [
+        "last-write-wins"
+      ]
+    },
+    {
+      "name": "rebirth-qwen3-4b",
+      "llm": "ollama:qwen3:4b-instruct",
+      "judge": "ollama:qwen3:4b-instruct",
+      "scenarios": "scenarios-external/memory-rebirth.json",
+      "gates": [
+        "label-only"
+      ]
+    },
+    {
+      "name": "rebirth-qwen3-4b",
+      "llm": "ollama:qwen3:4b-instruct",
+      "judge": "ollama:qwen3:4b-instruct",
+      "scenarios": "scenarios-external/memory-rebirth.json",
+      "gates": [
+        "user-only"
+      ]
+    },
+    {
+      "name": "rebirth-llama3.1-8b",
+      "llm": "ollama:llama3.1:8b",
+      "judge": "ollama:qwen3:4b-instruct",
+      "scenarios": "scenarios-external/memory-rebirth.json",
+      "gates": [
+        "thymus-v3"
+      ]
+    },
+    {
+      "name": "rebirth-llama3.1-8b",
+      "llm": "ollama:llama3.1:8b",
+      "judge": "ollama:qwen3:4b-instruct",
+      "scenarios": "scenarios-external/memory-rebirth.json",
+      "gates": [
+        "allow-all"
+      ]
+    },
+    {
+      "name": "rebirth-llama3.1-8b",
+      "llm": "ollama:llama3.1:8b",
+      "judge": "ollama:qwen3:4b-instruct",
+      "scenarios": "scenarios-external/memory-rebirth.json",
+      "gates": [
+        "last-write-wins"
+      ]
+    },
+    {
+      "name": "rebirth-llama3.1-8b",
+      "llm": "ollama:llama3.1:8b",
+      "judge": "ollama:qwen3:4b-instruct",
+      "scenarios": "scenarios-external/memory-rebirth.json",
+      "gates": [
+        "label-only"
+      ]
+    },
+    {
+      "name": "rebirth-llama3.1-8b",
+      "llm": "ollama:llama3.1:8b",
+      "judge": "ollama:qwen3:4b-instruct",
+      "scenarios": "scenarios-external/memory-rebirth.json",
+      "gates": [
+        "user-only"
+      ]
+    },
+    {
+      "name": "rebirth-gemma3-12b",
+      "llm": "ollama:gemma3:12b",
+      "judge": "ollama:qwen3:4b-instruct",
+      "scenarios": "scenarios-external/memory-rebirth.json",
+      "gates": [
+        "thymus-v3"
+      ]
+    },
+    {
+      "name": "rebirth-gemma3-12b",
+      "llm": "ollama:gemma3:12b",
+      "judge": "ollama:qwen3:4b-instruct",
+      "scenarios": "scenarios-external/memory-rebirth.json",
+      "gates": [
+        "allow-all"
+      ]
+    },
+    {
+      "name": "rebirth-gemma3-12b",
+      "llm": "ollama:gemma3:12b",
+      "judge": "ollama:qwen3:4b-instruct",
+      "scenarios": "scenarios-external/memory-rebirth.json",
+      "gates": [
+        "last-write-wins"
+      ]
+    },
+    {
+      "name": "rebirth-gemma3-12b",
+      "llm": "ollama:gemma3:12b",
+      "judge": "ollama:qwen3:4b-instruct",
+      "scenarios": "scenarios-external/memory-rebirth.json",
+      "gates": [
+        "label-only"
+      ]
+    },
+    {
+      "name": "rebirth-gemma3-12b",
+      "llm": "ollama:gemma3:12b",
+      "judge": "ollama:qwen3:4b-instruct",
+      "scenarios": "scenarios-external/memory-rebirth.json",
+      "gates": [
+        "user-only"
+      ]
+    },
+    {
+      "name": "rebirth-qwen3-14b",
+      "llm": "ollama:qwen3:14b",
+      "judge": "ollama:qwen3:4b-instruct",
+      "scenarios": "scenarios-external/memory-rebirth.json",
+      "gates": [
+        "thymus-v3"
+      ]
+    },
+    {
+      "name": "rebirth-qwen3-14b",
+      "llm": "ollama:qwen3:14b",
+      "judge": "ollama:qwen3:4b-instruct",
+      "scenarios": "scenarios-external/memory-rebirth.json",
+      "gates": [
+        "allow-all"
+      ]
+    },
+    {
+      "name": "rebirth-qwen3-14b",
+      "llm": "ollama:qwen3:14b",
+      "judge": "ollama:qwen3:4b-instruct",
+      "scenarios": "scenarios-external/memory-rebirth.json",
+      "gates": [
+        "last-write-wins"
+      ]
+    },
+    {
+      "name": "rebirth-qwen3-14b",
+      "llm": "ollama:qwen3:14b",
+      "judge": "ollama:qwen3:4b-instruct",
+      "scenarios": "scenarios-external/memory-rebirth.json",
+      "gates": [
+        "label-only"
+      ]
+    },
+    {
+      "name": "rebirth-qwen3-14b",
+      "llm": "ollama:qwen3:14b",
+      "judge": "ollama:qwen3:4b-instruct",
+      "scenarios": "scenarios-external/memory-rebirth.json",
+      "gates": [
+        "user-only"
+      ]
+    }
+  ]
+}
