@@ -1,0 +1,85 @@
+{
+  "pull": [
+    "qwen3:4b-instruct",
+    "nomic-embed-text"
+  ],
+  "inputs": [
+    "data/memform-code",
+    "data/memform/outputs_mcq_item_audit_accepted_cases.jsonl"
+  ],
+  "setup": [
+    "pip install -q -e data/memform-code"
+  ],
+  "runs": [
+    {
+      "name": "memform-sample",
+      "command": [
+        "python",
+        "scripts/memform_sample.py",
+        "data/memform/outputs_mcq_item_audit_accepted_cases.jsonl",
+        "results/memform/sample.jsonl",
+        "30"
+      ]
+    },
+    {
+      "name": "memform-undefended",
+      "command": [
+        "python",
+        "scripts/memform_thymus.py",
+        "run-langchain",
+        "--cases",
+        "results/memform/sample.jsonl",
+        "--output-dir",
+        "results/memform/undefended",
+        "--phase",
+        "all",
+        "--interfaces",
+        "P1",
+        "P2",
+        "P3",
+        "P4",
+        "P5",
+        "--model",
+        "qwen3:4b-instruct",
+        "--base-url",
+        "http://localhost:11434/v1",
+        "--api-key",
+        "ollama",
+        "--cache",
+        ".cache/memform.jsonl"
+      ]
+    },
+    {
+      "name": "memform-defenses",
+      "command": [
+        "python",
+        "scripts/memform_thymus.py",
+        "run-defense",
+        "--defense",
+        "all",
+        "--interfaces",
+        "all",
+        "--cases",
+        "results/memform/sample.jsonl",
+        "--undefended-results",
+        "results/memform/undefended/case_results.jsonl",
+        "--output-dir",
+        "results/memform/defense",
+        "--model",
+        "qwen3:4b-instruct",
+        "--defense-model",
+        "qwen3:4b-instruct",
+        "--base-url",
+        "http://localhost:11434/v1",
+        "--api-key",
+        "ollama",
+        "--defense-base-url",
+        "http://localhost:11434/v1",
+        "--defense-api-key",
+        "ollama",
+        "--cache",
+        ".cache/memform.jsonl"
+      ]
+    }
+  ]
+}
