@@ -74,7 +74,7 @@ Applies to v2-verified and v3 alike; no held-out run had started when this was c
 
 Rule applied as written: lower attack success on held-out agents, ties broken by updates
 reaching the user. Paired attacks where the two gates differ, all held-out data together:
-v3 better 17, worse 1.
+v3 better 56, worse 2 (17 / 1 before the adaptive attacks were in).
 
 | Held-out data | v2-verified fooled | v3 fooled | discordant (v3 better / worse) |
 |---|---|---|---|
@@ -86,7 +86,8 @@ v3 better 17, worse 1.
 | GPT-written families (54), qwen3-4B | 28% | 17% | 2 / 0 |
 | Frontier (Opus 5.5, GPT-6-Astra) | 0% | 0% | tie |
 | LongMemEval | 45% acc. | 45% acc. | identical (does not separate them) |
-| Automated adaptive attacks | pending | pending | |
+| Automated adaptive attacks (188), Llama 3.1 8B | 20% | 1% | 37 / 1 (p < 0.001) |
+| Automated adaptive attacks (188), qwen3-4B | 6% | 5% | 2 / 0 |
 
 **Final gate: thymus-v3.** v2-verified is reported as an ablation.
 

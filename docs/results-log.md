@@ -447,3 +447,10 @@ the notice does not apply. Reported as an open limitation.
 Haystack table now generated from the fixed run (baselines had been from before the background
 fix). With the fix, v2-auto and v3 keep the same recall (87%); the earlier recall gain from
 verification was mostly the bug.
+
+## 22 Oct 2026: v3 on the automated adaptive attacks (last pre-registered held-out item)
+
+188 attacks per model (qwen3-14B rewrites, told the gate's rules). Fooled, qwen3 / Llama:
+allow-all 44 / 56, label-only 20 / 52, v2-auto 4 / 10, v2-verified 6 / 20, **v3 5 / 1**.
+v3 vs v2-verified on Llama: 37 vs 1 discordant (p < 0.001); qwen3 2 vs 0. By strategy on Llama
+(v3): addition 2%, same-source 0%, user-voice 0%. Held-out total: v3 56 paired wins, 2 losses.

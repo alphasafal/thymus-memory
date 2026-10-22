@@ -83,8 +83,9 @@ version it replaced are within one attack of each other on the benchmark, and di
 contested claims arrive from look-alike senders: on Gemma's Enron replays the final gate is
 fooled 16\% of the time against 27\% (7 vs 0 discordant pairs, $p=0.016$), and on the
 GPT-written families with Llama \freshLlamaThy{} against \freshLlamaVer{} (8 vs 0, $p=0.008$; no
-defence: \freshLlamaAll; qwen3-4B: \freshQwenThy{} against \freshQwenVer). Across all held-out data
-the final gate wins 17 paired attacks and loses one. Of the four pre-registered predictions,
+defence: \freshLlamaAll; qwen3-4B: \freshQwenThy{} against \freshQwenVer), and on the automated
+adaptive attacks (\cref{sec:adaptive}). Across all held-out data the final gate wins 56 paired
+attacks and loses two. Of the four pre-registered predictions,
 two hold and two hold except for one attack (Gemma's benchmark) or two points of updates
 answered (Gemma, 58\% against 60\%).
 
@@ -142,6 +143,20 @@ With a model that follows labels, disclosing contested claims inline gets both 0
 the 4 updates of 12 not answered are the cross-origin ones, and all 4 reach the user in the
 notice. The subset is small: 0 of 12 attacks has a 95\% Clopper--Pearson upper bound of 26\%,
 so these runs show the gate does not break frontier models, not that it stops every attack.
+
+\subsection{An automated attacker that knows the gate}\label{sec:adaptive}
+
+We gave qwen3-14B a description of the gate's rules and asked it to rewrite every English
+tool-delivered attack of the test split three ways, each meant to slip past them: as the
+\emph{same source} confirming its own claim, in the \emph{user's voice}, and as an
+\emph{addition} that does not seem to contradict anything (\adaptQwenN{} attacks per model;
+every rewrite keeps the planted value). Fooled, qwen3-4B / Llama~3.1~8B: no defence
+\adaptQwenAll{} / \adaptLlamaAll{}, label-only \adaptQwenLabels{} / \adaptLlamaLabels{}, the gate
+without verification \adaptQwenAuto{} / \adaptLlamaAuto{}, v2-verified \adaptQwenVer{} /
+\adaptLlamaVer{}, and the final gate \adaptQwenThree{} / \adaptLlamaThree{} (against v2-verified on
+Llama: 37 vs 1 discordant pairs, $p<0.001$). The rewrites still contradict a stored fact from
+another origin, so the contest catches them whatever their wording; the attacks that do get
+through are those that create no contradiction at all (\cref{sec:gateaware}).
 
 \subsection{Attacks designed against the gate}\label{sec:gateaware}
 
