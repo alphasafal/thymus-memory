@@ -69,3 +69,31 @@ this lowers updates reaching the user by 2 points (qwen3-4B 94% to 92%, Llama 3.
 survives in the notice text.
 
 Applies to v2-verified and v3 alike; no held-out run had started when this was committed.
+
+## Outcome, 22 October 2026 (held-out runs complete)
+
+Rule applied as written: lower attack success on held-out agents, ties broken by updates
+reaching the user. Paired attacks where the two gates differ, all held-out data together:
+v3 better 17, worse 1.
+
+| Held-out data | v2-verified fooled | v3 fooled | discordant (v3 better / worse) |
+|---|---|---|---|
+| Gemma 3 12B benchmark (442) | 7% | 8% | 0 / 1 |
+| Gemma 3 12B Enron replays | 27% | 16% | 7 / 0 (p = 0.016) |
+| Gemma 3 12B SMS / phishing | 36% / 36% | 36% / 36% | 0 / 0 |
+| Qwen3 14B benchmark, Enron, SMS, phishing | 13 / 18 / 2 / 13% | identical | 0 / 0 |
+| GPT-written families (54), Llama 3.1 8B | 56% | 11% | 8 / 0 (p = 0.008) |
+| GPT-written families (54), qwen3-4B | 28% | 17% | 2 / 0 |
+| Frontier (Opus 5.5, GPT-6-Astra) | 0% | 0% | tie |
+| LongMemEval | 45% acc. | 45% acc. | identical (does not separate them) |
+| Automated adaptive attacks | pending | pending | |
+
+**Final gate: thymus-v3.** v2-verified is reported as an ablation.
+
+Predictions:
+- "v3 ≤ v2-verified on every held-out agent": holds except Gemma 3 12B's benchmark, where v3 is
+  worse by one attack (8% vs 7%, 1 discordant pair, p = 1.0).
+- "v3 ≈ v2-precise on attacks": holds (Gemma 8% vs 8%, Qwen3 14B 13% vs 13%).
+- "v3 updates ≥ v2-precise": fails narrowly on Gemma (58% vs 60% answered; reach 75% vs 75%),
+  holds on Qwen3 14B (70% vs 70%).
+- Large stores, recall reaching the user ≥ 88%: holds (88%).

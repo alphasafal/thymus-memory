@@ -34,7 +34,14 @@ counting both equally was the wrong criterion.
 and the rule for choosing the final gate, before any v3 run
 (\texttt{docs/preregistration-v3.md}, tag \texttt{v3-preregistered}). Because v3 was designed
 after seeing the qwen3 and Llama test splits, its evidence is data it was never run on: Gemma~3
-12B, Qwen3~14B, the frontier models, LongMemEval and the automated adaptive attacks.
+12B, Qwen3~14B, the frontier models, LongMemEval and the automated adaptive attacks. Before any
+held-out run, notices were also changed to remove links, addresses and phone numbers
+(pre-registered addendum). \emph{Outcome}: on the held-out data v3 won 17 paired attacks and lost
+one, so by the pre-registered rule it is the final gate (\cref{sec:heldout}); LongMemEval and the
+frontier subsets did not separate the two versions.
+\item \textbf{Background facts.} The large-store results that motivated pairwise verification
+were inflated by a bug: background facts came from related families. With it fixed, the
+unverified gate keeps the same recall as the verified one (\cref{tab:haystack}).
 \end{enumerate}
 
 \section{Verifier calibration}\label{sec:verifier}

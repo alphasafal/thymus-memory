@@ -51,8 +51,9 @@ speak for the user, and a fact may be replaced only by the user or by the authen
 that stated it. Against five baselines modelled on prior work, in one harness, it has the
 lowest attack success of any that keeps plain recall, on all four agents we test (qwen3-4B
 \absQwenAll{} $\to$ \absQwenThy{}, Llama~3.1~8B \absLlamaAll{} $\to$ \absLlamaThy{}, Claude Opus~5.5
-58\% $\to$ 0\%, GPT-6-Astra 50\% $\to$ 0\% on small subsets); provenance quarantine cuts plain
-recall to a quarter. The cost is updates from a different source than the original: fewer
+58\% $\to$ 0\%, GPT-6-Astra 50\% $\to$ 0\% on small subsets), and on two model families held out
+from every design decision (Gemma~3 12B \absGemmaAll{} $\to$ \absGemmaThy{}, Qwen3~14B \absQwenBigAll{}
+$\to$ \absQwenBigThy{}); provenance quarantine cuts plain recall to a quarter. The cost is updates from a different source than the original: fewer
 updates are answered directly (qwen3-4B 95\% $\to$ \updQwenThy{}, Llama 91\% $\to$ \updLlamaThy{}),
 though most of the rest reach the user in the notice (\updQwenThyReach{} and \updLlamaThyReach{} in all). On real Enron
 update emails replayed from forged and lookalike senders it is fooled \enronLlamaThy{} of the
@@ -195,13 +196,17 @@ content-based check.
 earlier memories (facts from the same message never conflict) and asks which ones it
 contradicts: the same specific thing (the same appointment, order or account) with a different
 value. In a large store, a small model also links similar facts about \emph{different} things
-(a car service and a water-purifier service). Each claimed conflict between two single claims
-is therefore checked again on its own: the model first names, in a few words and without
+(a car service and a water-purifier service). Before a conflict is allowed to \emph{replace}
+a fact, it is checked again on its own: the model first names, in a few words and without
 details, what each fact is about, then says whether that is the same thing and whether the
 values differ. Naming first matters: asked directly, small models read a changed detail as a
 different thing (``the meeting moved to 13 September'' is ``not the same meeting'' as the one on
-11 September), which drops exactly the conflicts that matter (\cref{sec:verifier}). Memories
-that hold several facts, such as a whole chat round, keep the first verdict.
+11 September; \cref{sec:verifier}). The second check can only cancel a replacement, never a
+contest: a conflict with another origin stays contested whatever it says. Its errors are not
+symmetric: a wrongly refused replacement costs an update, a wrongly refused contest lets an
+attack through, so verification is allowed to make the gate more careful, never less
+(\cref{sec:history}). Memories that hold several facts, such as a whole chat round, keep the
+first verdict.
 
 \para{Same-origin supersession.} Given the conflicts:
 \begin{itemize}
@@ -350,6 +355,10 @@ scenarios with exact McNemar tests~\cite{mcnemar}.
 \item \textbf{Disclosure moves the decision to the user.} That is the point, but every
 unverified claim the user hears costs attention. \burdenSentence{} A deployment could promote a
 claim to verified after the user, or an independent origin, confirms it.
+\item \textbf{An attacker who speaks first, or to itself.} A look-alike sender may update its own
+earlier claim, and a fake stated before the genuine source makes the genuine message the
+contested one; both reach the model labelled but not withheld, and fool Llama in most cases
+(\cref{sec:gateaware}).
 \item \textbf{Origins must be authentic.} Same-origin supersession is only as good as sender
 authentication (DKIM/ARC, signed invites, registered SMS headers). Where a channel has no
 authentication, forged same-origin updates remain possible.

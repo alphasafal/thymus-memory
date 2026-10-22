@@ -21,7 +21,7 @@ from thymus.scenarios import load_scenarios
 
 K = Path("results/kaggle")
 # Chosen by the rule in docs/preregistration-v3.md once the held-out runs are in.
-FINAL = os.environ.get("THYMUS_FINAL", "thymus-v2-verified")
+FINAL = os.environ.get("THYMUS_FINAL", "thymus-v3")
 CANDIDATES = {"Ver": "thymus-v2-verified", "Three": "thymus-v3"}
 DEV = dev_entries(Path("eval/dev_set.txt"))
 SCENARIOS = {s.id: s for d in (Path("scenarios"), Path("scenarios-real")) for s in load_scenarios(d)}
@@ -235,15 +235,16 @@ def full_table(model: str, rows: list[dict]) -> str:
 def real() -> None:
     for model, tag in (("Qwen", "qwen3-4b"), ("Llama", "llama3.1-8b")):
         for suite, key in (("realemail-enron", "enron"), ("realsms", "sms"), ("realemail-phishing", "mail")):
-            path = next(iter(sorted(K.glob(f"final-*/results/{suite}-{tag}"))), None)
-            rows = by_gate(load([path]), FINAL) if path else []
+            # Whichever run holds the final gate on this suite (final-*, v3-exposed, ...).
+            paths = sorted(K.glob(f"*/results/{suite}-{tag}"))
+            rows = by_gate(load(paths), FINAL) if paths else []
             put(f"{key}{model}Thy", rate(rows, fooled))
             if key == "enron":
                 put(f"{key}{model}UpdThy", rate(rows, updated))
     for key, suite in (("hay", "final-haystack/results/qwen3-4b-haystack80"),):
         path = K / suite
         rows = test_rows([path]) if path.exists() else []
-        for gate, g in (("Thy", FINAL), ("Auto", "thymus-v2-auto"), ("All", "allow-all"), ("Labels", "label-only"),
+        for gate, g in (("Thy", FINAL), ("Auto", "thymus-v2-auto"), ("Ver", "thymus-v2-verified"), ("All", "allow-all"), ("Labels", "label-only"),
                         ("Bounded", "bounded-occupancy"), ("User", "user-only")):
             rs = by_gate(rows, gate=g)
             put(f"{key}Fooled{gate}", rate(rs, fooled))
@@ -255,7 +256,7 @@ def real() -> None:
 
 def longmemeval() -> None:
     rows = []
-    for f in sorted((K / "final-longmemeval/results").rglob("results.jsonl")) if (K / "final-longmemeval/results").exists() else []:
+    for f in sorted(K.glob("*longmemeval*/results/**/results.jsonl")):
         rows += [json.loads(line) for line in f.read_text().splitlines() if line.strip()]
     for condition, key in (("clean", "Clean"), ("poisoned", "Poisoned"), ("evidence-untrusted", "Untrusted")):
         rs = [r for r in rows if r["condition"] == condition and r["gate"] == FINAL]
@@ -358,6 +359,19 @@ def gate_aware() -> None:
         macros["gateAwareSentence"] = "Against these 20 attacks, " + "; ".join(parts) + "."
 
 
+def fresh() -> None:
+    """Fact families written by GPT-6-Astra from a brief that never mentions the gate."""
+    for model, tag in (("Qwen", "qwen3-4b"), ("Llama", "llama3.1-8b")):
+        path = K / f"gate-aware/results/fresh-model-{tag}"
+        rows = load([path]) if path.exists() else []
+        for key, gate in (("All", "allow-all"), ("Thy", FINAL), ("Ver", "thymus-v2-verified"), ("User", "user-only"),
+                          ("Labels", "label-only")):
+            rs = by_gate(rows, gate)
+            put(f"fresh{model}{key}", rate(rs, fooled))
+            put(f"fresh{model}{key}Upd", rate(rs, updated))
+            put(f"fresh{model}{key}Rec", rate(rs, recalled))
+
+
 def external() -> None:
     """Data written by others: MemShield-Bench attacks and MemoryAgentBench updates."""
     parts = []
@@ -436,6 +450,7 @@ def main() -> None:
     longmemeval()
     adaptive()
     gate_aware()
+    fresh()
     external()
     sentences()
     Path("paper/tables").mkdir(parents=True, exist_ok=True)

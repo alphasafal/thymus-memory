@@ -9,7 +9,7 @@
   \node[gbox] (in) {candidate memory\\[-1pt]\scriptsize source, origin, speaker};
   \node[grule, right=of in] (screen) {\textbf{1 Screen}\\[-1pt]\scriptsize fact / preference / instruction};
   \node[gout, below=6mm of screen] (rej) {reject\\[-1pt]\scriptsize tool cannot speak for user};
-  \node[grule, right=of screen] (detect) {\textbf{2 Conflicts}\\[-1pt]\scriptsize detect, then verify each pair};
+  \node[grule, right=of screen] (detect) {\textbf{2 Conflicts}\\[-1pt]\scriptsize detect; verify before replacing};
   \node[gbox, right=27mm of detect, yshift=7mm] (super) {replace\\[-1pt]\scriptsize retire claim / mark round older};
   \node[gbox, right=27mm of detect, yshift=-7mm] (contest) {keep, \emph{contested}\\[-1pt]\scriptsize linked to what it contradicts};
   \draw[->] (in) -- (screen);

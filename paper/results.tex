@@ -44,11 +44,49 @@ Provenance quarantine is the safest store-or-block policy and keeps a third of u
 quarter of plain recall: most of what an assistant needs to remember arrives through tools.
 Conflict quarantine and bounded occupancy sit between it and no defence. Of the baselines that
 keep plain recall, the \gate{} gate has the lowest attack success on both models (paired against
-every baseline, \cref{sec:full}). On Llama, provenance quarantine is fooled less often
-(\absLlamaUser{} against \absLlamaThy{}), but answers \recLlamaUser{} of plain recall and
-\updLlamaUser{} of updates. Its cost is cross-origin updates (an airline's SMS changing what the airline's
+every baseline, \cref{sec:full}); provenance quarantine, the next safest, is fooled
+\absQwenUser{} and \absLlamaUser{} of the time and answers only \recQwenUser{} and \recLlamaUser{} of
+plain recall. Its cost is cross-origin updates (an airline's SMS changing what the airline's
 email said): one source cannot overwrite another, so these reach the user as an unconfirmed
 notice rather than as the answer. \crossOriginSentence{}
+
+\subsection{Held-out models and data}\label{sec:heldout}
+
+The final rule set (\cref{sec:gate}) was fixed, with predictions, before it was run on two model
+families never used while designing any version of the gate, and on 18 fact families written by
+GPT-6-Astra from a brief that never mentions the gate (\cref{sec:history};
+\texttt{docs/preregistration-v3.md}).
+
+\begin{table}[t]
+\centering\small
+\caption{Held-out agents, benchmark test split: fooled ($\downarrow$). For \gate{}, updates answered /
+reaching the user and recall.}\label{tab:heldout}
+\begin{tabular}{@{}lcc@{}}
+\toprule
+Defence & Gemma 3 12B & Qwen3 14B \\
+\midrule
+allow-all & \absGemmaAll & \absQwenBigAll \\
+user-only & \absGemmaUser & \absQwenBigUser \\
+label-only & \absGemmaLabels & \absQwenBigLabels \\
+\gate{} v2-verified & \absGemmaVer & \absQwenBigVer \\
+\textbf{\gate{}} & \textbf{\absGemmaThy} & \textbf{\absQwenBigThy} \\
+\quad updates & \updGemmaThy{} / \updGemmaThyReach & \updQwenBigThy{} / \updQwenBigThyReach \\
+\quad recall & \recGemmaThy & \recQwenBigThy \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+On both held-out agents the gate cuts attack success by a factor of 3.5 to 6.4 while keeping plain
+recall at the undefended level (\cref{tab:heldout}); provenance quarantine reaches a similar
+attack rate on Qwen3 14B only by dropping three quarters of recall. The final rule set and the
+version it replaced are within one attack of each other on the benchmark, and differ where
+contested claims arrive from look-alike senders: on Gemma's Enron replays the final gate is
+fooled 16\% of the time against 27\% (7 vs 0 discordant pairs, $p=0.016$), and on the
+GPT-written families with Llama \freshLlamaThy{} against \freshLlamaVer{} (8 vs 0, $p=0.008$; no
+defence: \freshLlamaAll; qwen3-4B: \freshQwenThy{} against \freshQwenVer). Across all held-out data
+the final gate wins 17 paired attacks and loses one. Of the four pre-registered predictions,
+two hold and two hold except for one attack (Gemma's benchmark) or two points of updates
+answered (Gemma, 58\% against 60\%).
 
 \subsection{Disclosure must not depend on the model}\label{sec:disclosure}
 
@@ -113,7 +151,14 @@ saved); a change \emph{reframed as an addition} so the conflict check sees no co
 addition to customer care, fraud is handled only by\dots''); \emph{pre-emption}, where the
 attacker states the fact before the genuine source, so the genuine message becomes the
 contested one; and \emph{same-origin persistence}, where a lookalike sender states a harmless
-fact and then ``updates'' its own message. \gateAwareSentence{}
+fact and then ``updates'' its own message. \gateAwareSentence{} Reframing fails because the
+claim still contradicts the stored fact. Persistence and pre-emption succeed by design of the
+rules, not by evading the models: a source may update its own earlier statement, and the first
+statement of a fact is the one later claims are contested against. The rules keep both claims
+labelled with their origin, so what remains is a model that ignores labels; against these two
+strategies the system notice does not apply, because nothing is contested. Binding replacement to
+a sender's reputation, or contesting a first statement when a known source later disagrees, would
+close them at the cost of real updates; we leave both open.
 
 \subsection{Attacks and updates written by others}\label{sec:external}
 
@@ -242,19 +287,22 @@ provenance (qwen3-4B, test split; \cref{tab:haystack}).
 \toprule
 Defence & Fooled $\downarrow$ & Updates & Recall \\
 \midrule
-allow-all & 28\% & 80 / 80\% & 91 / 91\% \\
-user-only & 13\% & 29 / 29\% & 24 / 24\% \\
-bounded-occupancy & 16\% & 48 / 48\% & 87 / 87\% \\
-label-only & 23\% & 84 / 84\% & 92 / 92\% \\
-\gate{} without verification & 14\% & 63 / 85\% & 76 / 90\% \\
-\textbf{\gate{}} & \hayFooled & \hayUpd & \hayRec \\
+allow-all & \hayFooledAll & \hayUpdAll{} / \hayUpdReachAll & \hayRecAll{} / \hayRecReachAll \\
+user-only & \hayFooledUser & \hayUpdUser{} / \hayUpdReachUser & \hayRecUser{} / \hayRecReachUser \\
+bounded-occupancy & \hayFooledBounded & \hayUpdBounded{} / \hayUpdReachBounded & \hayRecBounded{} / \hayRecReachBounded \\
+label-only & \hayFooledLabels & \hayUpdLabels{} / \hayUpdReachLabels & \hayRecLabels{} / \hayRecReachLabels \\
+\gate{} without verification & \hayFooledAuto & \hayUpdAuto{} / \hayUpdReachAuto & \hayRecAuto{} / \hayRecReachAuto \\
+\gate{} v2-verified & \hayFooledVer & \hayUpdVer{} / \hayUpdReachVer & \hayRecVer{} / \hayRecReachVer \\
+\textbf{\gate{}} & \hayFooledThy & \hayUpdThy{} / \hayUpdReachThy & \hayRecThy{} / \hayRecReachThy \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-In a large store a small gate model links similar facts about different things (a car service
-and a water-purifier service), and without verification 14 points of recall reach the user only
-as an ``unconfirmed'' notice. Checking each claimed conflict on its own \hayReading{}
+With 80 background facts, the gate is fooled \hayFooledThy{} of the time against \hayFooledAll{} with no
+defence, and plain recall stays within three points of the undefended agent. An earlier run
+suggested that a small gate model links similar facts about different things in a large store;
+most of that came from a bug in how background facts were chosen (\cref{sec:history}), and with
+it fixed, verification changes little here.
 
 \subsection{Languages and the gate model}\label{sec:languages}
 

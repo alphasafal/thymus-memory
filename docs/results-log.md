@@ -428,3 +428,22 @@ v3 queued (v3-adaptive).
   14%: identical to v2-verified. Chat rounds hold several claims and skip pairwise verification
   in both versions, so this suite does not separate them (pre-registered evidence item 2 is
   uninformative).
+
+## 22 Oct 2026: held-out models decide the final gate (v3)
+
+Held-out agents, benchmark test split, fooled: Gemma 3 12B allow-all 51%, user-only 18%,
+label-only 28%, v2-verified 7%, **v3 8%** (updates 58% answered / 75% reach, recall 82% = undefended);
+Qwen3 14B 45 / 13 / 34 / 13 / **13%** (updates 70 / 87, recall 98%). Real data, Gemma: Enron
+v2-verified 27% vs v3 16% (7/0, p = 0.016); SMS and phishing 36% for both. Qwen3 14B identical
+on every suite. GPT-written families (54): Llama v2-verified 56% vs v3 11% (8/0, p = 0.008),
+qwen3 28% vs 17%. Pre-registered rule applied: **v3 is the final gate** (17 paired wins, 1 loss).
+
+Gate-aware attacks (20, written after the freeze), fooled with v3: qwen3 30% (no defence 80%),
+Llama 55% (75%). By strategy, Llama: same-origin persistence 100%, pre-emption 80%, first contact
+40%, reframed as an addition 0%. Persistence and pre-emption work by design of the rules (a
+source may update itself; the first statement is the reference) and nothing is contested, so
+the notice does not apply. Reported as an open limitation.
+
+Haystack table now generated from the fixed run (baselines had been from before the background
+fix). With the fix, v2-auto and v3 keep the same recall (87%); the earlier recall gain from
+verification was mostly the bug.
