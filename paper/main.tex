@@ -126,19 +126,25 @@ other.
 \item \textbf{A matched-pair benchmark} of 491 scenarios: 90 everyday fact families, 30 of them
 Indian (UPI, KYC, electricity, FASTag, government schemes) in English, Hindi and Hinglish, each
 with a recall control, a real update and an attacker's twin sharing setup and question; plus
-25 attacks from prior work and 16 adaptive attacks against our gate.
-\item \textbf{Real-data evaluation on four public corpora}: 117 real smishing SMS (79 Indian),
-112 real phishing emails, 31 real Enron update emails each replayed from lookalike and forged
-senders so that only provenance differs, and an exact reproduction of the Utility Under Attack
-protocol on LongMemEval~\cite{uua,longmemeval}.
+attacks from prior work, adaptive attacks, 188 attacks rewritten by a model that knows the gate,
+20 attacks written against its rules after it was frozen, and 18 families written by another
+model family that never saw it.
 \item \textbf{The \gate{} gate}, whose rules are fixed and whose models only judge ``is this a
 fact?'' and ``does this contradict that?'', so that its guarantees hold whatever those models
-output (\cref{sec:guarantees}).
-\item \textbf{A head-to-head comparison} with five baselines modelled on prior work, in one harness, on
-four model families including Claude Opus~5.5 and GPT-6-Astra, with ablations, family-level
-bootstrap intervals and exact paired tests.
-\item \textbf{Evidence from production assistants}: in the authors' own ChatGPT account, fake
-updates came back from memory as fact in a new chat, one of them as something the user had said.
+output (\cref{sec:guarantees}); and a design rule for model judges inside a security gate:
+because a missed contradiction costs an attack and a false one only a notice, a second check
+may make the gate more careful, never less.
+\item \textbf{An evaluation that does not grade its own homework}: the final rule set was chosen
+by a pre-registered rule on two model families held out from every design decision (Gemma~3
+12B, Qwen3~14B), and tested on real SMS, phishing and Enron email, on Utility Under Attack's
+LongMemEval protocol~\cite{uua,longmemeval}, and on benchmarks other authors built
+(MemShield-Bench~\cite{memshield}, MemoryAgentBench~\cite{memoryagentbench},
+MemForm~\cite{memform}, the revoked-policy situations of~\cite{revoked}), against five baselines
+modelled on prior work, on six models from five families including Claude Opus~5.5 and GPT-6-Astra.
+\item \textbf{Deployment evidence}: the gate runs inside Mem0 with the same verdicts as our
+store, costs about one model call per memory write, and asks the user about ten times less
+often than confirming every outside memory; in the authors' own ChatGPT account, fake updates
+came back from memory as fact in a new chat, one of them as something the user had said.
 \end{enumerate}
 
 \input{results-brief}
@@ -454,9 +460,13 @@ The \gate{} gate replaces the binary decision with three rules: tool content can
 the user, only the user or an authenticated source can replace its own facts, and anything else
 is kept and disclosed with its source instead of being decided on. Its rules are fixed and its
 models only judge ``is this a fact?'' and ``does this contradict that?'', which makes its
-guarantees independent of those models and its remaining weaknesses visible: truth that arrives
-only through untrusted channels, channels that cannot authenticate senders, and a gate model
-that misreads a language.
+guarantees independent of those models and its weaknesses easy to locate. When it sees a
+contradiction it almost always holds; what remains is what it does not see: an attacker who
+speaks first or updates its own message, a claim that contradicts nothing reaching a model that
+ignores labels, a gate model that calls too few contradictions (larger models are not
+necessarily better), knowledge bases whose memories are procedures rather than facts, and truth
+that arrives only through untrusted channels. Whether people act well on the notices is the
+largest open question, and we release a protocol to test it.
 
 Memory that cannot tell a real change from a forged one is a security problem (ASI06) and an
 accuracy problem for the person it describes. We release the benchmark, the redacted real-data
