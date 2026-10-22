@@ -7,6 +7,7 @@ import json
 import random
 import sys
 from collections import defaultdict
+from pathlib import Path
 
 source, out = sys.argv[1], sys.argv[2]
 n = int(sys.argv[3]) if len(sys.argv) > 3 else 30
@@ -17,6 +18,7 @@ for line in open(source):
         by_interface[case["interface"]].append(case)
 rng = random.Random(0)
 picked = [c for k in sorted(by_interface) for c in rng.sample(by_interface[k], min(n, len(by_interface[k])))]
+Path(out).parent.mkdir(parents=True, exist_ok=True)
 with open(out, "w") as f:
     f.writelines(json.dumps(c) + "\n" for c in picked)
 print(f"{len(picked)} cases: " + ", ".join(f"{k} {min(n, len(v))}" for k, v in sorted(by_interface.items())))
