@@ -479,3 +479,15 @@ an "instruction" ("Customer PII must never leave the internal network") after th
 one was stored as a fact. Same cost as MemShield's clean rejections: rule 1 is for personal facts.
 LongMemEval-qwen3 errored again (Kaggle served the old dataset version without run_config.json);
 re-pushed.
+
+## 24 Oct 2026: LongMemEval with qwen3-4B (UUA protocol)
+
+Accuracy (planted answer adopted), allow-all / user-only / v3: clean 54/54/54; poisoned
+2 (96) / 54 (8) / 25 (64); evidence untrusted 2 (96) / 11 (2) / 8 (74). The gate beats no
+defence but not provenance quarantine, and on untrusted evidence it loses to it (8 vs 11),
+unlike Llama (14 vs 11). 53 of 77 poisoned adoptions had no notice (no planted round judged to
+contradict a stored one); in 59 of 77 qwen3 labelled the answer unverified yet gave it.
+The conflict check does not carry over to whole chat rounds; the paper no longer implies a
+LongMemEval benefit beyond "better than no defence".
+
+MemForm: the Kaggle run hit the 12-hour limit and was cancelled before finishing.

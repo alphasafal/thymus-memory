@@ -1,0 +1,111 @@
+{
+  "pull": [
+    "qwen3:4b-instruct",
+    "nomic-embed-text"
+  ],
+  "inputs": [
+    "data/memform-code",
+    "results/kaggle/memform/results/memform"
+  ],
+  "setup": [
+    "pip install -q -e data/memform-code"
+  ],
+  "runs": [
+    {
+      "name": "memform-thymus",
+      "command": [
+        "python",
+        "scripts/memform_thymus.py",
+        "run-defense",
+        "--defense",
+        "thymus",
+        "--interfaces",
+        "all",
+        "--cases",
+        "results/kaggle/memform/results/memform/sample.jsonl",
+        "--undefended-results",
+        "results/kaggle/memform/results/memform/undefended/case_results.jsonl",
+        "--output-dir",
+        "results/memform/defense",
+        "--model",
+        "qwen3:4b-instruct",
+        "--defense-model",
+        "qwen3:4b-instruct",
+        "--base-url",
+        "http://localhost:11434/v1",
+        "--api-key",
+        "ollama",
+        "--defense-base-url",
+        "http://localhost:11434/v1",
+        "--defense-api-key",
+        "ollama",
+        "--cache",
+        ".cache/memform.jsonl"
+      ]
+    },
+    {
+      "name": "memform-keyword_filter",
+      "command": [
+        "python",
+        "scripts/memform_thymus.py",
+        "run-defense",
+        "--defense",
+        "keyword_filter",
+        "--interfaces",
+        "all",
+        "--cases",
+        "results/kaggle/memform/results/memform/sample.jsonl",
+        "--undefended-results",
+        "results/kaggle/memform/results/memform/undefended/case_results.jsonl",
+        "--output-dir",
+        "results/memform/defense",
+        "--model",
+        "qwen3:4b-instruct",
+        "--defense-model",
+        "qwen3:4b-instruct",
+        "--base-url",
+        "http://localhost:11434/v1",
+        "--api-key",
+        "ollama",
+        "--defense-base-url",
+        "http://localhost:11434/v1",
+        "--defense-api-key",
+        "ollama",
+        "--cache",
+        ".cache/memform.jsonl"
+      ]
+    },
+    {
+      "name": "memform-llm_judge",
+      "command": [
+        "python",
+        "scripts/memform_thymus.py",
+        "run-defense",
+        "--defense",
+        "llm_judge",
+        "--interfaces",
+        "all",
+        "--cases",
+        "results/kaggle/memform/results/memform/sample.jsonl",
+        "--undefended-results",
+        "results/kaggle/memform/results/memform/undefended/case_results.jsonl",
+        "--output-dir",
+        "results/memform/defense",
+        "--model",
+        "qwen3:4b-instruct",
+        "--defense-model",
+        "qwen3:4b-instruct",
+        "--base-url",
+        "http://localhost:11434/v1",
+        "--api-key",
+        "ollama",
+        "--defense-base-url",
+        "http://localhost:11434/v1",
+        "--defense-api-key",
+        "ollama",
+        "--cache",
+        ".cache/memform.jsonl"
+      ]
+    }
+  ]
+}

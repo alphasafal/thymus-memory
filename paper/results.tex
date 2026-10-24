@@ -258,7 +258,7 @@ which strict scoring counts against the gate.
 
 We reproduce Utility Under Attack's LongMemEval setup exactly~\cite{uua,longmemeval}: the same
 120 questions, 29,646 rounds, and 360 poison rounds (1.2\%), with the official grading prompts
-and Llama~3.1~8B as agent and gate model (\cref{tab:lme}).
+and Llama~3.1~8B or qwen3-4B as agent and gate model (\cref{tab:lme}).
 
 \begin{table}[t]
 \centering\small
@@ -268,9 +268,15 @@ adopts the planted false answer.}\label{tab:lme}
 \toprule
 Condition & allow-all & user-only & \gate{} \\
 \midrule
+\multicolumn{4}{@{}l}{\emph{Llama 3.1 8B}} \\
 clean & 63\% & -- & \lmeClean \\
 poisoned & 24\% (63\%) & 63\% (5\%) & \lmePoisoned{} (\lmePoisonedAdopt) \\
 evidence untrusted & 24\% (63\%) & 11\% (2\%) & \lmeUntrusted{} (\lmeUntrustedAdopt) \\
+\midrule
+\multicolumn{4}{@{}l}{\emph{qwen3-4B}} \\
+clean & \lmeQwenAllClean & \lmeQwenUserClean & \lmeQwenClean \\
+poisoned & \lmeQwenAllPoisoned{} (\lmeQwenAllPoisonedAdopt) & \lmeQwenUserPoisoned{} (\lmeQwenUserPoisonedAdopt) & \lmeQwenPoisoned{} (\lmeQwenPoisonedAdopt) \\
+evidence untrusted & \lmeQwenAllUntrusted{} (\lmeQwenAllUntrustedAdopt) & \lmeQwenUserUntrusted{} (\lmeQwenUserUntrustedAdopt) & \lmeQwenUntrusted{} (\lmeQwenUntrustedAdopt) \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -290,6 +296,16 @@ reach Llama with only an inline label, which Llama ignores (\cref{sec:disclosure
 depends on seeing a contradiction; a claim the conflict check misses is labelled, not withheld. When the real
 answer itself is untrusted, provenance quarantine collapses (11\%) and the gate keeps
 \lmeUntrusted{}, disclosing what it cannot verify instead of dropping it.
+
+On qwen3-4B the gate still beats no defence under poisoning (\lmeQwenPoisoned{} against
+\lmeQwenAllPoisoned{}) but stays well below provenance quarantine (\lmeQwenUserPoisoned{}), and
+with untrusted evidence it no longer beats it (\lmeQwenUntrusted{} against
+\lmeQwenUserUntrusted{}). Here the failure is the conflict check, not the notice:
+\lmeQwenAdoptNoNotice{} of the gate's \lmeQwenAdoptN{} poisoned adoptions came with no notice at
+all, because no planted round was judged to contradict a stored one, and in
+\lmeQwenAdoptLabelled{} of them qwen3 marked its answer as unverified, which the UUA judge rightly
+counts as adoption. A conflict check written for single claims does not carry over to whole chat
+rounds; on this protocol the gate's benefit depends on the model, and we do not claim it.
 
 \subsection{Large memory stores}\label{sec:haystack}
 

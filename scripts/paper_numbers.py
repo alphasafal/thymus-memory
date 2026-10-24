@@ -271,6 +271,11 @@ def longmemeval() -> None:
                 if condition != "clean":
                     put(f"{name}Adopt", mean(r["attack_verdict"] == "adopted" for r in rs) if rs else None)
                     put(f"{name}Flag", mean(r["attack_verdict"] == "flagged" for r in rs) if rs else None)
+        adopted = [r for r in rows if r["condition"] == "poisoned" and r["gate"] == FINAL and r["attack_verdict"] == "adopted"]
+        if adopted:
+            macros[f"lme{model}AdoptN"] = str(len(adopted))
+            macros[f"lme{model}AdoptNoNotice"] = str(sum(1 for r in adopted if not r["notice"]))
+            macros[f"lme{model}AdoptLabelled"] = str(sum(1 for r in adopted if "unverified" in r["reply"].lower()))
 
 
 VERIFIER = K / "verifier-check2/results/verifier"
