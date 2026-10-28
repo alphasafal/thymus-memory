@@ -491,3 +491,14 @@ The conflict check does not carry over to whole chat rounds; the paper no longer
 LongMemEval benefit beyond "better than no defence".
 
 MemForm: the Kaggle run hit the 12-hour limit and was cancelled before finishing.
+
+## 28 Oct 2026: MemForm (provenance hidden), thymus as write-time defence
+
+150 MCQ cases (30 per interface), qwen3-4B, each record its own unauthenticated origin.
+ASR 63% -> 41% average; clean accuracy 100% -> 85% (41% of 1890 records rejected, 16%
+quarantined: decision rules read as instructions). By interface (undefended -> gate):
+Content P1 86 -> 0; Evidence P2 85 -> 77; Scope P3 69 -> 37; Selection P4 68 -> 57;
+Path P5 6 -> 31 and clean accuracy 44% (worse than no defence: withholding breaks merging).
+Stratification, not the average, is the honest result. keyword_filter and llm_judge baselines
+re-queued (first attempt crashed on a shared output dir; 12-h run before that was cancelled
+at Kaggle's limit during MemForm's own five defences).

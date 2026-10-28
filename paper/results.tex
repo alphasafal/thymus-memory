@@ -182,7 +182,25 @@ never tuned on. \memshieldSentence{} The clean entries it rejects are mostly imp
 (``always use parameterized queries''): rule~1 reads a knowledge base that gives instructions as
 tool content speaking for the user, a cost for agents whose memory holds procedures rather than
 personal facts. For legitimate updates, \mabSentence{} \rebirthSentence{} Policies are rules,
-and the screen was written for personal facts; this is the same cost as above. Fact families written by a different
+and the screen was written for personal facts; this is the same cost as above.
+
+\para{Poisoning with provenance hidden.} MemForm~\cite{memform} instantiates memory poisoning at
+five interfaces and hides provenance from every defence, so the gate runs in its most
+conservative reading: each record is its own unauthenticated origin (150 MCQ cases, 30 per
+interface, qwen3-4B). Attack success falls from \memformAsrAuto{} to \memformAsr{}, at a cost:
+clean accuracy drops from 100\% to \memformAcc{}, because the gate rejects \memformRejected{} and
+quarantines \memformQuarantined{} of all \memformWrites{} records, clean ones included (a
+``reusable decision rule'' is an instruction to rule~1). The average hides where the protection
+comes from. Where the poison is a written policy (Content), attack success goes from
+\memformOneAsrAuto{} to \memformOneAsr{}; where it is forged supporting records
+(Evidence) the gate barely helps (\memformTwoAsrAuto{} $\to$ \memformTwoAsr{}), exactly because
+forgery is invisible once provenance is gone; and where the attack is only the consolidation
+\emph{order} (Path), the gate is worse than no defence (\memformFiveAsrAuto{} $\to$
+\memformFiveAsr{}) and clean accuracy collapses to \memformFiveAcc{}: withholding records breaks
+incremental merging. \memformBaselines{} A provenance gate without provenance keeps only its
+screen, and this stratification, not the average, is the result.
+
+Fact families written by a different
 model family (GPT-6-Astra, never shown the gate) are reported with the held-out models.
 
 \subsection{Real attacks and real updates}\label{sec:real}

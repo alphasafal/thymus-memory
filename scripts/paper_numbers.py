@@ -467,6 +467,40 @@ def rebirth() -> None:
             "instruction (``Customer PII must never leave the internal network'') after the permissive one was stored as a fact.")
 
 
+def memform() -> None:
+    """MemForm MCQ cases (provenance hidden): the gate as a write-time defense, vs MemForm's own."""
+    names = {"keyword_filter": "MemForm's keyword filter", "llm_judge": "MemForm's LLM judge"}
+    found = {}
+    for d in sorted(K.glob("memform*/results/memform/defense*")):
+        summary = d / "summary.json"
+        if summary.exists():
+            rep = json.loads(summary.read_text())
+            name = rep.get("defense") or json.loads((d / "run_config.json").read_text())["identity"]["defense"]
+            found[name] = rep
+    if "thymus" not in found:
+        return
+    m = found["thymus"]["defense_metrics"]
+    for key, iface in (("One", "P1"), ("Two", "P2"), ("Three", "P3"), ("Four", "P4"), ("Five", "P5")):
+        macros[f"memform{key}Asr"] = f"{100 * m[iface]['causal_asr']:.0f}\\%"
+        macros[f"memform{key}AsrAuto"] = f"{100 * m[iface]['undefended_causal_asr']:.0f}\\%"
+        macros[f"memform{key}Acc"] = f"{100 * m[iface]['learned_clean_accuracy']:.0f}\\%"
+    log = found["thymus"]["defense_log_summary"]
+    total = log["n_kept"] + log["n_rejected"] + log["n_quarantined"]
+    macros["memformWrites"] = str(total)
+    macros["memformRejected"] = f"{100 * log['n_rejected'] / total:.0f}\\%"
+    macros["memformQuarantined"] = f"{100 * log['n_quarantined'] / total:.0f}\\%"
+    macros["memformAsr"] = f"{100 * m['avg_asr']:.0f}\\%"
+    macros["memformAsrAuto"] = f"{100 * m['undefended_avg_asr']:.0f}\\%"
+    macros["memformAcc"] = f"{100 * m['avg_acc']:.0f}\\%"
+    base = []
+    for name, label in names.items():
+        if name in found:
+            bm = found[name]["defense_metrics"]
+            base.append(f"{label} reaches {100 * bm['avg_asr']:.0f}\\% at {100 * bm['avg_acc']:.0f}\\% clean accuracy")
+    if base:
+        macros["memformBaselines"] = "On the same cases, " + "; ".join(base) + "."
+
+
 def sentences() -> None:
     """Sentences that exist only once their run is in; numbers.tex falls back to a pending note."""
     from thymus.cost import gate_overhead
@@ -514,6 +548,7 @@ def main() -> None:
     fresh()
     external()
     rebirth()
+    memform()
     sentences()
     Path("paper/tables").mkdir(parents=True, exist_ok=True)
     for name, table in (("verifier", verifier_table()), ("verifier-first", verifier_first_table())):
