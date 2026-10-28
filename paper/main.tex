@@ -401,14 +401,27 @@ label that survives summarisation, and requires independent corroboration or use
 authorisation for consequential actions (0 of 1,920 attacks over eight frontier models, also
 inside Mem0); it states that answer bias is ``mitigated, not eliminated''. PPMF~\cite{ppmf}
 authorises tool calls by the authority of the memories behind them. Signed or lineage-tracked
-memory (MutMem~\cite{mutmem}, MemLineage~\cite{memlineage}) and source-backed permissions
+memory (MutMem~\cite{mutmem}, MemLineage~\cite{memlineage}), provenance-grounded stores that
+keep source evidence before derived facts (Eywa~\cite{eywa}) and source-backed permissions
 (EAL~\cite{eal}) authenticate \emph{who wrote} a memory; none limits \emph{who may replace} a
 fact to the user or the source that stated it. Typed provenance with assertion guardrails
 (Stored Is Not Supported~\cite{storednot}) is closest to our first rule. We share the idea of
 keeping and labelling untrusted content and apply it where these systems stop: to answers, and
 to facts that change.
 
-\para{Updates and conflicts.} The closest work separates knowledge evolution from manipulation
+\para{Updates and conflicts.} The update side of our trade-off is now measured on its own:
+Supersede~\cite{supersede} isolates the memory-update gap on LongMemEval and trains the model to
+prefer the current value, and the Memory Trust Gap~\cite{trustgap} finds that larger models
+over-trust stale memories more, not less, consistent with our bigger-gate result. Mechanisms
+that act on a conflict decide: TEPA~\cite{tepa} revokes a stored precedent whenever fresh
+evidence contradicts it, which in our terms is any-origin replacement, the ablation an attacker
+drives with one forged update; LatticeMind~\cite{latticemind} records at write
+time which claim in a multi-agent store is contested, then resolves to a single trusted value;
+MemTxn~\cite{memtxn} admits an update only with source support; and a study of thirteen
+configurations~\cite{controlplane} asks where the supersede decision should sit. All resolve the
+conflict inside the system; none hands a contested pair to the user. FEB-30~\cite{feb30} argues
+that answers alone mis-grade memory and scores the store itself, as our write-level results do.
+The closest work separates knowledge evolution from manipulation
 in retrieval: EvoTrustRAG~\cite{evotrustrag} attributes each conflict to legitimate change,
 manipulation or uncertainty, but unresolved conflicts stay visible to the generator, the model
 rather than the user. Benchmarks of honest updates (MemoryAgentBench~\cite{memoryagentbench},
@@ -436,7 +449,10 @@ the lifecycle view of a recent survey~\cite{ltmsurvey}, which calls for ``storag
 provenance, versioning, and policy-aware retention''. The \gate{} gate is one concrete
 mechanism of that kind, evaluated on updates.
 
-\para{Attacks and benchmarks.} MINJA~\cite{minja}, AgentPoison~\cite{agentpoison},
+\para{Attacks and benchmarks.} MINJA~\cite{minja} (whose success drops outside idealised
+conditions, and whose sanitisation defence needs per-deployment thresholds~\cite{minjarobust}),
+AgentPoison~\cite{agentpoison}, sleeper memories planted through documents for a later
+trigger~\cite{sleeper},
 MPBench~\cite{mpbench}, MemPoison~\cite{mempoison}, Bad Memory~\cite{badmemory} and the
 optimised attack of~\cite{pipepoison}, which stays effective under eight defences; persistent
 memory poisoning of coding agents defeats a confirm-before-save prompt~\cite{pmpa}, and
@@ -445,8 +461,9 @@ a limit for any provenance gate. Benchmarks pair clean and poisoned \emph{condit
 (MemGauge~\cite{memgauge}, MemForm~\cite{memform}) or minimally edited clean and poisoned
 \emph{entries}, including false corrections (MemShield-Bench~\cite{memshield}); none pairs a
 legitimate update with an attacker's update of the same fact, on the same setup and question.
-For Indian languages, prompt-injection data is scarce and mostly translated~\cite{indicinjection};
-we found no memory or scam benchmark in Hindi or Hinglish.
+For Indian languages, prompt-injection data is scarce and mostly translated~\cite{indicinjection},
+and scam data targets message \emph{classification} (e.g.\ the UPI-fraud module
+of~\cite{indiaevals}); we found no agent-memory or update benchmark in Hindi or Hinglish.
 
 \section{Conclusion}
 

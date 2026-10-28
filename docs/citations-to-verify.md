@@ -30,3 +30,14 @@ Claims made in the paper about these works (each from the abstract; re-check aga
 - Remember, Verify, or Ask: the model decides when to ask, and rarely does; benign data only.
 - Are You Sure?: N = 303; 8.6% of participants noticed attacks.
 - Price of Safety: a reranker falsely quarantined up to 33.6% of legitimate memories.
+- [ ] supersede:2606.27472 https://arxiv.org/abs/2606.27472
+- [ ] tepa:2608.07429 https://arxiv.org/abs/2608.07429
+- [ ] feb30:2610.22209 https://arxiv.org/abs/2610.22209
+- [ ] memtxn:2607.27834 https://arxiv.org/abs/2607.27834
+- [ ] latticemind:2608.08236 https://arxiv.org/abs/2608.08236
+- [ ] trustgap:2609.01852 https://arxiv.org/abs/2609.01852
+- [ ] controlplane:2606.15903 https://arxiv.org/abs/2606.15903
+- [ ] eywa:2605.30771 https://arxiv.org/abs/2605.30771
+- [ ] minjarobust:2601.05504 https://arxiv.org/abs/2601.05504
+- [ ] sleeper:2605.15338 https://arxiv.org/abs/2605.15338
+- [ ] indiaevals:2607.25375 https://arxiv.org/abs/2607.25375

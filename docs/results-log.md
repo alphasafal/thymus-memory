@@ -502,3 +502,17 @@ Path P5 6 -> 31 and clean accuracy 44% (worse than no defence: withholding break
 Stratification, not the average, is the honest result. keyword_filter and llm_judge baselines
 re-queued (first attempt crashed on a shared output dir; 12-h run before that was cancelled
 at Kaggle's limit during MemForm's own five defences).
+
+## 29 Oct 2026: literature sweep (latest 2026 work), 11 papers added
+
+Searched arXiv for post-cutoff work on memory poisoning, updates/conflicts, provenance, user
+warnings, and Hindi/Hinglish scam data. Added and positioned: Supersede (2606.27472), TEPA
+(2608.07429, = any-origin replacement, our attackable ablation), FEB-30 (2610.22209, scores the
+store as our write-level results do), MemTxn (2607.27834), LatticeMind (2608.08236, contested
+status at write time but resolved in-system), Memory Trust Gap (2609.01852, bigger models
+over-trust stale memories), control-plane study (2606.15903), Eywa (2605.30771), MINJA
+robustness study (2601.05504), sleeper poisoning (2605.15338), Inspect India Evals (2607.25375).
+Softened the Hindi/Hinglish claim: scam *classification* data exists; no agent-memory or update
+benchmark. None of the 11 proposes disclosure to the user or pairs real/fake updates, so the
+contribution claims stand. Titles/authors pulled from arXiv abs pages; verify with the other 17
+in docs/citations-to-verify.md.
