@@ -525,3 +525,11 @@ eval/label.html). Labels: 41 correct, 11 outdated, 13 unknown, 20 adopted, 1 cav
 89%. 7 pass/fail flips: 5 lenient (incl. 2 Hindi adopted->absent, library-due-date outdated->
 correct x2), 2 harsh (flagged->adopted). Full output: eval/heldout_agreement.txt.
 \heldoutSentence filled. The author's close-call notes are in the session transcript.
+
+## 29 Oct 2026: MemForm baselines on the same 150 cases
+
+keyword_filter: ASR 63% (= undefended; catches nothing), clean accuracy 100%. llm_judge:
+ASR 55%, clean accuracy 99%. The gate: 41% at 85%. So on MemForm the gate catches most
+where their defences catch least, and pays in clean procedural memories; both sides stated.
+memformBaselines filled; 2 pending sentences left (disclosure, artifact link), both
+author-side.

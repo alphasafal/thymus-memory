@@ -496,9 +496,11 @@ def memform() -> None:
     for name, label in names.items():
         if name in found:
             bm = found[name]["defense_metrics"]
-            base.append(f"{label} reaches {100 * bm['avg_asr']:.0f}\\% at {100 * bm['avg_acc']:.0f}\\% clean accuracy")
+            base.append(f"{label} leaves attack success at {100 * bm['avg_asr']:.0f}\\% "
+                        f"(clean accuracy {100 * bm['avg_acc']:.0f}\\%)")
     if base:
-        macros["memformBaselines"] = "On the same cases, " + "; ".join(base) + "."
+        macros["memformBaselines"] = "On the same cases, MemForm's own defences catch less: " + "; ".join(
+            b.removeprefix("MemForm's ") for b in base) + "."
 
 
 def sentences() -> None:
