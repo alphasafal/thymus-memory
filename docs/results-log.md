@@ -516,3 +516,12 @@ Softened the Hindi/Hinglish claim: scam *classification* data exists; no agent-m
 benchmark. None of the 11 proposes disclosure to the user or pairs real/fake updates, so the
 contribution claims stand. Titles/authors pulled from arXiv abs pages; verify with the other 17
 in docs/citations-to-verify.md.
+
+## 29 Oct 2026: 120 blind held-out labels (author), grader agreement
+
+Author labelled all 120 held-out replies blind (model/defence/verdict hidden; document form of
+eval/label.html). Labels: 41 correct, 11 outdated, 13 unknown, 20 adopted, 1 caveated,
+9 disclosed, 25 absent. Grader (hybrid, qwen3-4b): pass/fail 94%, exact 91%, keywords alone
+89%. 7 pass/fail flips: 5 lenient (incl. 2 Hindi adopted->absent, library-due-date outdated->
+correct x2), 2 harsh (flagged->adopted). Full output: eval/heldout_agreement.txt.
+\heldoutSentence filled. The author's close-call notes are in the session transcript.
