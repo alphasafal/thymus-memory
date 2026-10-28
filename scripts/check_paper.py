@@ -8,7 +8,9 @@ import sys
 from pathlib import Path
 
 auto = Path("paper/numbers-auto.tex").read_text()
-missing = sorted(set(re.findall(r"\\newcommand\{\\(\w+)\}\{--\}", auto)))
+used = "".join(Path(f"paper/{n}.tex").read_text() for n in ("main", "results", "appendix", "numbers"))
+missing = sorted(name for name in set(re.findall(r"\\newcommand\{\\(\w+)\}\{--\}", auto))
+                 if re.search(r"\\" + name + r"\b", used))
 defined = set(re.findall(r"\\newcommand\{\\(\w+)\}", auto))
 pending = [line.split("}{", 1)[0] for line in Path("paper/numbers.tex").read_text().splitlines()
            if "\\pending{" in line and not line.startswith("\\newcommand{\\pending}")
