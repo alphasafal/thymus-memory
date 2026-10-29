@@ -201,6 +201,10 @@ def main(argv: list[str] | None = None) -> int:
     (run_dir / "summary.md").write_text(report + "\n")
     (run_dir / "summary.json").write_text(json.dumps(summary, indent=2) + "\n")
     print(report)
+    from thymus.llm import anthropic_spend
+
+    if anthropic_spend() > 0:
+        print(f"Anthropic API spend this run: ${anthropic_spend():.2f}", file=sys.stderr)
     print(f"\nSaved to {run_dir}", file=sys.stderr)
     if any(getattr(m, "exhausted", False) for m in (llm, judge.llm)):
         print(f"Stopped early: reached --max-new-calls {args.max_new_calls}. Rerun to resume from the cache.", file=sys.stderr)
