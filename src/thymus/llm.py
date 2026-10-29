@@ -183,6 +183,24 @@ _FALLBACK_MODELS = {"claude-fable-5-1", "claude-opus-5-5", "claude-opus-5", "cla
 _NO_EFFORT_MODELS = {"claude-haiku-4-5"}
 
 
+# Anthropic first-party API prices, US$ per million tokens (input, output), October 2026.
+_ANTHROPIC_PRICES = {
+    "claude-opus-5-5": (4.00, 20.00),
+    "claude-opus-5": (5.00, 25.00),
+    "claude-sonnet-5-5": (2.00, 10.00),
+    "claude-sonnet-5": (2.00, 10.00),
+    "claude-haiku-5-5": (0.10, 0.50),
+}
+# Dollars spent through AnthropicLLM in this process, across instances (gate + agent + judge
+# may be separate instances of the same model). THYMUS_ANTHROPIC_BUDGET_USD caps it: the run
+# stops with CallBudgetExceeded, cached work is kept, and a rerun resumes from the cache.
+_anthropic_spend_usd = 0.0
+
+
+def anthropic_spend() -> float:
+    return _anthropic_spend_usd
+
+
 class AnthropicLLM:
     """Claude via the official SDK. Needs `uv sync --extra anthropic` and credentials
     (ANTHROPIC_API_KEY or an `ant auth login` profile). Every call costs money."""
@@ -195,6 +213,8 @@ class AnthropicLLM:
         self.effort = effort
         self.max_tokens = max_tokens
         self.name = f"anthropic:{model}"
+        budget = os.environ.get("THYMUS_ANTHROPIC_BUDGET_USD")
+        self.budget_usd = float(budget) if budget else None
 
     def complete(self, system: str, prompt: str, schema: dict | None = None) -> str:
         output_config: dict[str, Any] = {}
@@ -209,6 +229,11 @@ class AnthropicLLM:
             extra["betas"] = ["server-side-fallback-2026-07-01"]
             extra["fallbacks"] = "default"
 
+        global _anthropic_spend_usd
+        if self.budget_usd is not None and _anthropic_spend_usd >= self.budget_usd:
+            raise CallBudgetExceeded(
+                f"{self.name} spent ${_anthropic_spend_usd:.2f}, over the "
+                f"${self.budget_usd:.2f} cap (THYMUS_ANTHROPIC_BUDGET_USD)")
         response = self._client.beta.messages.create(
             model=self.model,
             max_tokens=self.max_tokens,
@@ -216,6 +241,9 @@ class AnthropicLLM:
             messages=[{"role": "user", "content": prompt}],
             **extra,
         )
+        in_price, out_price = _ANTHROPIC_PRICES.get(self.model, (10.00, 50.00))
+        usage = response.usage
+        _anthropic_spend_usd += (usage.input_tokens * in_price + usage.output_tokens * out_price) / 1e6
         if response.stop_reason == "refusal":
             category = response.stop_details.category if response.stop_details else None
             raise LLMError(f"{self.name} refused (category: {category})")
