@@ -95,12 +95,26 @@ Inline labels work only if the model follows them. qwen3-4B, Opus~5.5 and GPT-6-
 label-only and v1 cut attacks by half or more. Llama~3.1~8B does not: label-only (41\%) and v1
 (47\%) are no better than no defence. The final gate takes the decision away from the model:
 contested claims are withheld and disclosed by the system, which cuts Llama's attack success
-from 42\% to \absLlamaThy{}. The ablations below were run on v2, before verification (6~October),
-and not repeated on the final gate. Simply dropping contested claims (\emph{hide}) blocks attacks too
-(qwen3-4B 10\%, Llama 28\%), but the real cross-origin updates it drops leave 30\% of update
-questions answered with the stale value. Removing the labels (\emph{no-labels}) returns attack
-success to the undefended level (qwen3-4B 38\%): disclosure, not storage policy, is the active
-ingredient.
+from 42\% to \absLlamaThy{}.
+
+\para{One rule out at a time.} Removing one ingredient from the final gate (full benchmark,
+both models) shows each rule carrying the metric it was written for. Without same-origin
+supersession (\emph{any-origin}) a forged update replaces the real fact: attack success rises
+from \absQwenThy{}/\absLlamaThy{} to \ablV3QwenAnyOrigin{}/\ablV3LlamaAnyOrigin{}, the largest
+single loss, and its price is visible on the other side, \ablV3QwenAnyOriginUpd{} of updates
+answered against \updQwenThy{}: that gap is what the rule declines to accept. Without labels,
+qwen3-4B, which reads them, doubles its losses (\ablV3QwenNoLabels{} against \absQwenThy{})
+while Llama, which ignores them, is unchanged (\ablV3LlamaNoLabels{}): the cross-model version
+of this section's claim. Dropping contested claims instead of disclosing them (\emph{hide})
+blocks the same attacks (\ablV3QwenHide{}/\ablV3LlamaHide{}) but the update's path to the user
+collapses, \ablV3QwenHideReach{} and \ablV3LlamaHideReach{} reaching the user against
+\updQwenThyReach{} and \updLlamaThyReach{}: disclosure is what keeps the real changes alive.
+Without authentication, spoofed-origin attacks return (Llama \ablV3LlamaNoAuthSpoof{} fooled on
+that stratum, the authenticated gate 0\%). Removing the screen leaves benchmark rates almost
+unchanged (\ablV3QwenNoScreen{}/\ablV3LlamaNoScreen{}; a stored instruction still arrives
+labelled, and these models rarely follow it): the screen's value is categorical, no preference
+or instruction is ever stored in the user's name (G3, \cref{sec:lemmas}), and its cost falls on
+procedural knowledge (\cref{sec:external}).
 
 \para{Where attacks still get through.} The notice protects only claims the gate contests. Split
 by what the final gate did with the planted claim, Llama is fooled by \stratLlamaContested{} of

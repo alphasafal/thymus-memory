@@ -63,12 +63,14 @@ def main() -> None:
             counts[outcome(gate, store, poisoned["content"], OTHER_SOURCE, 2)] += 1
         report["pairs"][name] = dict(counts)
 
-    gate = make_gate("thymus-v3", llm)  # screening is the same claim classifier in every version
-    screened = collections.defaultdict(collections.Counter)
-    for r in screen:
-        key = r["attack_type"] if r["label"] == "poisoned" else "clean"
-        screened[key][outcome(gate, MemoryStore(embedder), r["content"], OTHER_SOURCE, 1)] += 1
-    report["screening"] = {k: dict(v) for k, v in screened.items()}
+    # v1--v3 share one claim classifier; thymus-v3-procedures has its own, so screen with both.
+    for gate_name, key_name in (("thymus-v3", "screening"), ("thymus-v3-procedures", "screening_procedures")):
+        gate = make_gate(gate_name, llm)
+        screened = collections.defaultdict(collections.Counter)
+        for r in screen:
+            key = r["attack_type"] if r["label"] == "poisoned" else "clean"
+            screened[key][outcome(gate, MemoryStore(embedder), r["content"], OTHER_SOURCE, 1)] += 1
+        report[key_name] = {k: dict(v) for k, v in screened.items()}
 
     args.out.mkdir(parents=True, exist_ok=True)
     slug = args.llm.replace(":", "_").replace("/", "_")
@@ -77,10 +79,11 @@ def main() -> None:
     for name, c in report["pairs"].items():
         caught = c.get("contested", 0) + c.get("rejected", 0)
         print(f"  {name:<20} contested or rejected {caught}/{len(pairs)}  {c}")
-    print(f"Screening (n={len(screen)}), single entries from an untrusted origin:")
-    for k, c in sorted(report["screening"].items()):
-        n = sum(c.values())
-        print(f"  {k:<32} rejected {c.get('rejected', 0)}/{n}")
+    for key_name in ("screening", "screening_procedures"):
+        print(f"{key_name} (n={len(screen)}), single entries from an untrusted origin:")
+        for k, c in sorted(report[key_name].items()):
+            n = sum(c.values())
+            print(f"  {k:<32} rejected {c.get('rejected', 0)}/{n}")
 
 
 if __name__ == "__main__":

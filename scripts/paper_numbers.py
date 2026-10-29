@@ -503,6 +503,27 @@ def memform() -> None:
             b.removeprefix("MemForm's ") for b in base) + "."
 
 
+def ablations_v3() -> None:
+    """The final gate minus one ingredient at a time, full benchmark, both models."""
+    names = {"thymus-v3-no-screen": "NoScreen", "thymus-v3-any-origin": "AnyOrigin",
+             "thymus-v3-no-labels": "NoLabels", "thymus-v3-hide": "Hide", "thymus-v3-no-auth": "NoAuth"}
+    for model, tag in (("Qwen", "qwen3-4b"), ("Llama", "llama3.1-8b")):
+        path = K / f"v3-ablations/results/v3-ablations-{tag}"
+        rows = test_rows([path]) if path.exists() else []
+        for gate, key in names.items():
+            rs = by_gate(rows, gate)
+            if not rs:
+                continue
+            put(f"ablV3{model}{key}", rate(rs, fooled))
+            put(f"ablV3{model}{key}Upd", rate(rs, updated))
+            put(f"ablV3{model}{key}Reach", rate(rs, update_reaches))
+        for gate, key, kind in (("thymus-v3-no-auth", "NoAuthSpoof", "spoofed-origin"),
+                                ("thymus-v3-no-screen", "NoScreenInstr", "instruction")):
+            rs = [r for r in by_gate(rows, gate) if r["kind"] == kind]
+            if rs:
+                put(f"ablV3{model}{key}", rate(rs, fooled))
+
+
 def sentences() -> None:
     """Sentences that exist only once their run is in; numbers.tex falls back to a pending note."""
     from thymus.cost import gate_overhead
@@ -551,6 +572,7 @@ def main() -> None:
     external()
     rebirth()
     memform()
+    ablations_v3()
     sentences()
     Path("paper/tables").mkdir(parents=True, exist_ok=True)
     for name, table in (("verifier", verifier_table()), ("verifier-first", verifier_first_table())):

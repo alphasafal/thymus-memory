@@ -548,3 +548,15 @@ v3-procedures queued on benchmark (attack regression check), rebirth, MemShield
 memories (LongMemEval fix); reputation-gated supersession + late-contest for the three
 bypasses, pre-registered before held-out runs. Needs the author: user study sponsor, frontier
 API budget decision, disclosure, co-author/external reader.
+
+## 29 Oct 2026: ablations of the final gate (v3 minus one rule, full benchmark)
+
+Fooled / updates answered / update reaches user, qwen3-4B then Llama (v3 reference 9/73/92 and
+6/63/88): any-origin 20/94/94 and 41/91/91 (the load-bearing rule; its cost = the update gap);
+no-labels 19 and 6 (qwen reads labels, Llama ignores them - cross-model proof of sec 6.3);
+hide 8 and 6 fooled but reach collapses to 73 and 64; no-auth 9 and 9 overall, spoofed-origin
+stratum 18% and 23% fooled (v3: 14/0); no-screen 8/6 (near v3 - screen's value is categorical
+G3 + procedural suites, not benchmark rates). Each rule carries exactly the metric it was
+written for. Also: frontier full-442 Opus run in progress ($0.48 pilot, cap $30); v3-procedures
+bench/rebirth = v3 within noise, MemShield v3p screening rerunning locally (the old script
+hard-coded the v3 classifier for screening).
