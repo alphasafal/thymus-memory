@@ -229,7 +229,9 @@ class ThymusGate(Gate):
     def review(self, candidate: Candidate, store: MemoryStore) -> Decision:
         if self.screen and candidate.source == "tool" and not self._trusted_origin(candidate):
             kind = self.classifier.kind(candidate.text)
-            if kind != "fact":
+            # "procedure" exists only when the classifier runs with procedures=True; it is
+            # imperative knowledge about the world, stored and labelled like any fact.
+            if kind not in ("fact", "procedure"):
                 return Decision("reject", f"{candidate.origin} tried to speak for the user ({kind})")
 
         trust = self._trust(candidate)
@@ -368,6 +370,36 @@ GATES: dict[str, Callable[[LLM], Gate]] = {
     "thymus-v3": lambda llm: ThymusGate(
         LLMConflictDetector(llm, same_subject=True), LLMClaimClassifier(llm), require_auth=True,
         contest_other_users=True, notice=True, soft_supersede="auto", confirm_replacements=True, name="thymus-v3"),
+    # The final gate with the procedure class: imperative knowledge about the world (a policy,
+    # a runbook step, advice) is stored as a labelled claim; only directives aimed at the
+    # assistant itself are rejected. Designed after MemShield, MemForm and the revoked-policy
+    # sets showed rule 1 rejecting procedural knowledge; reported beside thymus-v3, never in
+    # its place.
+    "thymus-v3-procedures": lambda llm: ThymusGate(
+        LLMConflictDetector(llm, same_subject=True), LLMClaimClassifier(llm, procedures=True), require_auth=True,
+        contest_other_users=True, notice=True, soft_supersede="auto", confirm_replacements=True,
+        name="thymus-v3-procedures"),
+    # Ablations of the final gate: thymus-v3 with exactly one ingredient removed.
+    "thymus-v3-no-screen": lambda llm: ThymusGate(
+        LLMConflictDetector(llm, same_subject=True), LLMClaimClassifier(llm), screen=False, require_auth=True,
+        contest_other_users=True, notice=True, soft_supersede="auto", confirm_replacements=True,
+        name="thymus-v3-no-screen"),
+    "thymus-v3-any-origin": lambda llm: ThymusGate(
+        LLMConflictDetector(llm, same_subject=True), LLMClaimClassifier(llm), same_origin_only=False, require_auth=True,
+        contest_other_users=True, notice=True, soft_supersede="auto", confirm_replacements=True,
+        name="thymus-v3-any-origin"),
+    "thymus-v3-no-labels": lambda llm: ThymusGate(
+        LLMConflictDetector(llm, same_subject=True), LLMClaimClassifier(llm), disclose=False, require_auth=True,
+        contest_other_users=True, notice=True, soft_supersede="auto", confirm_replacements=True,
+        name="thymus-v3-no-labels"),
+    "thymus-v3-hide": lambda llm: ThymusGate(
+        LLMConflictDetector(llm, same_subject=True), LLMClaimClassifier(llm), hide_contested=True, require_auth=True,
+        contest_other_users=True, notice=True, soft_supersede="auto", confirm_replacements=True,
+        name="thymus-v3-hide"),
+    "thymus-v3-no-auth": lambda llm: ThymusGate(
+        LLMConflictDetector(llm, same_subject=True), LLMClaimClassifier(llm), require_auth=False,
+        contest_other_users=True, notice=True, soft_supersede="auto", confirm_replacements=True,
+        name="thymus-v3-no-auth"),
     "thymus-v2-inline": lambda llm: ThymusGate(
         LLMConflictDetector(llm), LLMClaimClassifier(llm), require_auth=True, contest_other_users=True,
         name="thymus-v2-inline"),
@@ -378,6 +410,8 @@ MAIN_GATES = (
     "allow-all", "user-only", "conflict-quarantine", "last-write-wins", "bounded-occupancy", "label-only", "thymus",
 )
 ABLATIONS = ("thymus-no-screen", "thymus-any-origin", "thymus-no-labels", "thymus-hide")
+ABLATIONS_V3 = ("thymus-v3-no-screen", "thymus-v3-any-origin", "thymus-v3-no-labels", "thymus-v3-hide", "thymus-v3-no-auth",
+                "thymus-v3-procedures")
 # Version 2 of the gate and its inline-label variant (see ThymusGate).
 VERSION_2 = ("thymus-v2", "thymus-v2-inline", "thymus-v2-soft", "thymus-v2-auto", "thymus-v2-precise", "thymus-v2-verified",
              "thymus-v3")

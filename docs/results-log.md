@@ -533,3 +533,18 @@ ASR 55%, clean accuracy 99%. The gate: 41% at 85%. So on MemForm the gate catche
 where their defences catch least, and pays in clean procedural memories; both sides stated.
 memformBaselines filled; 2 pending sentences left (disclosure, artifact link), both
 author-side.
+
+## 29 Oct 2026: acting on the second review (ChatGPT)
+
+Done directly: MoM (2609.25054) cited; abstract now states scope and the residual bypasses;
+"For legitimate updates, On 36..." flow fixed; reproduce.sh promoted to README line 1; G1-G4
+written as four lemmas with proofs + an error-containment corollary (appendix, sec:lemmas).
+New gates: thymus-v3-{no-screen,any-origin,no-labels,hide,no-auth} (ablations of the final
+gate, queued as kaggle/configs/v3-ablations.json) and thymus-v3-procedures (4th classifier
+class "procedure": imperative knowledge about the world stored as a labelled claim; designed
+after MemShield/MemForm/rebirth showed rule 1 rejecting procedures; to be reported BESIDE v3).
+v3-procedures queued on benchmark (attack regression check), rebirth, MemShield
+(kaggle/configs/v3-procedures.json). Still to build: claim-level contesting for whole-round
+memories (LongMemEval fix); reputation-gated supersession + late-contest for the three
+bypasses, pre-registered before held-out runs. Needs the author: user study sponsor, frontier
+API budget decision, disclosure, co-author/external reader.

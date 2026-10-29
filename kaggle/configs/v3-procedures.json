@@ -1,0 +1,64 @@
+{
+  "pull": [
+    "qwen3:4b-instruct",
+    "llama3.1:8b",
+    "nomic-embed-text"
+  ],
+  "inputs": [
+    "data/memshield"
+  ],
+  "runs": [
+    {
+      "name": "v3p-bench-qwen3-4b",
+      "llm": "ollama:qwen3:4b-instruct",
+      "judge": "ollama:qwen3:4b-instruct",
+      "gates": [
+        "thymus-v3-procedures"
+      ]
+    },
+    {
+      "name": "v3p-rebirth-qwen3-4b",
+      "llm": "ollama:qwen3:4b-instruct",
+      "judge": "ollama:qwen3:4b-instruct",
+      "scenarios": "scenarios-external/memory-rebirth.json",
+      "gates": [
+        "thymus-v3-procedures"
+      ]
+    },
+    {
+      "name": "v3p-bench-llama3.1-8b",
+      "llm": "ollama:llama3.1:8b",
+      "judge": "ollama:qwen3:4b-instruct",
+      "gates": [
+        "thymus-v3-procedures"
+      ]
+    },
+    {
+      "name": "v3p-rebirth-llama3.1-8b",
+      "llm": "ollama:llama3.1:8b",
+      "judge": "ollama:qwen3:4b-instruct",
+      "scenarios": "scenarios-external/memory-rebirth.json",
+      "gates": [
+        "thymus-v3-procedures"
+      ]
+    },
+    {
+      "name": "v3p-memshield-qwen3-4b",
+      "command": [
+        "python",
+        "scripts/memshield_eval.py",
+        "--llm",
+        "ollama:qwen3:4b-instruct"
+      ]
+    },
+    {
+      "name": "v3p-memshield-llama3.1-8b",
+      "command": [
+        "python",
+        "scripts/memshield_eval.py",
+        "--llm",
+        "ollama:llama3.1:8b"
+      ]
+    }
+  ]
+}

@@ -59,7 +59,10 @@ though most of the rest reach the user in the notice (\updQwenThyReach{} and \up
 update emails replayed from forged and lookalike senders it is fooled \enronLlamaThy{} of the
 time (no defence: 84\%) while keeping \enronLlamaUpdThy{} of real updates (provenance
 quarantine: 0\%). In our own ChatGPT account, 3 of 6 fake updates came back from memory as fact
-in a new chat, one attributed to the user.
+in a new chat, one attributed to the user. The scope is single-claim facts over channels that
+can authenticate senders; what remains open is measured, not assumed: an attacker who speaks
+before the genuine source, or who updates its own earlier claim, still reaches a model that
+ignores labels.
 \end{abstract}
 
 \section{Introduction}
@@ -428,7 +431,8 @@ rather than the user. Benchmarks of honest updates (MemoryAgentBench~\cite{memor
 LongMemEval~\cite{longmemeval}), of irreducible conflicts in personal memory
 (TANGLE~\cite{tangle}) and of when to remember, verify or ask (\cite{rva}) contain no attacker;
 there, models rarely ask the user even when they should, which supports moving disclosure out
-of the model. Bitemporal memory keeps the superseded value for audit (TOKI~\cite{toki}), and
+of the model. Bitemporal memory keeps the superseded value for audit (TOKI~\cite{toki}), MoM~\cite{mom}
+commits the current value at write time while keeping prior state recoverable, and
 agents adopt conflicting memory at the first decision~\cite{compliancetrap}. Defence costs on
 benign traffic alone are large: a reranker quarantined up to a third of legitimate
 memories~\cite{priceofsafety}.

@@ -2,6 +2,9 @@
 
 **A write-gate for LLM agent memory that keeps poisoned memories out without blocking real updates.**
 
+`scripts/reproduce.sh` rebuilds every benchmark table from the cached model responses on a
+laptop, no GPU needed.
+
 Agents that remember things across conversations can be poisoned: a web page, an email or
 another user plants a false "memory" that the agent acts on later. Published attacks succeed
 75–99% of the time. The obvious defences have a cost the immune system also has:

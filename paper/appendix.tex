@@ -90,6 +90,60 @@ attacker's message became the user's statement. Claude's one wrong update (trial
 genuine change from the same sender as the original as possibly spoofed. 15 trials per
 assistant, one run; memory features change often.
 
+
+\section{Why the guarantees hold}\label{sec:lemmas}
+
+Write $c$ for a candidate with $\mathrm{src}(c)\in\{\textsf{user},\textsf{tool}\}$, speaker
+$\mathrm{sp}(c)$, origin $\mathrm{og}(c)$ and authentication bit $\mathrm{auth}(c)$, all set by
+the channel, never by a model (\cref{sec:setup}). The conflict detector returns
+$D(c)\subseteq M$ from the store $M$; the pairwise verifier $V$ maps a list of memories to a
+subset of it (it can only remove); the classifier returns
+$L(c)\in\{\textsf{fact},\textsf{preference},\textsf{instruction}\}$. Two assumptions:
+\textbf{A1}, origins are channel-assigned and the user's chat is not a tool channel; \textbf{A2},
+$\mathrm{auth}(c)=1$ only if the message really came from $\mathrm{og}(c)$ (\cref{sec:discussion}
+measures what forged senders do when A2 fails). The gate retires
+$R(c)\subseteq D(c)$ and marks $C(c)=D(c)\setminus Z(c)$ contested, where $Z(c)$ is the branch's
+replaceable set below.
+
+\para{L1 (no cross-source overwrite).} If $\mathrm{src}(c)=\textsf{tool}$ then
+$R(c)\subseteq\{m : \mathrm{og}(m)=\mathrm{og}(c)\wedge\mathrm{auth}(c)\}$.
+\emph{Proof.} The tool branch sets $Z(c)=\{m\in D(c):\mathrm{og}(m)=\mathrm{og}(c)\wedge
+\mathrm{auth}(c)\}$ and $R(c)=V(Z(c))\subseteq Z(c)$, since $V$ only removes. By A1 a user
+memory's origin is the chat, which no tool candidate carries, so no user statement is in
+$Z(c)$. $D(c)$ and $V$'s output can change \emph{which} same-origin facts are retired, never
+whose. \hfill$\square$
+
+\para{L2 (no cross-user overwrite).} If $\mathrm{src}(c)=\textsf{user}$ then every
+$m\in R(c)$ has $\mathrm{src}(m)=\textsf{tool}$ or $\mathrm{sp}(m)=\mathrm{sp}(c)$.
+\emph{Proof.} The user branch sets $Z(c)=\{m\in D(c):\mathrm{src}(m)=\textsf{tool}\vee
+\mathrm{sp}(m)=\mathrm{sp}(c)\}$ and $R(c)=V(Z(c))\subseteq Z(c)$; another user's statement
+fails both disjuncts and lands in $C(c)$. \hfill$\square$
+
+\para{L3 (non-self cannot speak for the user).} No memory from an untrusted tool origin with
+$L(c)\neq\textsf{fact}$ is ever stored. \emph{Proof.} The screen runs before any store call on
+exactly the candidates with $\mathrm{src}(c)=\textsf{tool}$ and an untrusted origin, and
+returns \textsf{reject} unless $L(c)=\textsf{fact}$; no later rule stores a rejected
+candidate. The guarantee is conditional on $L$, as stated in \cref{sec:guarantees}, and the
+classifier's measured error is the instruction-attack stratum of \cref{sec:tradeoff} and the
+clean-entry rejections of \cref{sec:external}. \hfill$\square$
+
+\para{L4 (disclosure).} Every recalled untrusted memory carries its origin; every contested
+memory is withheld from the model and rendered only in the system notice. \emph{Proof.} The
+recall path reads stored fields alone: the origin label is appended from $\mathrm{og}(m)$
+unconditionally, the contested set is excluded from the prompt by its stored links, and the
+notice is a string template over $(\mathrm{og},\text{text})$ written by the harness after the
+model's reply. No model output is an input to this path. \hfill$\square$
+
+\para{Error containment.} A detector miss shrinks $D(c)$: both facts stay active, the newer one
+labelled unverified (nothing retired, nothing contested). A false conflict grows $C(c)$: an
+answer becomes a notice. A verifier error shrinks $R(c)$ within $Z(c)$: a lost update, never a
+lost contest (v3 asks $V$ only about replacement). A classifier error either rejects a real
+fact (lost) or stores an instruction as a fact, where by L1 it is labelled, cannot retire
+anything outside its own authenticated origin, and cannot speak for the user in recall. No
+model error widens $R(c)$ beyond L1--L2. The property tests execute these cases on 300 random
+write sequences with adversarial model outputs (7{,}500 decisions); each lemma's test fails
+when its rule is switched off.
+
 \section{Prompts}\label{sec:prompts}
 
 \para{Claim classifier} (screening).

@@ -56,7 +56,7 @@ class ThymusDefense(MemoryDefense):
     def __init__(self, model=None, threshold: float = 0.5, **kwargs):
         super().__init__(model=model, threshold=threshold, **kwargs)
         llm = CachedLLM(OllamaLLM(os.environ.get("THYMUS_MEMFORM_MODEL", "qwen3:4b-instruct")), Path(".cache/llm"))
-        self.gate = make_gate("thymus-v3", llm)
+        self.gate = make_gate(os.environ.get("THYMUS_MEMFORM_GATE", "thymus-v3"), llm)
         self.embedder = MemoEmbedder(OllamaEmbedder("nomic-embed-text"))
 
     def filter_memory(self, memory: MemoryItem, context: DefenseContext | None = None) -> DefenseDecision:

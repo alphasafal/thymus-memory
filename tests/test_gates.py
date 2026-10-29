@@ -227,9 +227,9 @@ def test_every_registered_gate_builds_and_has_its_own_name():
 
 
 def test_main_gates_and_ablations_cover_the_registry():
-    from thymus.gates import ABLATIONS, GATES, MAIN_GATES, VERSION_2
+    from thymus.gates import ABLATIONS, ABLATIONS_V3, GATES, MAIN_GATES, VERSION_2
 
-    groups = [set(MAIN_GATES), set(ABLATIONS), set(VERSION_2)]
+    groups = [set(MAIN_GATES), set(ABLATIONS), set(ABLATIONS_V3), set(VERSION_2)]
     assert set().union(*groups) == set(GATES) and sum(map(len, groups)) == len(GATES)
 
 

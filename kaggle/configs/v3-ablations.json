@@ -1,0 +1,89 @@
+{
+  "pull": [
+    "qwen3:4b-instruct",
+    "llama3.1:8b",
+    "nomic-embed-text"
+  ],
+  "runs": [
+    {
+      "name": "v3-ablations-qwen3-4b",
+      "llm": "ollama:qwen3:4b-instruct",
+      "judge": "ollama:qwen3:4b-instruct",
+      "gates": [
+        "thymus-v3-no-screen"
+      ]
+    },
+    {
+      "name": "v3-ablations-qwen3-4b",
+      "llm": "ollama:qwen3:4b-instruct",
+      "judge": "ollama:qwen3:4b-instruct",
+      "gates": [
+        "thymus-v3-any-origin"
+      ]
+    },
+    {
+      "name": "v3-ablations-qwen3-4b",
+      "llm": "ollama:qwen3:4b-instruct",
+      "judge": "ollama:qwen3:4b-instruct",
+      "gates": [
+        "thymus-v3-no-labels"
+      ]
+    },
+    {
+      "name": "v3-ablations-qwen3-4b",
+      "llm": "ollama:qwen3:4b-instruct",
+      "judge": "ollama:qwen3:4b-instruct",
+      "gates": [
+        "thymus-v3-hide"
+      ]
+    },
+    {
+      "name": "v3-ablations-qwen3-4b",
+      "llm": "ollama:qwen3:4b-instruct",
+      "judge": "ollama:qwen3:4b-instruct",
+      "gates": [
+        "thymus-v3-no-auth"
+      ]
+    },
+    {
+      "name": "v3-ablations-llama3.1-8b",
+      "llm": "ollama:llama3.1:8b",
+      "judge": "ollama:qwen3:4b-instruct",
+      "gates": [
+        "thymus-v3-no-screen"
+      ]
+    },
+    {
+      "name": "v3-ablations-llama3.1-8b",
+      "llm": "ollama:llama3.1:8b",
+      "judge": "ollama:qwen3:4b-instruct",
+      "gates": [
+        "thymus-v3-any-origin"
+      ]
+    },
+    {
+      "name": "v3-ablations-llama3.1-8b",
+      "llm": "ollama:llama3.1:8b",
+      "judge": "ollama:qwen3:4b-instruct",
+      "gates": [
+        "thymus-v3-no-labels"
+      ]
+    },
+    {
+      "name": "v3-ablations-llama3.1-8b",
+      "llm": "ollama:llama3.1:8b",
+      "judge": "ollama:qwen3:4b-instruct",
+      "gates": [
+        "thymus-v3-hide"
+      ]
+    },
+    {
+      "name": "v3-ablations-llama3.1-8b",
+      "llm": "ollama:llama3.1:8b",
+      "judge": "ollama:qwen3:4b-instruct",
+      "gates": [
+        "thymus-v3-no-auth"
+      ]
+    }
+  ]
+}

@@ -25,7 +25,7 @@ from thymus.gates import make_gate
 from thymus.llm import CachedLLM
 from thymus.memory import Candidate, MemoryStore
 
-GATES = ("thymus-v2-auto", "thymus-v2-verified", "thymus-v3")
+GATES = ("thymus-v2-auto", "thymus-v2-verified", "thymus-v3", "thymus-v3-procedures")
 TRUSTED_SOURCE, OTHER_SOURCE = "doc:team-wiki", "web:forum-post"
 
 
